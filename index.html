@@ -545,6 +545,7 @@ else if (pageId === 'payroll-page') loadPayrollPage();
     function logout() {
         loggedInUser = null;
         allUsers = [];
+        sessionStorage.removeItem('loggedInUser');
         document.getElementById('login-form').reset();
         document.getElementById('admin-login-form').reset();
         showPage('login-page');
@@ -560,6 +561,7 @@ else if (pageId === 'payroll-page') loadPayrollPage();
         const user = allUsers.find(u => u.name === name && u.phone === phone);
         if (user) {
             loggedInUser = user;
+            sessionStorage.setItem('loggedInUser', JSON.stringify(user));
             alert(`'${name}'님, 환영합니다!`);
             showPage('TM-DB-Table');
         } else {
@@ -574,6 +576,7 @@ else if (pageId === 'payroll-page') loadPayrollPage();
         const adminData = await callAPI('readAll', 'Admin');
         if (adminData && adminData.length > 0 && id === adminData[0].id && pw === adminData[0].pw) {
             loggedInUser = { name: 'admin', role: 'admin' };
+            sessionStorage.setItem('loggedInUser', JSON.stringify(loggedInUser));
             alert('관리자님, 환영합니다!');
             showPage('admin-page');
         } else {
@@ -1323,7 +1326,18 @@ window.saveWorkLog = saveWorkLog;
 
     // === 페이지 첫 로드 ===
     document.addEventListener('DOMContentLoaded', () => {
-        showPage('login-page');
+        // 세션 복원
+        const savedUser = sessionStorage.getItem('loggedInUser');
+        if (savedUser) {
+            loggedInUser = JSON.parse(savedUser);
+            if (loggedInUser.role === 'admin') {
+                showPage('admin-page');
+            } else {
+                showPage('TM-DB-Table');
+            }
+        } else {
+            showPage('login-page');
+        }
         updateRoleSelection();
 
 // 기존 loadInitialData 함수 수정
