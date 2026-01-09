@@ -1,0 +1,1343 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>연구소 DB Project</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Noto Sans KR', sans-serif; word-break: keep-all; }
+        .hidden { display: none; }
+        .role-label.selected { background-color: #f59e0b; color: #1e293b; border-color: #d97706; }
+        .modal-body::-webkit-scrollbar { width: 8px; height: 8px; }
+        .modal-body::-webkit-scrollbar-track { background: #f1f5f9; }
+        .modal-body::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        input:disabled, select:disabled, textarea:disabled { background-color: #f1f5f9; cursor: not-allowed; opacity: 0.7; }
+        .loading-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(255, 255, 255, 0.8); z-index: 1000;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .loader {
+            border: 8px solid #f3f3f3; border-top: 8px solid #3498db;
+            border-radius: 50%; width: 60px; height: 60px; animation: spin 2s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        .tooltip-icon {
+            position: relative; margin-left: 6px; cursor: pointer; color: #94a3b8;
+            border: 1px solid #e2e8f0; border-radius: 50%; width: 20px; height: 20px;
+            display: inline-flex; justify-content: center; align-items: center;
+            font-size: 12px; font-weight: bold; font-style: italic; user-select: none; transition: all 0.2s ease;
+        }
+        .tooltip-icon:hover { background-color: #1e293b; color: white; border-color: #1e293b; }
+        #global-tooltip {
+            visibility: hidden; width: 280px; background-color: #1e293b; color: #fff;
+            text-align: left; border-radius: 6px; padding: 12px; position: fixed;
+            z-index: 1001; opacity: 0; transition: opacity 0.2s; pointer-events: none;
+            font-size: 13px; font-weight: 400; line-height: 1.6;
+        }
+        th, td, button, a { white-space: nowrap; }
+    </style>
+</head>
+<body class="bg-slate-100 pb-20">
+
+    <div id="loading-overlay" class="loading-overlay hidden">
+        <div class="loader"></div>
+    </div>
+    
+    <div id="global-tooltip"></div>
+
+    <div id="login-page">
+        <div class="flex items-center justify-center min-h-screen">
+            <div class="w-full max-w-md p-8 space-y-8 bg-white rounded-2xl shadow-xl">
+                <header class="text-center">
+                    <h1 class="text-3xl font-bold text-slate-800">연구소 DB Project</h1>
+                    <p class="mt-2 text-sm text-slate-500">제작 : (주)한국FP센터 부설 중소기업경영연구소</p>
+                </header>
+                <form id="login-form" class="mt-8 space-y-6">
+                    <div>
+                        <label for="username" class="text-sm font-semibold text-slate-700">아이디 (성명)</label>
+                        <input id="username" type="text" required class="mt-2 block w-full px-4 py-3 bg-slate-50 border rounded-lg" placeholder="가입하신 성명을 입력하세요">
+                    </div>
+                    <div>
+                        <label for="password" class="text-sm font-semibold text-slate-700">전화번호 (비밀번호)</label>
+                        <input id="password" type="password" required class="mt-2 block w-full px-4 py-3 bg-slate-50 border rounded-lg" placeholder="'-'를 제외한 전화번호를 입력하세요">
+                    </div>
+                    <div><button type="submit" class="w-full flex justify-center py-3 px-4 text-base font-bold rounded-lg text-white bg-slate-800 hover:bg-slate-900">로그인</button></div>
+                </form>
+                <div class="flex items-center justify-between gap-4">
+                    <button type="button" onclick="showPage('register-page')" class="w-full text-center py-3 px-4 text-sm font-semibold rounded-lg text-slate-800 bg-slate-200 hover:bg-slate-300">회원가입</button>
+                    <button type="button" onclick="showPage('admin-login-page')" class="w-full text-center py-3 px-4 text-sm font-semibold rounded-lg text-slate-800 bg-slate-200 hover:bg-slate-300">관리자페이지</button>
+                </div>
+                <div class="pt-4 border-t grid grid-cols-2 gap-4">
+                    <a href="https://benefits-corp-homepage.netlify.app/" target="_blank" class="text-center py-3 px-4 text-sm font-semibold rounded-lg text-white bg-sky-600 hover:bg-sky-700">기업홈페이지 장점</a>
+                    <button type="button" onclick="showPriceTableModal()" class="text-center py-3 px-4 text-sm font-semibold rounded-lg text-white bg-teal-600 hover:bg-teal-700">기업홈페이지 가격표</button>
+                </div>
+                
+                <!-- 가격표 모달 -->
+                <div id="price-table-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div class="bg-white rounded-2xl shadow-xl max-w-md w-full mx-4 overflow-hidden">
+                        <div class="bg-teal-600 text-white px-6 py-4">
+                            <h3 class="text-xl font-bold text-center">기업홈페이지 가격표</h3>
+                        </div>
+                        <div class="p-6">
+                            <table class="w-full text-sm">
+                                <tbody class="divide-y">
+                                    <tr class="hover:bg-slate-50">
+                                        <td class="py-3 font-semibold text-slate-700">제작비</td>
+                                        <td class="py-3 text-right text-teal-600 font-bold">무료</td>
+                                    </tr>
+                                    <tr class="hover:bg-slate-50">
+                                        <td class="py-3 font-semibold text-slate-700">유지/보수 비용</td>
+                                        <td class="py-3 text-right text-teal-600 font-bold">없음</td>
+                                    </tr>
+                                    <tr class="hover:bg-slate-50">
+                                        <td class="py-3 font-semibold text-slate-700">초기셋팅비</td>
+                                        <td class="py-3 text-right font-bold">100만원</td>
+                                    </tr>
+                                    <tr class="hover:bg-slate-50">
+                                        <td class="py-3 font-semibold text-slate-700">서버등록비 (1회)</td>
+                                        <td class="py-3 text-right font-bold">10만원</td>
+                                    </tr>
+                                    <tr class="hover:bg-slate-50">
+                                        <td class="py-3 font-semibold text-slate-700">월이용료</td>
+                                        <td class="py-3 text-right font-bold">10만원</td>
+                                    </tr>
+                                    <tr class="hover:bg-slate-50">
+                                        <td class="py-3 font-semibold text-slate-700">웹호스팅비</td>
+                                        <td class="py-3 text-right text-slate-500">이용량에 따라 결정</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="px-6 pb-6">
+                            <button type="button" onclick="closePriceTableModal()" class="w-full py-3 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-lg">닫기</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <script>
+                    function showPriceTableModal() {
+                        document.getElementById('price-table-modal').classList.remove('hidden');
+                    }
+                    function closePriceTableModal() {
+                        document.getElementById('price-table-modal').classList.add('hidden');
+                    }
+                    document.addEventListener('DOMContentLoaded', function() {
+                        document.getElementById('price-table-modal')?.addEventListener('click', function(e) {
+                            if (e.target === this) closePriceTableModal();
+                        });
+                    });
+                </script>
+            </div>
+        </div>
+    </div>
+    
+    <div id="admin-login-page" class="hidden">
+        <div class="flex items-center justify-center min-h-screen">
+            <div class="w-full max-w-md p-8 space-y-8 bg-white rounded-2xl shadow-xl">
+                <header class="text-center"><h1 class="text-3xl font-bold text-slate-800">관리자 로그인</h1></header>
+                <form id="admin-login-form" class="mt-8 space-y-6">
+                    <div>
+                        <label for="admin-id" class="text-sm font-semibold text-slate-700">관리자 아이디</label>
+                        <input id="admin-id" type="text" required class="mt-2 block w-full px-4 py-3 bg-slate-50 border rounded-lg" placeholder="아이디 입력">
+                    </div>
+                    <div>
+                        <label for="admin-pw" class="text-sm font-semibold text-slate-700">관리자 비밀번호</label>
+                        <input id="admin-pw" type="password" required class="mt-2 block w-full px-4 py-3 bg-slate-50 border rounded-lg" placeholder="비밀번호 입력">
+                    </div>
+                    <div class="pt-4 flex gap-4">
+                        <button type="submit" class="w-full flex justify-center py-3 px-4 text-base font-bold rounded-lg text-white bg-slate-800 hover:bg-slate-900">로그인</button>
+                        <button type="button" onclick="showPage('login-page')" class="w-full text-center py-3 px-4 text-base font-bold rounded-lg text-slate-800 bg-slate-200 hover:bg-slate-300">취소</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="register-page" class="hidden">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="w-full max-w-2xl p-8 md:p-12 space-y-8 bg-white rounded-2xl shadow-xl">
+                <header class="text-center"><h1 class="text-3xl font-bold text-slate-800">회원가입</h1></header>
+                <form id="register-form" class="mt-8 space-y-8">
+                    <fieldset>
+                        <legend class="text-lg font-semibold text-slate-800 mb-4">가입 구분</legend>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <input type="radio" name="role" value="TMer" id="tmer" class="sr-only" checked>
+                                <label for="tmer" class="role-label cursor-pointer border-2 rounded-lg p-6 flex justify-center items-center transition font-bold">TMer</label>
+                            </div>
+                            <div>
+                                <input type="radio" name="role" value="전문위원" id="specialist" class="sr-only">
+                                <label for="specialist" class="role-label cursor-pointer border-2 rounded-lg p-6 flex justify-center items-center transition font-bold">전문위원</label>
+                            </div>
+                        </div>
+                    </fieldset>
+                    <div class="space-y-6">
+                        <div>
+                            <label for="register-name" class="text-sm font-semibold text-slate-700">성명</label>
+                            <input id="register-name" name="name" type="text" required class="mt-1 block w-full px-4 py-3 bg-slate-50 border rounded-lg" placeholder="예: 홍길동">
+                            <p class="mt-2 text-xs text-slate-500">로그인 시 아이디로 사용될 성명을 입력해주세요. (공백 없이)</p>
+                        </div>
+                        <div class="hidden" id="company-field">
+                            <label for="register-company" class="text-sm font-semibold text-slate-700">소속사</label>
+                            <input id="register-company" name="company" type="text" class="mt-1 block w-full px-4 py-3 bg-slate-50 border rounded-lg" placeholder="예: KFPC">
+                            <p class="mt-2 text-xs text-slate-500">소속사를 입력해주세요. (TMer는 자동 입력됩니다)</p>
+                        </div>
+                        <div>
+                            <label for="register-phone" class="text-sm font-semibold text-slate-700">전화번호</label>
+                            <input id="register-phone" name="phone" type="tel" required class="mt-1 block w-full px-4 py-3 bg-slate-50 border rounded-lg" placeholder="예: 01012345678">
+                            <p class="mt-2 text-xs text-slate-500">'-' 기호 없이 숫자만 입력해주세요. 로그인 시 비밀번호로 사용됩니다.</p>
+                        </div>
+                    </div>
+                    <div class="pt-4 flex gap-4">
+                        <button type="submit" class="w-full py-4 text-lg font-bold rounded-lg text-slate-800 bg-amber-400 hover:bg-amber-500">회원가입</button>
+                        <button type="button" onclick="showPage('login-page')" class="w-full py-4 text-lg font-bold rounded-lg text-slate-800 bg-slate-200 hover:bg-slate-300">취소</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+
+<div id="payroll-page" class="hidden">
+    <div class="container mx-auto p-4 md:p-8">
+        <header class="mb-8 flex flex-wrap justify-between items-center gap-4">
+            <div>
+                <h1 class="text-4xl font-bold text-slate-800">업무 및 급여 관리</h1>
+                <p id="payroll-user-name" class="mt-2 text-base text-slate-500"></p>
+            </div>
+            <div class="flex gap-4">
+                <button id="payroll-back-button" class="py-2 px-5 font-semibold rounded-lg text-slate-700 bg-slate-200 hover:bg-slate-300 transition">뒤로가기</button>
+            </div>
+        </header>
+
+        <div id="admin-payroll-input" class="hidden bg-white rounded-2xl shadow-xl mb-8 p-6">
+            <h2 class="text-2xl font-semibold text-slate-800 mb-4">근무 성과 기록</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 items-end">
+                <div class="lg:col-span-2">
+                    <label for="payroll-tmer-select" class="text-sm font-semibold text-slate-700">TMer 선택</label>
+                    <select id="payroll-tmer-select" class="mt-1 block w-full p-2 border rounded-md"></select>
+                </div>
+                <div>
+                    <label for="payroll-date" class="text-sm font-semibold text-slate-700">날짜 선택</label>
+                    <input id="payroll-date" type="date" class="mt-1 block w-full p-2 border rounded-md">
+                </div>
+                <div>
+                    <label for="payroll-hours" class="text-sm font-semibold text-slate-700">근무 시간</label>
+                    <input id="payroll-hours" type="number" step="0.5" class="mt-1 block w-full p-2 border rounded-md" placeholder="예: 5.5">
+                </div>
+                <div>
+                    <label for="payroll-callCount" class="text-sm font-semibold text-slate-700">통화량</label>
+                    <input id="payroll-callCount" type="number" class="mt-1 block w-full p-2 border rounded-md" placeholder="총 통화 수">
+                </div>
+                <div>
+                    <label for="payroll-messageSentCount" class="text-sm font-semibold text-slate-700">메세지전달</label>
+                    <input id="payroll-messageSentCount" type="number" class="mt-1 block w-full p-2 border rounded-md">
+                </div>
+                <div>
+                    <label for="payroll-pendingCount" class="text-sm font-semibold text-slate-700">보류/불통/재통화</label>
+                    <input id="payroll-pendingCount" type="number" class="mt-1 block w-full p-2 border rounded-md">
+                </div>
+                <div>
+                    <label for="payroll-rejectionCount" class="text-sm font-semibold text-slate-700">거절</label>
+                    <input id="payroll-rejectionCount" type="number" class="mt-1 block w-full p-2 border rounded-md">
+                </div>
+<div class="lg:col-span-2">
+    <label for="payroll-notes" class="text-sm font-semibold text-slate-700">수당/공제 (교육비 등)</label>
+    <input id="payroll-notes" type="text" class="mt-1 block w-full p-2 border rounded-md" placeholder="예: 교육비 30000">
+</div>
+
+<div class="lg:col-span-3">
+    <label for="payroll-mainTask" class="text-sm font-semibold text-slate-700">주요업무</label>
+    <input id="payroll-mainTask" type="text" class="mt-1 block w-full p-2 border rounded-md" placeholder="오늘의 주요 업무 내용을 입력하세요">
+</div>
+<div class="lg:col-span-3">
+    <label for="payroll-messageDelivery" class="text-sm font-semibold text-slate-700">메세지전달</label>
+    <input id="payroll-messageDelivery" type="text" class="mt-1 block w-full p-2 border rounded-md" placeholder="전달한 메세지 내용을 입력하세요">
+</div>
+<div class="lg:col-span-3">
+    <label for="payroll-suggestions" class="text-sm font-semibold text-slate-700">건의사항</label>
+    <input id="payroll-suggestions" type="text" class="mt-1 block w-full p-2 border rounded-md" placeholder="건의사항이나 특이사항을 입력하세요">
+</div>
+<div class="lg:col-span-5">
+    <label for="payroll-generalNotes" class="text-sm font-semibold text-slate-700">업무 외 메모/피드백</label>
+    <input id="payroll-generalNotes" type="text" class="mt-1 block w-full p-2 border rounded-md" placeholder="업무 외 특이사항이나 개인적인 피드백을 입력하세요.">
+</div>
+
+            </div>
+             <div class="mt-4 flex justify-end">
+                <button onclick="saveWorkLog()" class="py-2 px-8 font-bold rounded-lg text-white bg-slate-800 hover:bg-slate-900">저장</button>
+            </div>
+        </div>
+
+        <div id="payroll-display" class="bg-white rounded-2xl shadow-xl p-6">
+            <div class="flex flex-wrap justify-between items-center mb-4 gap-4">
+                 <h2 class="text-2xl font-semibold text-slate-800">업무 및 급여 내역</h2>
+                 <div class="flex items-center gap-2">
+                     <label for="month-select" class="text-sm font-semibold">조회 월:</label>
+                     <input type="month" id="month-select" class="p-2 border rounded-md">
+                     <button onclick="displayPayrollForSelectedMonth()" class="py-2 px-4 font-semibold rounded-lg text-slate-700 bg-slate-200 hover:bg-slate-300">조회</button>
+                 </div>
+            </div>
+            <div id="payroll-summary" class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6"></div>
+            
+            <h3 class="text-xl font-semibold text-slate-700 mb-4">일일 근무 기록 상세</h3>
+            <div class="w-full overflow-x-auto">
+                <table class="w-full text-sm text-left text-slate-600">
+                    <thead class="text-xs text-slate-700 uppercase bg-slate-100">
+                        <tr>
+                            <th class="px-6 py-3">날짜</th>
+                            <th class="px-6 py-3">근무시간</th>
+                            <th class="px-6 py-3">통화량</th>
+                            <th class="px-6 py-3">메세지전달</th>
+                            <th class="px-6 py-3">보류/불통 등</th>
+                            <th class="px-6 py-3">거절</th>
+                            <th class="px-6 py-3">수당/공제</th>
+        <th class="px-6 py-3">주요업무</th>
+        <th class="px-6 py-3">메세지전달내용</th>
+        <th class="px-6 py-3">건의사항</th>
+        <th class="px-6 py-3">업무 외 메모</th>
+                            <th class="px-6 py-3">일급(세후)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="payroll-table-body"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+    <div id="admin-page" class="hidden">
+        <div class="container mx-auto p-4 md:p-8">
+            <header class="mb-8 flex flex-wrap justify-between items-center gap-4">
+                <div><h1 class="text-4xl font-bold text-slate-800">관리자 페이지</h1></div>
+                <div class="flex gap-4">
+                    <button onclick="showPage('TM-DB-Table')" class="py-2 px-5 font-semibold rounded-lg text-slate-700 bg-slate-200 hover:bg-slate-300 transition">DB 현황 보기</button>
+
+<button onclick="showPage('payroll-page')" class="py-2 px-5 font-semibold rounded-lg text-white bg-teal-600 hover:bg-teal-700 transition">업무 및 급여 관리</button>
+
+                    <button onclick="logout()" class="py-2 px-5 font-semibold rounded-lg text-red-600 bg-red-100 hover:bg-red-200 transition">로그아웃</button>
+                </div>
+            </header>
+            <div class="bg-white rounded-2xl shadow-xl mb-8">
+                <div class="p-6 border-b"><h2 class="text-2xl font-semibold text-slate-800">관리자 정보 변경</h2></div>
+                <form id="admin-credential-form" class="p-6">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                        <div>
+                            <label for="new-admin-id" class="text-sm font-semibold text-slate-700">새로운 아이디</label>
+                            <input id="new-admin-id" type="text" required class="mt-1 block w-full px-3 py-2 bg-slate-50 border rounded-md">
+                        </div>
+                        <div>
+                            <label for="new-admin-pw" class="text-sm font-semibold text-slate-700">새로운 비밀번호</label>
+                            <input id="new-admin-pw" type="password" required class="mt-1 block w-full px-3 py-2 bg-slate-50 border rounded-md">
+                        </div>
+                        <div><button type="submit" class="w-full py-2 px-5 font-bold rounded-lg text-white bg-slate-800 hover:bg-slate-900">관리자 정보 저장</button></div>
+                    </div>
+                </form>
+            </div>
+            <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+                <div class="p-6"><h2 class="text-2xl font-semibold text-slate-800">회원 정보 현황</h2></div>
+                <div class="w-full overflow-x-auto">
+                    <table class="w-full text-sm text-left text-slate-600">
+                        <thead class="text-xs text-slate-700 uppercase bg-slate-100">
+                            <tr><th class="px-6 py-4">구분</th><th class="px-6 py-4">성명</th><th class="px-6 py-4">전화번호</th><th class="px-6 py-4">지역</th><th class="px-6 py-4">제공빈도</th><th class="px-6 py-4">소속사</th><th class="px-6 py-4 text-center min-w-[140px]">관리</th></tr>
+                        </thead>
+                        <tbody id="admin-table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="TM-DB-Table" class="hidden">
+         <div class="container mx-auto p-4 md:p-8">
+            <header class="mb-8 flex flex-wrap justify-between items-center gap-4">
+                <div><h1 class="text-4xl font-bold text-slate-800">연구소 DB 현황 Table</h1><p id="welcome-user" class="mt-2 text-base text-slate-500"></p></div>
+                <div class="flex gap-4 items-center">
+
+<button id="my-payroll-button" class="hidden py-2 px-5 font-semibold rounded-lg text-white bg-teal-600 hover:bg-teal-700 transition" onclick="showPage('payroll-page')">일일 업무 현황</button>
+
+                    <button id="admin-page-button" class="hidden py-2 px-5 font-semibold rounded-lg text-slate-700 bg-slate-200 hover:bg-slate-300 transition" onclick="showPage('admin-page')">관리자 페이지</button>
+                    <button onclick="logout()" class="py-2 px-5 font-semibold rounded-lg text-red-600 bg-red-100 hover:bg-red-200 transition">로그아웃</button>
+                </div>
+            </header>
+            <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+                <div class="p-6 flex flex-wrap gap-4 justify-between items-center">
+                    <h2 class="text-2xl font-semibold text-slate-800">보유 기업 리스트</h2>
+<p id="data-count-display" class="text-sm text-slate-500 mt-1"></p>
+<div id="filter-container" class="flex items-center gap-2">
+    <select id="search-column-select" class="border rounded-md p-2 text-base bg-white">
+        <option value="기업명">기업명</option>
+        <option value="담당 전문위원">담당 전문위원</option>
+    </select>
+    <input type="text" id="search-input" class="w-64 border rounded-md p-2 text-base" placeholder="검색어 입력" onkeydown="if(event.key==='Enter') searchCompany();">
+    <button onclick="searchCompany()" class="py-2 px-5 font-bold rounded-lg text-white bg-slate-700 hover:bg-slate-800">검색</button>
+    <button onclick="resetSearch()" class="py-2 px-5 font-semibold rounded-lg text-slate-700 bg-slate-200 hover:bg-slate-300">초기화</button>
+</div>
+
+                    <button id="add-company-button" onclick="openNewCompanyModal()" class="py-2 px-5 font-bold rounded-lg text-white bg-slate-800 hover:bg-slate-900 transition">+ 신규 등록</button>
+                </div>
+                <div class="w-full overflow-x-auto">
+                    <table class="w-full text-sm text-left text-slate-600">
+ <thead class="text-xs text-slate-700 uppercase bg-slate-100">
+    <tr class="border-b-2">
+        <th colspan="26" class="px-6 py-3 font-bold text-center bg-blue-100 text-blue-800">TMer 관리항목</th>
+        <th colspan="13" class="px-6 py-3 font-bold text-center bg-green-100 text-green-800">전문위원 관리항목</th>
+        <th colspan="4" class="px-6 py-3 font-bold text-center bg-amber-100 text-amber-800">본사 관리항목</th>
+    </tr>
+    <tr class="border-b">
+        <th class="px-4 py-3 min-w-[60px]">No</th><th class="px-4 py-3 min-w-[120px]">TMer</th><th class="px-4 py-3 min-w-[180px]">기업명</th><th class="px-4 py-3 min-w-[120px]">대표자명</th><th class="px-4 py-3 min-w-[120px]">기업규모</th><th class="px-4 py-3 min-w-[120px]">구분</th><th class="px-4 py-3 min-w-[150px]">회사Tel</th><th class="px-4 py-3 min-w-[150px]">회사Fax</th><th class="px-4 py-3 min-w-[200px]">e-mail</th><th class="px-4 py-3 min-w-[250px]">회사주소</th><th class="px-4 py-3 min-w-[250px]">홈페이지</th><th class="px-4 py-3 min-w-[150px]">통화일시</th><th class="px-4 py-3 min-w-[120px]">통화자성명</th><th class="px-4 py-3 min-w-[120px]">통화자직함</th><th class="px-4 py-3 min-w-[300px]">통화내용_TMer</th><th class="px-4 py-3 min-w-[100px]">전달완료</th><th class="px-4 py-3 min-w-[100px]">보류</th><th class="px-4 py-3 min-w-[100px]">거절</th><th class="px-4 py-3 min-w-[100px]">불통</th><th class="px-4 py-3 min-w-[100px]">재통화</th><th class="px-4 py-3 min-w-[100px]">부재중_TMer</th><th class="px-4 py-3 min-w-[150px]">통화가능일자</th><th class="px-4 py-3 min-w-[150px]">통화가능시간</th><th class="px-4 py-3 min-w-[120px]">메세지생성</th><th class="px-4 py-3 min-w-[120px]">메세지전달</th><th class="px-4 py-3 min-w-[150px]">담당 전문위원</th>
+        <th class="px-4 py-3 min-w-[150px]">전문위원 성명</th><th class="px-4 py-3 min-w-[150px]">전문위원 연락처</th><th class="px-4 py-3 min-w-[120px]">지역</th><th class="px-4 py-3 min-w-[120px]">제공 빈도</th><th class="px-4 py-3 min-w-[150px]">제작안내콜일자</th><th class="px-4 py-3 min-w-[300px]">통화내용_전문위원</th><th class="px-4 py-3 min-w-[100px]">통화완료</th><th class="px-4 py-3 min-w-[100px]">부재중_전문위원</th><th class="px-4 py-3 min-w-[100px]">미진행</th><th class="px-4 py-3 min-w-[120px]">무료신청여부</th><th class="px-4 py-3 min-w-[180px]">시연일정셋팅콜일자</th><th class="px-4 py-3 min-w-[150px]">대면미팅일자</th><th class="px-4 py-3 min-w-[150px]">대면미팅결과</th>
+        <th class="px-4 py-3 min-w-[150px]">홈피완료예정일</th><th class="px-4 py-3 min-w-[250px]">홈페이지url</th><th class="px-4 py-3 min-w-[120px]">채택여부</th><th class="px-4 py-3 min-w-[150px]">마지막 연락일</th>
+    </tr>
+</thead>
+                        <tbody id="db-table-body"></tbody>
+                    </table>
+                </div>
+<div id="pagination-controls" class="p-4 flex justify-center items-center gap-2 border-t">
+
+    <div id="page-buttons-container" class="flex items-center gap-2"></div>
+
+    <div id="page-jump-container" class="flex items-center gap-2 ml-4">
+        <input type="number" id="page-jump-input" class="w-20 border rounded-md p-2 text-sm" placeholder="페이지" onkeydown="if(event.key==='Enter') jumpToPage();">
+        <button onclick="jumpToPage()" class="px-4 py-2 rounded-md text-sm font-medium bg-slate-600 text-white hover:bg-slate-700">이동</button>
+    </div>
+
+</div>
+
+            </div>
+        </div>
+    </div>
+
+    <div id="edit-modal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
+        <div class="w-full max-w-5xl bg-white rounded-2xl shadow-xl flex flex-col max-h-[90vh]">
+            <header class="p-6 border-b flex justify-between items-center"><h2 id="modal-title" class="text-2xl font-bold text-slate-800">상세 정보 입력</h2><button onclick="closeEditModal()" class="text-gray-400 hover:text-gray-600 text-3xl">&times;</button></header>
+
+<div id="modal-warning" class="hidden p-4 text-sm text-amber-800 bg-amber-100 text-center font-semibold"></div>
+
+            <div class="p-8 modal-body overflow-y-auto">
+                <form id="edit-form" onkeydown="handleEnterKey(event)">
+                    <input name="originalIndex" type="hidden">
+                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-6">
+                        <fieldset id="tmer-fieldset" class="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-6"><legend class="lg:col-span-3 font-bold text-lg text-blue-800 border-b-2 border-blue-200 pb-2 mb-4">TMer 관리항목</legend>
+                            <input name="No" type="hidden">
+                            <div><label class="font-semibold flex items-center">TMer</label><input name="TMer" type="text" class="w-full p-2 mt-1 border rounded"></div>
+                            <div><label class="font-semibold flex items-center">기업명</label><input name="기업명" type="text" class="w-full p-2 mt-1 border rounded"></div>
+                            <div><label class="font-semibold flex items-center">대표자명</label><input name="대표자명" type="text" class="w-full p-2 mt-1 border rounded"></div>
+                            <div><label class="font-semibold flex items-center">기업규모</label><input name="기업규모" type="text" class="w-full p-2 mt-1 border rounded"></div>
+                            <div><label class="font-semibold flex items-center">구분</label><input name="구분" type="text" class="w-full p-2 mt-1 border rounded"></div>
+                            <div><label class="font-semibold flex items-center">회사Tel</label><input name="회사Tel" type="text" class="w-full p-2 mt-1 border rounded"></div>
+                            <div><label class="font-semibold flex items-center">회사Fax</label><input name="회사Fax" type="text" class="w-full p-2 mt-1 border rounded"></div>
+                            <div><label class="font-semibold flex items-center">e-mail</label><input name="e-mail" type="text" class="w-full p-2 mt-1 border rounded"></div>
+                            <div class="lg:col-span-3"><label class="font-semibold flex items-center">회사주소</label><input name="회사주소" type="text" class="w-full p-2 mt-1 border rounded"></div>
+                            <div class="lg:col-span-3"><label class="font-semibold flex items-center">홈페이지</label><input name="홈페이지" type="text" class="w-full p-2 mt-1 border rounded"></div>
+
+<div><label class="font-semibold flex items-center">통화일시</label><input name="통화일시" type="text" class="w-full p-2 mt-1 border rounded bg-gray-100" readonly></div>
+
+
+                            <div><label class="font-semibold flex items-center">통화자성명<span class="tooltip-icon" onmouseenter="showTooltip(this, '안내문 전달 관련 통화를 진행한 직원의 이름을 입력합니다.')" onmouseleave="hideTooltip()">ⓘ</span></label><input name="통화자성명" type="text" class="w-full p-2 mt-1 border rounded"></div>
+                            <div><label class="font-semibold flex items-center">통화자직함<span class="tooltip-icon" onmouseenter="showTooltip(this, '위 통화자의 직함을 입력합니다.')" onmouseleave="hideTooltip()">ⓘ</span></label><input name="통화자직함" type="text" class="w-full p-2 mt-1 border rounded"></div>
+                            <div class="lg:col-span-3"><label class="font-semibold flex items-center">통화내용_TMer<span class="tooltip-icon" onmouseenter="showTooltip(this, '통화 주요 내용을 간단하게 입력합니다.')" onmouseleave="hideTooltip()">ⓘ</span></label><textarea name="통화내용_TMer" rows="3" class="w-full p-2 mt-1 border rounded"></textarea></div>
+                            <div><label class="font-semibold flex items-center">전달완료<span class="tooltip-icon" onmouseenter="showTooltip(this, '안내문을 정상적으로 전달한 경우 ‘O’를 선택합니다.')" onmouseleave="hideTooltip()">ⓘ</span></label><select name="전달완료" class="w-full p-2 mt-1 border rounded"><option value="">선택</option><option value="O">O</option><option value="X">X</option></select></div>
+                            <div><label class="font-semibold flex items-center">보류<span class="tooltip-icon" onmouseenter="showTooltip(this, '추후 다시 전화를 해야 하는 경우 ‘O’를 선택합니다.')" onmouseleave="hideTooltip()">ⓘ</span></label><select name="보류" class="w-full p-2 mt-1 border rounded"><option value="">미입력</option><option value="O">O</option></select></div>
+                            <div><label class="font-semibold flex items-center">거절<span class="tooltip-icon" onmouseenter="showTooltip(this, '안내문 수령을 회사 측에서 거부한 경우 ‘O’를 선택합니다.')" onmouseleave="hideTooltip()">ⓘ</span></label><select name="거절" class="w-full p-2 mt-1 border rounded"><option value="">미입력</option><option value="O">O</option></select></div>
+                            <div><label class="font-semibold flex items-center">불통<span class="tooltip-icon" onmouseenter="showTooltip(this, '통화가 전혀 이루어지지 않은 경우(통화 중, 연결 불가 등) ‘O’를 선택합니다.')" onmouseleave="hideTooltip()">ⓘ</span></label><select name="불통" class="w-full p-2 mt-1 border rounded"><option value="">미입력</option><option value="O">O</option></select></div>
+                            <div><label class="font-semibold flex items-center">재통화<span class="tooltip-icon" onmouseenter="showTooltip(this, '직원과 통화는 했지만, CEO와 통화를 위해 다시 시도해야 하는 경우 ‘O’를 선택합니다.')" onmouseleave="hideTooltip()">ⓘ</span></label><select name="재통화" class="w-full p-2 mt-1 border rounded"><option value="">미입력</option><option value="O">O</option></select></div>
+                            <div><label class="font-semibold flex items-center">부재중_TMer<span class="tooltip-icon" onmouseenter="showTooltip(this, '직원과 통화는 되었으나, 안내문 전달 대상(대표·연구소장 등)이 부재중이어서 재통화를 해야하는 경우 ‘O’를 선택합니다.')" onmouseleave="hideTooltip()">ⓘ</span></label><select name="부재중_TMer" class="w-full p-2 mt-1 border rounded"><option value="">미입력</option><option value="O">O</option></select></div>
+                            <div><label class="font-semibold flex items-center">통화가능일자<span class="tooltip-icon" onmouseenter="showTooltip(this, '대표와 통화 가능한 날짜를 입력합니다.')" onmouseleave="hideTooltip()">ⓘ</span></label><input name="통화가능일자" type="date" class="w-full p-2 mt-1 border rounded"></div>
+                            <div><label class="font-semibold flex items-center">통화가능시간<span class="tooltip-icon" onmouseenter="showTooltip(this, '대표와 통화 가능한 시간을 입력합니다. (예: 오전 10시에 가능→ ‘오전 10~11시’로 표시)')" onmouseleave="hideTooltip()">ⓘ</span></label><input name="통화가능시간" type="text" class="w-full p-2 mt-1 border rounded"></div>
+                            <div><label class="font-semibold flex items-center">메세지생성<span class="tooltip-icon" onmouseenter="showTooltip(this, '아래 예시와 같이 작성합니다. (예: 한국산업, 홍길동 대표, 9/15 오전 10~11시 통화 가능)')" onmouseleave="hideTooltip()">ⓘ</span></label><input name="메세지생성" type="text" class="w-full p-2 mt-1 border rounded"></div>
+                            <div><label class="font-semibold flex items-center">메세지전달<span class="tooltip-icon" onmouseenter="showTooltip(this, '전문위원에게 메시지를 전달 완료 시 ‘O’를 선택합니다.')" onmouseleave="hideTooltip()">ⓘ</span></label><select name="메세지전달" class="w-full p-2 mt-1 border rounded"><option value="">미입력</option><option value="O">O</option></select></div>
+                            <div><label class="font-semibold flex items-center">담당 전문위원<span class="tooltip-icon" onmouseenter="showTooltip(this, '본사에서 입력하는 항목입니다.')" onmouseleave="hideTooltip()">ⓘ</span></label><select name="담당 전문위원" class="w-full p-2 mt-1 border rounded"></select></div>
+                        </fieldset>
+                        <fieldset id="specialist-fieldset" class="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-6"><legend class="lg:col-span-3 font-bold text-lg text-green-800 border-b-2 border-green-200 pb-2 mb-4 mt-6">전문위원 관리항목</legend>
+                            <div><label class="font-semibold">전문위원 성명</label><input name="전문위원 성명" type="text" class="w-full p-2 mt-1 border rounded bg-gray-100" readonly></div>
+                            <div><label class="font-semibold">전문위원 연락처</label><input name="전문위원 연락처" type="text" class="w-full p-2 mt-1 border rounded bg-gray-100" readonly></div>
+                            <div><label class="font-semibold">지역</label><input name="지역" type="text" class="w-full p-2 mt-1 border rounded bg-gray-100" readonly></div>
+                            <div><label class="font-semibold">제공 빈도</label><input name="제공 빈도" type="text" class="w-full p-2 mt-1 border rounded bg-gray-100" readonly></div>
+                            <div><label class="font-semibold flex items-center">제작안내콜일자<span class="tooltip-icon" onmouseenter="showTooltip(this, '제공받은 회사의 대표와 홈페이지 무료 선제공 신청을 유도하기 위해 통화한 날짜를 입력합니다.')" onmouseleave="hideTooltip()">ⓘ</span></label><input name="제작안내콜일자" type="date" class="w-full p-2 mt-1 border rounded"></div>
+                            <div class="lg:col-span-3"><label class="font-semibold flex items-center">통화내용_전문위원<span class="tooltip-icon" onmouseenter="showTooltip(this, '통화 내용을 간단히 입력합니다.')" onmouseleave="hideTooltip()">ⓘ</span></label><textarea name="통화내용_전문위원" rows="3" class="w-full p-2 mt-1 border rounded"></textarea></div>
+                            <div><label class="font-semibold flex items-center">통화완료<span class="tooltip-icon" onmouseenter="showTooltip(this, '1차 콜이 완료되었을 때 ‘O’를 선택합니다.')" onmouseleave="hideTooltip()">ⓘ</span></label><select name="통화완료" class="w-full p-2 mt-1 border rounded"><option value="">미입력</option><option value="O">O</option></select></div>
+                            <div><label class="font-semibold flex items-center">부재중_전문위원<span class="tooltip-icon" onmouseenter="showTooltip(this, '1차 콜은 진행했으나 CEO와 통화가 이루어지지 않은 경우 ‘O’를 선택합니다.')" onmouseleave="hideTooltip()">ⓘ</span></label><select name="부재중_전문위원" class="w-full p-2 mt-1 border rounded"><option value="">미입력</option><option value="O">O</option></select></div>
+                            <div><label class="font-semibold flex items-center">미진행<span class="tooltip-icon" onmouseenter="showTooltip(this, '아직 1차 콜을 진행하지 못했을 경우 ‘O’를 선택합니다.')" onmouseleave="hideTooltip()">ⓘ</span></label><select name="미진행" class="w-full p-2 mt-1 border rounded"><option value="">미입력</option><option value="O">O</option></select></div>
+                            <div><label class="font-semibold flex items-center">무료신청여부<span class="tooltip-icon" onmouseenter="showTooltip(this, '1차 콜 후, CEO가 홈페이지 무료 제공을 요청했을 경우 ‘O’를 선택합니다.')" onmouseleave="hideTooltip()">ⓘ</span></label><select name="무료신청여부" class="w-full p-2 mt-1 border rounded"><option value="">선택</option><option value="O">O</option><option value="X">X</option></select></div>
+                            <div><label class="font-semibold flex items-center">시연일정셋팅콜일자<span class="tooltip-icon" onmouseenter="showTooltip(this, '2차콜(시연 일정 확정)을 진행한 날짜를 입력합니다.')" onmouseleave="hideTooltip()">ⓘ</span></label><input name="시연일정셋팅콜일자" type="date" class="w-full p-2 mt-1 border rounded"></div>
+                            <div><label class="font-semibold flex items-center">대면미팅일자<span class="tooltip-icon" onmouseenter="showTooltip(this, '시연을 위해 만나는 1차 대면 미팅 날짜 입력합니다.')" onmouseleave="hideTooltip()">ⓘ</span></label><input name="대면미팅일자" type="date" class="w-full p-2 mt-1 border rounded"></div>
+                            <div class="lg:col-span-3"><label class="font-semibold flex items-center">대면미팅결과<span class="tooltip-icon" onmouseenter="showTooltip(this, '미팅 완료 후,주요 내용을 간단히 입력합니다. (홈페이지 관련)')" onmouseleave="hideTooltip()">ⓘ</span></label><input name="대면미팅결과" type="text" class="w-full p-2 mt-1 border rounded"></div>
+                        </fieldset>
+                        <fieldset id="hq-fieldset" class="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-6"><legend class="lg:col-span-3 font-bold text-lg text-amber-800 border-b-2 border-amber-200 pb-2 mb-4 mt-6">본사 관리항목</legend>
+                            <div><label class="font-semibold flex items-center">홈피완료예정일<span class="tooltip-icon" onmouseenter="showTooltip(this, '홈페이지 제작 완료 예정일을 입력합니다. (전문위원은 이 일정을 기준으로 기업 CEO에게 연락합니다.)')" onmouseleave="hideTooltip()">ⓘ</span></label><input name="홈피완료예정일" type="date" class="w-full p-2 mt-1 border rounded"></div>
+                            <div class="lg:col-span-2"><label class="font-semibold">홈페이지url</label><input name="홈페이지url" type="text" class="w-full p-2 mt-1 border rounded"></div>
+                            <div><label class="font-semibold">채택여부</label><input name="채택여부" type="text" class="w-full p-2 mt-1 border rounded"></div>
+                        </fieldset>
+                    </div>
+                </form>
+            </div>
+            <footer class="p-6 border-t flex justify-between items-center bg-slate-50">
+                <button type="button" id="delete-button" onclick="deleteCompany()" class="py-2 px-6 font-bold rounded-lg text-white bg-red-600 hover:bg-red-700">삭제</button>
+                <div class="flex gap-4">
+                    <button type="button" onclick="closeEditModal()" class="py-2 px-6 font-bold rounded-lg text-slate-700 bg-slate-200 hover:bg-slate-300">취소</button>
+                    <button type="button" onclick="saveModalData()" class="py-2 px-8 font-bold rounded-lg text-white bg-slate-800 hover:bg-slate-900">저장</button>
+                </div>
+            </footer>
+        </div>
+    </div>
+    
+    <footer class="fixed bottom-0 w-full text-center py-5 bg-slate-100"><p class="text-sm text-slate-500">Copyright © 2025 (주)한국FP센터. All Rights Reserved.</p></footer>
+<script>
+    // === 전역 변수 및 상태 관리 ===
+    let loggedInUser = null;
+    let allUsers = [];
+    let allCompanies = [];
+    let currentPage = 1;
+    let totalCompanies = 0;
+    const companiesLimit = 15;
+    let currentFilter = {};
+
+    // === 로딩 오버레이 제어 ===
+    const loadingOverlay = document.getElementById('loading-overlay');
+    const showLoading = () => loadingOverlay.classList.remove('hidden');
+    const hideLoading = () => loadingOverlay.classList.add('hidden');
+
+    // === 백엔드 통신 함수 ===
+    async function callAPI(action, sheetName, payload = {}) {
+        showLoading();
+        try {
+            payload.userName = loggedInUser ? loggedInUser.name : null;
+            payload.userRole = loggedInUser ? loggedInUser.role : null;
+
+            const response = await fetch('/.netlify/functions/handleData', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action, sheetName, payload }),
+            });
+            
+            const responseData = await response.json();
+
+            if (!response.ok) {
+                const message = responseData.message || `HTTP error! status: ${response.status}`;
+                throw new Error(message);
+            }
+            return responseData;
+        } catch (error) {
+            console.error(`API call failed:`, error);
+            alert(`오류: ${error.message}`);
+            return null;
+        } finally {
+            hideLoading();
+        }
+    }
+
+    // === 페이지 전환 및 초기화 ===
+    function showPage(pageId) {
+        document.querySelectorAll('body > div[id]').forEach(page => page.classList.add('hidden'));
+        const targetPage = document.getElementById(pageId);
+        if (targetPage) targetPage.classList.remove('hidden');
+        if (pageId === 'admin-page') loadAdminPageData();
+        else if (pageId === 'TM-DB-Table') loadInitialData(1);
+else if (pageId === 'payroll-page') loadPayrollPage(); 
+    }
+    window.showPage = showPage;
+
+    function logout() {
+        loggedInUser = null;
+        allUsers = [];
+        document.getElementById('login-form').reset();
+        document.getElementById('admin-login-form').reset();
+        showPage('login-page');
+    }
+    window.logout = logout;
+
+    // === 로그인 / 회원가입 ===
+    document.getElementById('login-form').addEventListener('submit', async function(event) {
+        event.preventDefault();
+        await loadUsers();
+        const name = this.elements.username.value;
+        const phone = this.elements.password.value;
+        const user = allUsers.find(u => u.name === name && u.phone === phone);
+        if (user) {
+            loggedInUser = user;
+            alert(`'${name}'님, 환영합니다!`);
+            showPage('TM-DB-Table');
+        } else {
+            alert('아이디 또는 비밀번호가 일치하지 않습니다.');
+        }
+    });
+
+    document.getElementById('admin-login-form').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const id = document.getElementById('admin-id').value;
+        const pw = document.getElementById('admin-pw').value;
+        const adminData = await callAPI('readAll', 'Admin');
+        if (adminData && adminData.length > 0 && id === adminData[0].id && pw === adminData[0].pw) {
+            loggedInUser = { name: 'admin', role: 'admin' };
+            alert('관리자님, 환영합니다!');
+            showPage('admin-page');
+        } else {
+            alert('관리자 정보가 일치하지 않습니다.');
+        }
+    });
+
+    document.querySelector('#register-form input[name="name"]').addEventListener('input', (e) => {
+        e.target.value = e.target.value.replace(/\s/g, '');
+    });
+
+    document.getElementById('register-form').addEventListener('submit', async function(event) {
+        event.preventDefault();
+        const formData = new FormData(this);
+        const name = formData.get('name');
+        const phone = formData.get('phone');
+        
+        if (!/^\d+$/.test(phone)) {
+            alert('전화번호는 숫자만 입력해주세요.'); return;
+        }
+        await loadUsers();
+        if (allUsers.some(u => u.name === name)) {
+            alert('이미 존재하는 이름(아이디)입니다.'); return;
+        }
+        const newUser = {
+            role: formData.get('role'), name, phone,
+            company: formData.get('role') === '전문위원' ? formData.get('company') : 'KFPC',
+            region: '', frequency: ''
+        };
+        const result = await callAPI('write', 'Users', { data: newUser });
+        if (result && result.success) {
+            alert('회원가입이 완료되었습니다!');
+            this.reset();
+            showPage('login-page');
+        }
+    });
+
+    // === 관리자 페이지 ===
+    async function loadAdminPageData() {
+        const adminData = await callAPI('readAll', 'Admin');
+        if (adminData && adminData.length > 0) {
+            document.getElementById('new-admin-id').value = adminData[0].id;
+            document.getElementById('new-admin-pw').value = adminData[0].pw;
+        }
+        await renderAdminTable();
+    }
+    document.getElementById('admin-credential-form').addEventListener('submit', async function(event) {
+        event.preventDefault();
+        const newId = document.getElementById('new-admin-id').value;
+        const newPw = document.getElementById('new-admin-pw').value;
+        if (newId && newPw && confirm('관리자 정보를 변경하시겠습니까?')) {
+            await callAPI('update', 'Admin', { data: { id: newId, pw: newPw }, rowIndex: 0 });
+            alert('관리자 정보가 성공적으로 변경되었습니다.');
+        } else if (!newId || !newPw) {
+            alert('새로운 아이디와 비밀번호를 모두 입력해주세요.');
+        }
+    });
+    
+    async function renderAdminTable() {
+        await loadUsers();
+        const tableBody = document.getElementById('admin-table-body');
+        tableBody.innerHTML = '';
+        if (allUsers.length === 0) {
+            tableBody.innerHTML = `<tr><td colspan="7" class="text-center py-16 text-slate-500">등록된 회원이 없습니다.</td></tr>`;
+            return;
+        }
+        allUsers.forEach((member, index) => {
+            const row = document.createElement('tr');
+            row.className = 'bg-white border-b';
+            row.id = `user-row-${index}`;
+            row.innerHTML = getUserRowHtml(member, index);
+            tableBody.appendChild(row);
+        });
+    }
+    
+    function getUserRowHtml(member, index) {
+        return `
+            <td class="px-6 py-4 font-semibold">${member.role}</td>
+            <td class="px-6 py-4">${member.name}</td>
+            <td class="px-6 py-4">${member.phone}</td>
+            <td class="px-6 py-4">${member.region || ''}</td>
+            <td class="px-6 py-4">${member.frequency || ''}</td>
+            <td class="px-6 py-4">${member.company}</td>
+            <td class="px-6 py-4 text-center">
+                <div class="flex justify-center items-center gap-4">
+                    <button onclick="editUser(${index})" class="font-semibold text-blue-600 hover:text-blue-800">수정</button>
+                    <button onclick="deleteUser(${index})" class="font-semibold text-red-500 hover:text-red-700">삭제</button>
+                </div>
+            </td>
+        `;
+    }
+
+    function getEditUserRowHtml(member, index) {
+        return `
+            <td class="px-6 py-4">
+                <select name="role" class="w-full p-1 border rounded bg-slate-50">
+                    <option value="TMer" ${member.role === 'TMer' ? 'selected' : ''}>TMer</option>
+                    <option value="전문위원" ${member.role === '전문위원' ? 'selected' : ''}>전문위원</option>
+                </select>
+            </td>
+            <td class="px-6 py-4"><input name="name" type="text" value="${member.name}" class="w-full p-1 border rounded bg-gray-200" readonly></td>
+            <td class="px-6 py-4"><input name="phone" type="text" value="${member.phone}" class="w-full p-1 border rounded bg-slate-50"></td>
+            <td class="px-6 py-4"><input name="region" type="text" value="${member.region || ''}" class="w-full p-1 border rounded bg-slate-50" placeholder="예: 서울"></td>
+            <td class="px-6 py-4"><input name="frequency" type="text" value="${member.frequency || ''}" class="w-full p-1 border rounded bg-slate-50" placeholder="예: 주 2회"></td>
+            <td class="px-6 py-4"><input name="company" type="text" value="${member.company}" class="w-full p-1 border rounded bg-slate-50"></td>
+            <td class="px-6 py-4 text-center">
+                <div class="flex justify-center items-center gap-2">
+                    <button onclick="saveUser(${index})" class="font-semibold text-green-600 hover:text-green-800">저장</button>
+                    <button onclick="renderAdminTable()" class="font-semibold text-gray-600 hover:text-gray-800">취소</button>
+                </div>
+            </td>
+        `;
+    }
+    
+    function editUser(index) {
+        const row = document.getElementById(`user-row-${index}`);
+        row.innerHTML = getEditUserRowHtml(allUsers[index], index);
+    }
+    window.editUser = editUser;
+
+    async function saveUser(index) {
+        const row = document.getElementById(`user-row-${index}`);
+        const originalUser = allUsers[index];
+        const updatedUserData = {
+            role: row.querySelector('[name="role"]').value,
+            name: row.querySelector('[name="name"]').value,
+            phone: row.querySelector('[name="phone"]').value,
+            region: row.querySelector('[name="region"]').value,
+            frequency: row.querySelector('[name="frequency"]').value,
+            company: row.querySelector('[name="company"]').value
+        };
+        const result = await callAPI('update', 'Users', { data: updatedUserData, rowIndex: originalUser.originalIndex });
+        if (result && result.success) {
+            alert('회원 정보가 수정되었습니다.');
+            await renderAdminTable();
+        }
+    }
+    window.saveUser = saveUser;
+
+    async function deleteUser(index) {
+        const userToDelete = allUsers[index];
+        if (confirm(`'${userToDelete.name}' 회원을 정말로 삭제하시겠습니까?`)) {
+            const result = await callAPI('delete', 'Users', { rowIndex: userToDelete.originalIndex });
+            if (result && result.success) {
+                alert('삭제되었습니다.');
+                await renderAdminTable();
+            }
+        }
+    }
+    window.deleteUser = deleteUser;
+
+    // === 데이터 로딩 및 DB 테이블 렌더링 ===
+    async function loadUsers() {
+        if (allUsers.length > 0) return;
+        const users = await callAPI('readAll', 'Users');
+        if (users) {
+            allUsers = users;
+        }
+    }
+
+    async function loadInitialData(page = 1, filter = currentFilter) {
+        currentPage = page;
+        currentFilter = filter;
+        if (allUsers.length === 0) await loadUsers();
+        
+        let effectiveFilter = { ...filter };
+        if (loggedInUser.role === 'TMer') {
+            effectiveFilter['TMer'] = loggedInUser.name;
+        } else if (loggedInUser.role === '전문위원') {
+            effectiveFilter['담당 전문위원'] = loggedInUser.name;
+        }
+        
+        const result = await callAPI('read', 'Companies', { page, limit: companiesLimit, filter: effectiveFilter });
+        
+        if (result) {
+            allCompanies = result.data;
+            totalCompanies = result.total;
+
+        document.getElementById('data-count-display').textContent = `총 ${totalCompanies}개의 기업이 검색되었습니다.`;
+
+
+            renderDbTable();
+            renderPagination();
+            document.getElementById('welcome-user').textContent = `'${loggedInUser.name}'(${loggedInUser.role})님, 환영합니다!`;
+            document.getElementById('admin-page-button').classList.toggle('hidden', loggedInUser.role !== 'admin');
+            document.getElementById('add-company-button').classList.toggle('hidden', loggedInUser.role === '전문위원');
+
+        const myPayrollButton = document.getElementById('my-payroll-button');
+        if (loggedInUser && loggedInUser.role === 'TMer') {
+            myPayrollButton.classList.remove('hidden');
+        } else {
+            myPayrollButton.classList.add('hidden');
+        }
+
+        }
+    }
+
+    function renderDbTable() {
+        const tableBody = document.getElementById('db-table-body');
+        tableBody.innerHTML = '';
+        
+        const companiesToShow = allCompanies;
+        if (companiesToShow.length === 0) {
+            tableBody.innerHTML = `<tr><td colspan="43" class="text-center py-16 text-slate-500">표시할 기업 정보가 없습니다.</td></tr>`;
+            return;
+        }
+        const headers = ['TMer','기업명','대표자명','기업규모','구분','회사Tel','회사Fax','e-mail','회사주소','홈페이지','통화일시','통화자성명','통화자직함','통화내용_TMer','전달완료','보류','거절','불통','재통화','부재중_TMer','통화가능일자','통화가능시간','메세지생성','메세지전달','담당 전문위원','전문위원 성명','전문위원 연락처','지역','제공 빈도','제작안내콜일자','통화내용_전문위원','통화완료','부재중_전문위원','미진행','무료신청여부','시연일정셋팅콜일자','대면미팅일자','대면미팅결과','홈피완료예정일','홈페이지url','채택여부','lastContactDate'];
+        companiesToShow.forEach((company, index) => {
+            const row = document.createElement('tr');
+            row.className = 'cursor-pointer hover:bg-amber-50';
+            row.onclick = () => openEditModal(company.originalIndex);
+            
+            let rowHtml = `<td class="px-4 py-3 border-b whitespace-nowrap">${(currentPage - 1) * companiesLimit + index + 1}</td>`;
+            const specialist = allUsers.find(u => u.name === company['담당 전문위원']);
+
+            headers.forEach(header => {
+                let cellValue = company[header] || '';
+                if (header === '지역') {
+                    cellValue = specialist ? specialist.region || '' : '';
+                } else if (header === '제공 빈도') {
+                    cellValue = specialist ? specialist.frequency || '' : '';
+                }
+                rowHtml += `<td class="px-4 py-3 border-b whitespace-nowrap">${cellValue}</td>`;
+            });
+            row.innerHTML = rowHtml;
+            tableBody.appendChild(row);
+        });
+    }
+
+    function renderPagination() {
+        const totalPages = Math.ceil(totalCompanies / companiesLimit);
+        const controls = document.getElementById('page-buttons-container');
+        controls.innerHTML = '';
+        
+        if (totalPages <= 1) return;
+        
+        const createButton = (text, page, isDisabled = false, isCurrent = false) => {
+            const button = document.createElement('button');
+            button.innerHTML = text;
+            button.disabled = isDisabled;
+            let styles = 'px-4 py-2 rounded-md text-sm font-medium transition-colors ';
+            if (isCurrent) { styles += 'bg-slate-800 text-white cursor-default'; } 
+            else if (isDisabled) { styles += 'bg-slate-200 text-slate-400 cursor-not-allowed'; } 
+            else { styles += 'bg-white text-slate-700 hover:bg-slate-100'; }
+            button.className = styles;
+            if (!isDisabled && !isCurrent) { button.onclick = () => loadInitialData(page); }
+            return button;
+        };
+
+function jumpToPage() {
+    const totalPages = Math.ceil(totalCompanies / companiesLimit);
+    const pageInput = document.getElementById('page-jump-input');
+    const page = parseInt(pageInput.value);
+
+    if (isNaN(page) || page < 1 || page > totalPages) {
+        alert(`1에서 ${totalPages} 사이의 페이지 번호를 입력해주세요.`);
+        pageInput.value = '';
+        return;
+    }
+    loadInitialData(page);
+}
+// 전역 스코프에 노출
+window.jumpToPage = jumpToPage;
+
+function searchCompany() {
+    const column = document.getElementById('search-column-select').value;
+    const searchTerm = document.getElementById('search-input').value;
+   
+    currentFilter = { [column]: searchTerm };
+    loadInitialData(1, currentFilter);
+}
+window.searchCompany = searchCompany; // 이 줄도 그대로 유지해주세요!
+
+function resetSearch() {
+    // 검색창을 비웁니다.
+    document.getElementById('search-input').value = '';
+    // 전역 필터 변수를 초기화합니다.
+    currentFilter = {};
+    // 전체 데이터의 첫 페이지를 불러옵니다.
+    loadInitialData(1, currentFilter);
+}
+window.resetSearch = resetSearch;
+
+        controls.appendChild(createButton('이전', currentPage - 1, currentPage === 1));
+
+        let startPage, endPage;
+        if (totalPages <= 5) { startPage = 1; endPage = totalPages; } 
+        else {
+            if (currentPage <= 3) { startPage = 1; endPage = 5; } 
+            else if (currentPage + 2 >= totalPages) { startPage = totalPages - 4; endPage = totalPages; } 
+            else { startPage = currentPage - 2; endPage = currentPage + 2; }
+        }
+
+        if (startPage > 1) {
+            controls.appendChild(createButton(1, 1));
+            if (startPage > 2) controls.insertAdjacentHTML('beforeend', `<span class="px-4 py-2">...</span>`);
+        }
+        for (let i = startPage; i <= endPage; i++) {
+            controls.appendChild(createButton(i, i, false, i === currentPage));
+        }
+        if (endPage < totalPages) {
+            if (endPage < totalPages - 1) controls.insertAdjacentHTML('beforeend', `<span class="px-4 py-2">...</span>`);
+            controls.appendChild(createButton(totalPages, totalPages));
+        }
+
+        controls.appendChild(createButton('다음', currentPage + 1, currentPage === totalPages));
+    }
+    window.renderPagination = renderPagination;
+
+    // === 모달 로직 ===
+    async function openEditModal(originalIndex) {
+        const populateAndOpen = (comp, idx) => {
+            const form = document.getElementById('edit-form');
+            form.reset();
+            for (const key in comp) {
+                if (form.elements[key]) form.elements[key].value = comp[key];
+            }
+            
+            const specialistInfo = allUsers.find(u => u.name === comp['담당 전문위원']);
+            if (specialistInfo) {
+                form.elements['지역'].value = specialistInfo.region || '';
+                form.elements['제공 빈도'].value = specialistInfo.frequency || '';
+            } else {
+                form.elements['지역'].value = '';
+                form.elements['제공 빈도'].value = '';
+            }
+
+            form.elements['originalIndex'].value = idx;
+            document.getElementById('modal-title').textContent = `[${comp['기업명'] || '미입력'}] 상세 정보`;
+            document.getElementById('delete-button').classList.remove('hidden');
+            populateSpecialistDropdown(comp['담당 전문위원']);
+            applyRolePermissions();
+            document.querySelector('#edit-form input[name="TMer"]').readOnly = (loggedInUser.role === 'TMer');
+            
+            const warningDiv = document.getElementById('modal-warning');
+            warningDiv.classList.add('hidden');
+            if (loggedInUser.role === 'TMer' && comp['담당 전문위원']) {
+                const today = new Date().toISOString().split('T')[0];
+                callAPI('readAll', 'Companies').then(fullList => {
+                    if (fullList) {
+                        const hasContactedToday = fullList.some(c => 
+                            c.originalIndex !== comp.originalIndex &&
+                            c['담당 전문위원'] === comp['담당 전문위원'] && 
+                            c.lastContactDate === today
+                        );
+                        if (hasContactedToday) {
+                            warningDiv.textContent = '해당 전문위원은 오늘 이미 다른 기업에 연락 기록을 남겼습니다. 그래도 진행하시겠습니까?';
+                            warningDiv.classList.remove('hidden');
+                        }
+                    }
+                });
+            }
+            document.getElementById('edit-modal').classList.remove('hidden');
+        };
+        
+        showLoading();
+        const fullList = await callAPI('readAll', 'Companies');
+        hideLoading();
+        if(fullList){
+            const company = fullList.find(c => c.originalIndex === originalIndex);
+            if (company) {
+                populateAndOpen(company, originalIndex);
+            } else {
+                alert('해당 기업 정보를 찾을 수 없습니다.');
+            }
+        }
+    }
+    window.openEditModal = openEditModal;
+
+    function closeEditModal() {
+        document.getElementById('edit-modal').classList.add('hidden');
+    }
+    window.closeEditModal = closeEditModal;
+
+    async function saveModalData() {
+        const form = document.getElementById('edit-form');
+        const formData = new FormData(form);
+        const newData = {};
+        for (let [key, value] of formData.entries()) { newData[key] = value; }
+        const originalIndexValue = newData.originalIndex;
+        const originalIndex = (originalIndexValue !== '' && !isNaN(parseInt(originalIndexValue))) ? parseInt(originalIndexValue) : null;
+        delete newData.originalIndex;
+
+        const specialistInfo = allUsers.find(u => u.name === newData['담당 전문위원']);
+        if (specialistInfo) {
+            newData['전문위원 성명'] = specialistInfo.name;
+            newData['전문위원 연락처'] = specialistInfo.phone;
+        } else {
+            newData['전문위원 성명'] = '';
+            newData['전문위원 연락처'] = '';
+        }
+
+        const action = (originalIndex !== null) ? 'update' : 'write';
+        const payload = { data: newData, rowIndex: originalIndex };
+
+        if (action === 'write') {
+            const allCompanyData = await callAPI('readAll', 'Companies');
+            const maxNo = allCompanyData ? (allCompanyData.length > 0 ? Math.max(...allCompanyData.map(c => parseInt(c.No) || 0)) : 0) : 0;
+            newData.No = (maxNo + 1).toString();
+        }
+
+        let result = await callAPI(action, 'Companies', payload);
+
+        if (result && result.success) {
+            alert('저장되었습니다!');
+            closeEditModal();
+            await loadInitialData(action === 'update' ? currentPage : 1); 
+        } else if (result && result.confirmation_required) {
+            if (confirm(result.message)) {
+                payload.forceSave = true;
+                const forceResult = await callAPI(action, 'Companies', payload);
+                if (forceResult && forceResult.success) {
+                    alert('저장되었습니다!');
+                    closeEditModal();
+                    await loadInitialData(action === 'update' ? currentPage : 1);
+                } else if (forceResult) {
+                    alert('저장 중 오류가 발생했습니다: ' + (forceResult.message || ''));
+                }
+            }
+        }
+    }
+    window.saveModalData = saveModalData;
+
+    async function deleteCompany() {
+        const originalIndex = document.querySelector('#edit-form input[name="originalIndex"]').value;
+        if (originalIndex === '' || originalIndex === null) return;
+        if (confirm('정말로 이 기업 정보를 삭제하시겠습니까?')) {
+            const result = await callAPI('delete', 'Companies', { rowIndex: parseInt(originalIndex) });
+            if (result && result.success) {
+                alert('삭제되었습니다.');
+                closeEditModal();
+                await loadInitialData(1);
+            }
+        }
+    }
+    window.deleteCompany = deleteCompany;
+
+    // === UI 헬퍼 함수 ===
+    function applyRolePermissions() {
+        const form = document.getElementById('edit-form');
+        form.querySelectorAll('fieldset').forEach(fs => fs.disabled = false);
+        
+        if (loggedInUser.role === 'admin') {
+            // Admin can edit everything
+        } else if (loggedInUser.role === 'TMer') {
+            form.querySelector('#specialist-fieldset').disabled = true;
+            form.querySelector('#hq-fieldset').disabled = true;
+        } else if (loggedInUser.role === '전문위원') {
+            form.querySelector('#tmer-fieldset').disabled = true;
+            form.querySelector('#hq-fieldset').disabled = true;
+        }
+    }
+
+    function populateSpecialistDropdown(selectedValue) {
+        const specialistSelect = document.querySelector('select[name="담당 전문위원"]');
+        specialistSelect.innerHTML = '<option value="">미배정</option>';
+        allUsers.filter(u => u.role === '전문위원').forEach(s => {
+            const option = document.createElement('option');
+            option.value = s.name;
+            option.textContent = s.name;
+            if (s.name === selectedValue) option.selected = true;
+            specialistSelect.appendChild(option);
+        });
+        
+        specialistSelect.onchange = function() {
+            const selectedSpecialist = allUsers.find(u => u.name === this.value);
+            const form = document.getElementById('edit-form');
+            if (selectedSpecialist) {
+                form.elements['지역'].value = selectedSpecialist.region || '';
+                form.elements['제공 빈도'].value = selectedSpecialist.frequency || '';
+            } else {
+                form.elements['지역'].value = '';
+                form.elements['제공 빈도'].value = '';
+            }
+        };
+    }
+    
+    const roleRadios = document.querySelectorAll('#register-form input[name="role"]');
+    function updateRoleSelection() {
+        const form = document.getElementById('register-form');
+        if (!form.querySelector('input[name="role"]:checked')) return;
+        const selectedRole = form.querySelector('input[name="role"]:checked').value;
+        document.querySelectorAll('#register-form .role-label').forEach(label => label.classList.toggle('selected', label.htmlFor === (selectedRole === '전문위원' ? 'specialist' : 'tmer')));
+        const companyField = document.getElementById('company-field');
+        companyField.classList.toggle('hidden', selectedRole !== '전문위원');
+        companyField.querySelector('input').required = selectedRole === '전문위원';
+    }
+    roleRadios.forEach(radio => radio.addEventListener('change', updateRoleSelection));
+    
+    function handleEnterKey(event) {
+         if (event.key === 'Enter' && event.target.tagName.toLowerCase() !== 'textarea') {
+            if (event.target.tagName.toLowerCase() === 'select') { return; }
+            event.preventDefault();
+            const form = event.target.form;
+            const fields = Array.from(form.querySelectorAll('input:not([readonly]):not([type=hidden]), select, textarea')).filter(el => !el.disabled);
+            const currentIndex = fields.indexOf(event.target);
+            const nextIndex = currentIndex + 1;
+            if (nextIndex < fields.length) { fields[nextIndex].focus(); }
+        }
+    }
+    window.handleEnterKey = handleEnterKey;
+    
+    const tooltip = document.getElementById('global-tooltip');
+    function showTooltip(iconElement, text) {
+        tooltip.innerHTML = text;
+        tooltip.style.visibility = 'visible';
+        tooltip.style.opacity = '1';
+
+        const rect = iconElement.getBoundingClientRect();
+        
+        let top = rect.top - tooltip.offsetHeight - 10;
+        if (top < 10) {
+            top = rect.bottom + 10;
+        }
+        
+        let left = rect.left + (rect.width / 2) - (tooltip.offsetWidth / 2);
+        if (left < 10) {
+            left = 10;
+        } else if (left + tooltip.offsetWidth > window.innerWidth - 10) {
+            left = window.innerWidth - tooltip.offsetWidth - 10;
+        }
+
+        tooltip.style.top = `${top}px`;
+        tooltip.style.left = `${left}px`;
+    }
+    window.showTooltip = showTooltip;
+    function hideTooltip() {
+        tooltip.style.visibility = 'hidden';
+        tooltip.style.opacity = '0';
+    }
+    window.hideTooltip = hideTooltip;
+
+// ▼▼▼ 이 코드 블록 전체를 복사해서 사용하세요 ▼▼▼
+
+// ==================================================================
+// === 급여 관리 페이지 로직 (업그레이드 버전) ===
+// ==================================================================
+const HOURLY_RATE = 15000;
+const TAX_RATE = 0.033;
+let allWorkLogs = [];
+
+// [메인] 급여 페이지 로딩 함수
+async function loadPayrollPage() {
+    if (allUsers.length === 0) await loadUsers();
+
+    const backButton = document.getElementById('payroll-back-button');
+    const adminInputDiv = document.getElementById('admin-payroll-input');
+    const payrollUserName = document.getElementById('payroll-user-name');
+    const monthSelect = document.getElementById('month-select');
+    
+    // 월 선택 input의 기본값을 현재 월로 설정
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    monthSelect.value = `${year}-${month}`;
+
+    const result = await callAPI('readAll', 'WorkLogs');
+    allWorkLogs = result || [];
+
+    adminInputDiv.classList.remove('hidden');
+
+    if (loggedInUser.role === 'admin') {
+        payrollUserName.textContent = '전체 TMer 근무 성과를 관리합니다.';
+        backButton.onclick = () => showPage('admin-page');
+        populateTmerDropdown(); // 관리자에게만 TMer 목록 채우기
+        // 관리자는 TMer 선택 드롭다운의 부모 div를 보이게 함
+        document.getElementById('payroll-tmer-select').parentElement.style.display = 'block';
+    } else { // TMer
+        payrollUserName.textContent = `'${loggedInUser.name}'님의 근무 성과를 기록하고 확인합니다.`;
+        backButton.onclick = () => showPage('TM-DB-Table');
+        // TMer는 TMer 선택 드롭다운의 부모 div를 숨김
+        document.getElementById('payroll-tmer-select').parentElement.style.display = 'none';
+    }
+    
+    // 페이지 첫 로딩 시 현재 월 데이터 표시
+    displayPayrollForSelectedMonth();
+}
+
+// [신규] 월 선택 시 데이터 표시 함수
+function displayPayrollForSelectedMonth() {
+    const monthSelect = document.getElementById('month-select').value;
+    if (!monthSelect) return;
+
+    const [year, month] = monthSelect.split('-');
+    
+    let logsForMonth;
+    if (loggedInUser.role === 'admin') {
+        const selectedTmer = document.getElementById('payroll-tmer-select').value;
+        // 관리자는 선택된 TMer의 로그를 필터링
+        const logsForTmer = selectedTmer ? allWorkLogs.filter(log => log.tmerName === selectedTmer) : [];
+        logsForMonth = logsForTmer.filter(log => log.date && log.date.startsWith(monthSelect));
+    } else {
+        // TMer는 자신의 로그만 필터링
+        const myLogs = allWorkLogs.filter(log => log.tmerName === loggedInUser.name);
+        logsForMonth = myLogs.filter(log => log.date && log.date.startsWith(monthSelect));
+    }
+    
+    renderPayrollData(logsForMonth, `${year}년 ${month}월`);
+}
+window.displayPayrollForSelectedMonth = displayPayrollForSelectedMonth;
+
+// TMer 목록 드롭다운 채우기
+function populateTmerDropdown() {
+    const tmerSelect = document.getElementById('payroll-tmer-select');
+    tmerSelect.innerHTML = '<option value="">전체 TMer</option>'; // '전체' 옵션 추가
+    allUsers.filter(u => u.role === 'TMer').forEach(tmer => {
+        const option = document.createElement('option');
+        option.value = tmer.name;
+        option.textContent = tmer.name;
+        tmerSelect.appendChild(option);
+    });
+    // TMer 선택 시 해당 월 데이터 다시 표시
+    tmerSelect.onchange = displayPayrollForSelectedMonth;
+}
+
+// [수정] 데이터 렌더링 함수
+function renderPayrollData(logs, title) {
+    const summaryDiv = document.getElementById('payroll-summary');
+    const tableBody = document.getElementById('payroll-table-body');
+    summaryDiv.innerHTML = '';
+    tableBody.innerHTML = '';
+
+    if (!logs || logs.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="8" class="text-center py-16 text-slate-500">선택하신 월의 근무 기록이 없습니다.</td></tr>`;
+        return;
+    }
+
+    // 데이터 집계
+    const summary = {
+        workDays: new Set(logs.map(log => log.date)).size,
+        totalHours: logs.reduce((sum, log) => sum + (parseFloat(log.hours) || 0), 0),
+        totalCallCount: logs.reduce((sum, log) => sum + (parseInt(log.callCount) || 0), 0),
+        totalMessageSentCount: logs.reduce((sum, log) => sum + (parseInt(log.messageSentCount) || 0), 0),
+        totalRejectionCount: logs.reduce((sum, log) => sum + (parseInt(log.rejectionCount) || 0), 0),
+        // 메모에서 숫자(수수료/교육비)만 추출하여 합산
+        totalNotesFee: logs.reduce((sum, log) => {
+            const fee = (log.notes || '').match(/\d+/g);
+            return sum + (fee ? parseInt(fee.join('')) : 0);
+        }, 0),
+    };
+
+    const grossPay = summary.totalHours * HOURLY_RATE;
+    const totalPay = grossPay + summary.totalNotesFee;
+    const tax = Math.floor(totalPay * TAX_RATE);
+    const netPay = totalPay - tax;
+    const rejectionRate = summary.totalCallCount > 0 ? ((summary.totalRejectionCount / summary.totalCallCount) * 100).toFixed(1) : 0;
+    
+    // 요약 카드 생성
+    summaryDiv.innerHTML = `
+        <div class="p-6 border rounded-lg bg-slate-50">
+            <h4 class="font-bold text-slate-700 text-lg">${title} 성과 요약</h4>
+            <ul class="text-sm mt-3 grid grid-cols-2 gap-2">
+                <li>총 근무일수: <span class="font-semibold">${summary.workDays} 일</span></li>
+                <li>총 근무시간: <span class="font-semibold">${summary.totalHours.toFixed(1)} 시간</span></li>
+                <li>총 통화량: <span class="font-semibold">${summary.totalCallCount} 건</span></li>
+                <li>총 메시지 전달: <span class="font-semibold">${summary.totalMessageSentCount} 건</span></li>
+                <li>총 거절: <span class="font-semibold">${summary.totalRejectionCount} 건</span></li>
+                <li>거절률: <span class="font-semibold">${rejectionRate} %</span></li>
+            </ul>
+        </div>
+        <div class="p-6 border rounded-lg bg-sky-50">
+             <h4 class="font-bold text-sky-700 text-lg">${title} 급여 정산</h4>
+             <ul class="text-sm mt-3 space-y-1">
+                <li>기본급 (시간): <span class="font-semibold">${grossPay.toLocaleString()} 원</span></li>
+                <li>기타 수당 (메모): <span class="font-semibold">${summary.totalNotesFee.toLocaleString()} 원</span></li>
+                <li class="border-t pt-1 mt-1">과세 대상 합계: <span class="font-semibold">${totalPay.toLocaleString()} 원</span></li>
+                <li>공제액 (3.3%): <span class="font-semibold text-red-500">- ${tax.toLocaleString()} 원</span></li>
+                <li class="font-bold text-base border-t pt-1 mt-1">최종 실지급액: <span class="text-lg text-blue-600">${netPay.toLocaleString()} 원</span></li>
+             </ul>
+        </div>
+    `;
+
+    // 일일 상세 기록 표시
+    logs.sort((a, b) => new Date(a.date) - new Date(b.date)); // 날짜 오름차순으로 변경
+    logs.forEach(log => {
+        const dailyGross = (parseFloat(log.hours) || 0) * HOURLY_RATE;
+        const dailyNoteFee = (log.notes || '').match(/\d+/g) ? parseInt((log.notes || '').match(/\d+/g).join('')) : 0;
+        const dailyNet = dailyGross + dailyNoteFee - Math.floor((dailyGross + dailyNoteFee) * TAX_RATE);
+        
+        const row = document.createElement('tr');
+        row.className = 'bg-white border-b';
+row.innerHTML = `
+            <td class="px-6 py-4">${log.date}</td>
+            <td class="px-6 py-4">${log.hours || 0}</td>
+            <td class="px-6 py-4">${log.callCount || 0}</td>
+            <td class="px-6 py-4">${log.messageSentCount || 0}</td>
+            <td class="px-6 py-4">${(parseInt(log.pendingCount) || 0) + (parseInt(log.noAnswerCount) || 0) + (parseInt(log.callBackCount) || 0)}</td>
+            <td class="px-6 py-4">${log.rejectionCount || 0}</td>
+            <td class="px-6 py-4">${log.notes || ''}</td> <td class="px-6 py-4">${log.mainTask || ''}</td>
+        <td class="px-6 py-4">${log.messageDelivery || ''}</td>
+        <td class="px-6 py-4">${log.suggestions || ''}</td>
+        <td class="px-6 py-4">${log.generalNotes || ''}</td> <td class="px-6 py-4 font-semibold">${dailyNet.toLocaleString()} 원</td>
+        `;
+        tableBody.appendChild(row);
+    });
+}
+
+// [수정] 데이터 저장 함수
+async function saveWorkLog() {
+    const tmerName = (loggedInUser.role === 'admin')
+        ? document.getElementById('payroll-tmer-select').value
+        : loggedInUser.name;
+    const date = document.getElementById('payroll-date').value;
+    
+    if (!tmerName || !date) {
+        alert('TMer와 날짜를 선택해주세요.');
+        return;
+    }
+
+    const newLogData = {
+        tmerName, date,
+        hours: document.getElementById('payroll-hours').value,
+        callCount: document.getElementById('payroll-callCount').value,
+        messageSentCount: document.getElementById('payroll-messageSentCount').value,
+        // 보류/불통/재통화를 합쳐서 pendingCount에 저장 (필요시 분리 가능)
+        pendingCount: document.getElementById('payroll-pendingCount').value,
+        rejectionCount: document.getElementById('payroll-rejectionCount').value,
+        notes: document.getElementById('payroll-notes').value, // (수당/공제)
+        noAnswerCount: '0', // 현재 UI에서는 합쳐져 있으므로 기본값 0
+        callBackCount: '0', // 현재 UI에서는 합쳐져 있으므로 기본값 0
+        mainTask: document.getElementById('payroll-mainTask').value,
+        messageDelivery: document.getElementById('payroll-messageDelivery').value,
+        suggestions: document.getElementById('payroll-suggestions').value,
+        generalNotes: document.getElementById('payroll-generalNotes').value,
+
+    };
+
+    const allLogsRaw = await callAPI('readAll', 'WorkLogs') || [];
+    const existingLog = allLogsRaw.find(log => log.tmerName === tmerName && log.date === date);
+
+    const result = existingLog ?
+        await callAPI('update', 'WorkLogs', { data: newLogData, rowIndex: existingLog.originalIndex }) :
+        await callAPI('write', 'WorkLogs', { data: newLogData });
+
+    if (result && result.success) {
+        alert('저장되었습니다.');
+        // 입력 필드 초기화 (TMer와 날짜는 유지)
+        ['payroll-hours', 'payroll-callCount', 'payroll-messageSentCount', 'payroll-pendingCount', 'payroll-rejectionCount', 'payroll-notes', 'payroll-mainTask', 'payroll-messageDelivery', 'payroll-suggestions', 'payroll-generalNotes'].forEach(id => document.getElementById(id).value = '');
+        
+        // 데이터 다시 불러오고 현재 월 화면 갱신
+        const freshLogs = await callAPI('readAll', 'WorkLogs');
+        allWorkLogs = freshLogs || [];
+        displayPayrollForSelectedMonth();
+    }
+}
+window.saveWorkLog = saveWorkLog;
+
+    // === 페이지 첫 로드 ===
+    document.addEventListener('DOMContentLoaded', () => {
+        showPage('login-page');
+        updateRoleSelection();
+
+// 기존 loadInitialData 함수 수정
+const originalLoadInitialData = window.loadInitialData;
+async function loadInitialData(page = 1, filter = currentFilter) {
+    if(typeof originalLoadInitialData === 'function') await originalLoadInitialData(page, filter);
+    const myPayrollButton = document.getElementById('my-payroll-button');
+    if (loggedInUser && loggedInUser.role === 'TMer') {
+        myPayrollButton.classList.remove('hidden');
+    } else {
+        myPayrollButton.classList.add('hidden');
+    }
+}
+
+
+    });
+</script>
