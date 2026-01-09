@@ -1,0 +1,8 @@
+{
+  "name": "db-project-functions",
+  "version": "1.0.0",
+  "dependencies": {
+    "google-spreadsheet": "^4.1.1",
+    "google-auth-library": "^9.11.0"
+  }
+}
