@@ -288,8 +288,8 @@
                         <thead class="text-xs text-slate-700 uppercase bg-slate-100">
                             <tr class="border-b-2">
                                 <th colspan="11" class="px-4 py-2 font-bold text-center bg-blue-100 text-blue-800">기업 기본정보</th>
-                                <th colspan="7" class="px-4 py-2 font-bold text-center bg-green-100 text-green-800">전문위원 입력</th>
-                                <th colspan="1" class="px-4 py-2 font-bold text-center bg-amber-100 text-amber-800">본사</th>
+                                <th colspan="6" class="px-4 py-2 font-bold text-center bg-green-100 text-green-800">전문위원 입력</th>
+                                <th colspan="2" class="px-4 py-2 font-bold text-center bg-amber-100 text-amber-800">본사</th>
                             </tr>
                             <tr class="border-b">
                                 <!-- A~K열: 기업 기본정보 -->
@@ -304,15 +304,15 @@
                                 <th class="px-3 py-2 min-w-[120px]">회사Fax</th>
                                 <th class="px-3 py-2 min-w-[80px]">대표자명</th>
                                 <th class="px-3 py-2 min-w-[100px]">담당전문위원</th>
-                                <!-- X~AC열: 전문위원 입력항목 -->
+                                <!-- 전문위원 입력항목 (6개) -->
                                 <th class="px-3 py-2 min-w-[90px]">콜일자</th>
                                 <th class="px-3 py-2 min-w-[80px]">통화대상자</th>
                                 <th class="px-3 py-2 min-w-[70px]">직함</th>
                                 <th class="px-3 py-2 min-w-[200px]">통화내용</th>
                                 <th class="px-3 py-2 min-w-[100px]">본사상담요청</th>
                                 <th class="px-3 py-2 min-w-[100px]">홈피안내일</th>
+                                <!-- 본사 입력항목 (2개) -->
                                 <th class="px-3 py-2 min-w-[150px]">홈페이지url</th>
-                                <!-- AD열: 본사 입력항목 -->
                                 <th class="px-3 py-2 min-w-[200px]">본사메모</th>
                             </tr>
                         </thead>
@@ -361,7 +361,7 @@
                             <div><label class="font-semibold">담당 전문위원</label><input name="담당 전문위원" type="text" class="w-full p-2 mt-1 border rounded bg-gray-100" readonly></div>
                         </fieldset>
                         
-                        <!-- 전문위원 입력항목 (X~AC열) -->
+                        <!-- 전문위원 입력항목 -->
                         <fieldset id="specialist-fieldset" class="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-6">
                             <legend class="lg:col-span-3 font-bold text-lg text-green-800 border-b-2 border-green-200 pb-2 mb-4 mt-6">전문위원 입력항목</legend>
                             <div>
@@ -402,18 +402,18 @@
                                 <label class="font-semibold flex items-center">홈페이지안내일자</label>
                                 <input name="홈페이지안내일자" type="text" class="w-full p-2 mt-1 border rounded" placeholder="예: 2025-01-10">
                             </div>
-                            <div>
-                                <label class="font-semibold flex items-center">홈페이지url <span class="text-xs text-slate-400 ml-2">(본사입력)</span></label>
-                                <input name="홈페이지url" type="text" class="w-full p-2 mt-1 border rounded bg-gray-100" readonly>
-                            </div>
                         </fieldset>
                         
-                        <!-- 본사 입력항목 (AD열) -->
+                        <!-- 본사 입력항목 -->
                         <fieldset id="hq-fieldset" class="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-6">
                             <legend class="lg:col-span-3 font-bold text-lg text-amber-800 border-b-2 border-amber-200 pb-2 mb-4 mt-6">본사 입력항목</legend>
-                            <div class="lg:col-span-3">
-                                <label class="font-semibold flex items-center">본사담당자메모<span class="tooltip-icon" onmouseenter="showTooltip(this, '본사 담당자가 메모를 입력합니다.')" onmouseleave="hideTooltip()">ⓘ</span></label>
-                                <textarea name="본사담당자메모" rows="3" class="w-full p-2 mt-1 border rounded"></textarea>
+                            <div>
+                                <label class="font-semibold flex items-center">홈페이지url</label>
+                                <input name="홈페이지url" type="text" class="w-full p-2 mt-1 border rounded">
+                            </div>
+                            <div class="lg:col-span-2">
+                                <label class="font-semibold flex items-center">본사담당자메모</label>
+                                <textarea name="본사담당자메모" rows="2" class="w-full p-2 mt-1 border rounded"></textarea>
                             </div>
                         </fieldset>
                         
@@ -934,12 +934,17 @@
                 });
             });
         } else if (loggedInUser.role === '전문위원') {
-            // 전문위원: 기본정보 읽기전용, 전문위원 입력항목만 편집 가능, 본사 입력항목 비활성화
+            // 전문위원: 기본정보 읽기전용, 전문위원 입력항목만 편집 가능
             form.querySelector('#specialist-fieldset').querySelectorAll('input, select, textarea').forEach(el => {
                 el.readOnly = false;
                 el.disabled = false;
             });
-            form.querySelector('#hq-fieldset').disabled = true;
+            // 본사 입력항목은 전문위원이 수정 불가
+            form.querySelector('#hq-fieldset').querySelectorAll('input, select, textarea').forEach(el => {
+                el.readOnly = true;
+                el.disabled = false;
+                el.classList.add('bg-gray-100');
+            });
         }
     }
 
