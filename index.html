@@ -234,6 +234,28 @@
                     </div>
                 </form>
             </div>
+            <!-- 스케줄 관리 섹션 -->
+            <div class="bg-white rounded-xl shadow-lg mb-4">
+                <div class="p-4 border-b"><h2 class="text-lg font-semibold text-slate-800">📅 다음 주 전문위원 스케줄</h2></div>
+                <div class="p-4">
+                    <div id="admin-schedule-container" class="overflow-x-auto">
+                        <table class="w-full text-sm text-left text-slate-600">
+                            <thead class="text-xs text-slate-700 uppercase bg-slate-100">
+                                <tr>
+                                    <th class="px-4 py-3">전문위원</th>
+                                    <th class="px-4 py-3">신청일자</th>
+                                    <th class="px-4 py-3">상태</th>
+                                    <th class="px-4 py-3">처리일시</th>
+                                    <th class="px-4 py-3 text-center">관리</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-schedule-body"></tbody>
+                        </table>
+                    </div>
+                    <p id="no-schedule-msg" class="text-center py-8 text-slate-500 hidden">신청된 스케줄이 없습니다.</p>
+                </div>
+            </div>
+
             <div class="bg-white rounded-xl shadow-lg overflow-hidden">
                 <div class="p-4 border-b"><h2 class="text-lg font-semibold text-slate-800">회원 정보 현황</h2></div>
                 <div class="w-full overflow-x-auto">
@@ -267,6 +289,22 @@
                     <button onclick="logout()" class="py-2 px-4 text-sm font-semibold rounded-lg text-red-600 bg-red-100 hover:bg-red-200 transition">로그아웃</button>
                 </div>
             </header>
+            
+            <!-- 전문위원 스케줄 신청 섹션 (전문위원만 표시) -->
+            <div id="specialist-schedule-section" class="hidden bg-white rounded-xl shadow-lg mb-4">
+                <div class="p-4 border-b flex flex-wrap justify-between items-center gap-2">
+                    <h2 class="text-lg font-semibold text-slate-800">📅 다음 주 콜 일정 신청</h2>
+                    <button onclick="saveSchedule()" class="py-2 px-4 text-sm font-bold rounded-lg text-white bg-amber-500 hover:bg-amber-600">신청하기</button>
+                </div>
+                <div class="p-4">
+                    <div id="schedule-checkboxes" class="flex flex-wrap gap-3 justify-center"></div>
+                    <div id="my-schedule-status" class="mt-4 pt-4 border-t">
+                        <h3 class="text-sm font-semibold text-slate-700 mb-2">나의 신청 현황</h3>
+                        <div id="my-schedule-list" class="flex flex-wrap gap-2"></div>
+                    </div>
+                </div>
+            </div>
+
             <div class="bg-white rounded-xl shadow-lg overflow-hidden">
                 <div class="p-3 flex flex-wrap gap-2 justify-between items-center border-b">
                     <div class="flex items-center gap-2">
@@ -474,8 +512,14 @@
     function showPage(pageId) {
         document.querySelectorAll('body > div[id$="-page"], body > div[id="TM-DB-Table"], body > div[id="admin-page"]').forEach(p => p.classList.add('hidden'));
         document.getElementById(pageId)?.classList.remove('hidden');
-        if (pageId === 'TM-DB-Table' && loggedInUser) loadInitialData();
-        if (pageId === 'admin-page' && loggedInUser) renderAdminTable();
+        if (pageId === 'TM-DB-Table' && loggedInUser) {
+            loadInitialData();
+            if (loggedInUser.role === '전문위원') renderScheduleUI();
+        }
+        if (pageId === 'admin-page' && loggedInUser) {
+            renderAdminTable();
+            renderAdminSchedule();
+        }
     }
     window.showPage = showPage;
 
@@ -514,7 +558,7 @@
         const adminData = await callAPI('readAll', 'Admin');
         if (adminData && adminData.length > 0) {
             const admin = adminData[0];
-            if (admin.id === adminId && admin.pw === adminPw) {
+            if (admin.id === adminId && String(admin.pw) === adminPw) {
                 loggedInUser = { name: '관리자', role: 'admin' };
                 sessionStorage.setItem('loggedInUser', JSON.stringify(loggedInUser));
                 showPage('admin-page');
@@ -997,6 +1041,196 @@
         tooltip.style.opacity = '0';
     }
     window.hideTooltip = hideTooltip;
+
+    // === Schedule 관련 함수 ===
+    // 2025-2026 한국 공휴일 목록
+    const koreanHolidays = [
+        '2025-01-01', '2025-01-28', '2025-01-29', '2025-01-30', // 신정, 설날
+        '2025-03-01', '2025-05-05', '2025-05-06', '2025-06-06', // 삼일절, 어린이날, 대체휴일, 현충일
+        '2025-08-15', '2025-10-03', '2025-10-05', '2025-10-06', '2025-10-07', // 광복절, 개천절, 추석
+        '2025-10-09', '2025-12-25', // 한글날, 성탄절
+        '2026-01-01', '2026-02-16', '2026-02-17', '2026-02-18', // 신정, 설날
+        '2026-03-01', '2026-03-02', '2026-05-05', '2026-05-24', '2026-06-06', // 삼일절, 대체휴일, 어린이날, 부처님오신날, 현충일
+        '2026-08-15', '2026-08-17', '2026-09-24', '2026-09-25', '2026-09-26', // 광복절, 대체휴일, 추석
+        '2026-10-03', '2026-10-05', '2026-10-09', '2026-12-25' // 개천절, 대체휴일, 한글날, 성탄절
+    ];
+
+    function getNextWeekDates() {
+        const today = new Date();
+        const dayOfWeek = today.getDay(); // 0(일) ~ 6(토)
+        const daysUntilNextMonday = dayOfWeek === 0 ? 1 : 8 - dayOfWeek;
+        const nextMonday = new Date(today);
+        nextMonday.setDate(today.getDate() + daysUntilNextMonday);
+        
+        const dates = [];
+        const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
+        for (let i = 0; i < 5; i++) { // 월~금
+            const date = new Date(nextMonday);
+            date.setDate(nextMonday.getDate() + i);
+            const dateStr = date.toISOString().split('T')[0];
+            const isHoliday = koreanHolidays.includes(dateStr);
+            dates.push({
+                date: dateStr,
+                display: `${date.getMonth() + 1}/${date.getDate()}(${weekdays[date.getDay()]})`,
+                isHoliday: isHoliday
+            });
+        }
+        return dates;
+    }
+
+    async function renderScheduleUI() {
+        if (loggedInUser.role !== '전문위원') return;
+        
+        document.getElementById('specialist-schedule-section').classList.remove('hidden');
+        
+        const container = document.getElementById('schedule-checkboxes');
+        const dates = getNextWeekDates();
+        
+        container.innerHTML = dates.map(d => `
+            <label class="flex items-center gap-2 p-3 border rounded-lg cursor-pointer hover:bg-slate-50 ${d.isHoliday ? 'opacity-50 bg-red-50' : ''}">
+                <input type="checkbox" name="schedule-date" value="${d.date}" 
+                    ${d.isHoliday ? 'disabled' : ''} class="w-5 h-5 text-amber-500">
+                <span class="${d.isHoliday ? 'text-red-500 line-through' : ''}">${d.display}</span>
+                ${d.isHoliday ? '<span class="text-xs text-red-500">(공휴일)</span>' : ''}
+            </label>
+        `).join('');
+        
+        await renderMyScheduleStatus();
+    }
+
+    async function renderMyScheduleStatus() {
+        const listContainer = document.getElementById('my-schedule-list');
+        const schedules = await callAPI('readAll', 'Schedule');
+        
+        if (!schedules || schedules.length === 0) {
+            listContainer.innerHTML = '<span class="text-sm text-slate-500">신청 내역이 없습니다.</span>';
+            return;
+        }
+        
+        const mySchedules = schedules.filter(s => s['전문위원성명'] === loggedInUser.name);
+        
+        if (mySchedules.length === 0) {
+            listContainer.innerHTML = '<span class="text-sm text-slate-500">신청 내역이 없습니다.</span>';
+            return;
+        }
+        
+        listContainer.innerHTML = mySchedules.map(s => {
+            const status = s['상태'] || '신청';
+            let statusClass = 'bg-yellow-100 text-yellow-800';
+            let statusIcon = '⏳';
+            if (status === '확정') {
+                statusClass = 'bg-green-100 text-green-800';
+                statusIcon = '✅';
+            } else if (status === '취소') {
+                statusClass = 'bg-red-100 text-red-800';
+                statusIcon = '❌';
+            }
+            return `<span class="px-3 py-1 rounded-full text-sm ${statusClass}">${statusIcon} ${s['신청일자']} (${status})</span>`;
+        }).join('');
+    }
+
+    async function saveSchedule() {
+        const checkboxes = document.querySelectorAll('input[name="schedule-date"]:checked');
+        if (checkboxes.length === 0) {
+            alert('콜 가능한 날짜를 선택해주세요.');
+            return;
+        }
+        
+        const selectedDates = Array.from(checkboxes).map(cb => cb.value);
+        
+        // 기존 신청 목록 가져오기
+        const existingSchedules = await callAPI('readAll', 'Schedule');
+        const myExisting = existingSchedules ? existingSchedules.filter(s => s['전문위원성명'] === loggedInUser.name).map(s => s['신청일자']) : [];
+        
+        let successCount = 0;
+        for (const date of selectedDates) {
+            if (myExisting.includes(date)) continue; // 이미 신청한 날짜는 건너뜀
+            
+            const scheduleData = {
+                '전문위원성명': loggedInUser.name,
+                '신청일자': date,
+                '상태': '신청',
+                '처리일시': ''
+            };
+            const result = await callAPI('write', 'Schedule', { data: scheduleData });
+            if (result && result.success) successCount++;
+        }
+        
+        if (successCount > 0) {
+            alert(`${successCount}개 일정이 신청되었습니다.`);
+            // 체크박스 초기화
+            document.querySelectorAll('input[name="schedule-date"]').forEach(cb => cb.checked = false);
+            await renderMyScheduleStatus();
+        } else {
+            alert('이미 신청된 일자이거나 신청에 실패했습니다.');
+        }
+    }
+    window.saveSchedule = saveSchedule;
+
+    // 관리자용 스케줄 관리
+    async function renderAdminSchedule() {
+        const tbody = document.getElementById('admin-schedule-body');
+        const noMsg = document.getElementById('no-schedule-msg');
+        
+        const schedules = await callAPI('readAll', 'Schedule');
+        
+        if (!schedules || schedules.length === 0) {
+            tbody.innerHTML = '';
+            noMsg.classList.remove('hidden');
+            document.getElementById('admin-schedule-container').classList.add('hidden');
+            return;
+        }
+        
+        noMsg.classList.add('hidden');
+        document.getElementById('admin-schedule-container').classList.remove('hidden');
+        
+        tbody.innerHTML = schedules.map((s, idx) => {
+            const status = s['상태'] || '신청';
+            let statusBadge = '<span class="px-2 py-1 rounded-full text-xs bg-yellow-100 text-yellow-800">⏳ 신청</span>';
+            if (status === '확정') {
+                statusBadge = '<span class="px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">✅ 확정</span>';
+            } else if (status === '취소') {
+                statusBadge = '<span class="px-2 py-1 rounded-full text-xs bg-red-100 text-red-800">❌ 취소</span>';
+            }
+            
+            const showButtons = status === '신청';
+            
+            return `
+                <tr class="bg-white border-b">
+                    <td class="px-4 py-3 font-semibold">${s['전문위원성명']}</td>
+                    <td class="px-4 py-3">${s['신청일자']}</td>
+                    <td class="px-4 py-3">${statusBadge}</td>
+                    <td class="px-4 py-3 text-sm text-slate-500">${s['처리일시'] || '-'}</td>
+                    <td class="px-4 py-3 text-center">
+                        ${showButtons ? `
+                            <button onclick="updateScheduleStatus(${s.originalIndex}, '확정')" class="px-2 py-1 text-xs font-semibold rounded bg-green-500 text-white hover:bg-green-600 mr-1">확정</button>
+                            <button onclick="updateScheduleStatus(${s.originalIndex}, '취소')" class="px-2 py-1 text-xs font-semibold rounded bg-red-500 text-white hover:bg-red-600">취소</button>
+                        ` : '<span class="text-xs text-slate-400">처리완료</span>'}
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    }
+    window.renderAdminSchedule = renderAdminSchedule;
+
+    async function updateScheduleStatus(rowIndex, newStatus) {
+        const now = new Date();
+        const timestamp = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+        
+        const result = await callAPI('update', 'Schedule', {
+            rowIndex: rowIndex,
+            data: {
+                '상태': newStatus,
+                '처리일시': timestamp
+            }
+        });
+        
+        if (result && result.success) {
+            alert(`${newStatus} 처리되었습니다.`);
+            await renderAdminSchedule();
+        }
+    }
+    window.updateScheduleStatus = updateScheduleStatus;
 
     // === 페이지 첫 로드 ===
     document.addEventListener('DOMContentLoaded', () => {
