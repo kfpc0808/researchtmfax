@@ -73,8 +73,213 @@
                     <div><button type="submit" class="w-full flex justify-center py-3 px-4 text-base font-bold rounded-lg text-white bg-slate-800 hover:bg-slate-900">로그인</button></div>
                 </form>
                 <div class="pt-4 border-t grid grid-cols-2 gap-4">
-                    <a href="https://benefits-corp-homepage.netlify.app/" target="_blank" class="text-center py-3 px-4 text-sm font-semibold rounded-lg text-white bg-sky-600 hover:bg-sky-700">기업홈페이지 장점</a>
+                    <button type="button" onclick="showFeaturesModal()" class="text-center py-3 px-4 text-sm font-semibold rounded-lg text-white bg-sky-600 hover:bg-sky-700">기업홈페이지 주요기능</button>
                     <button type="button" onclick="showPriceTableModal()" class="text-center py-3 px-4 text-sm font-semibold rounded-lg text-white bg-teal-600 hover:bg-teal-700">기업홈페이지 가격표</button>
+                </div>
+                
+                <!-- 주요기능 모달 -->
+                <div id="features-modal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
+                    <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
+                        <!-- 헤더 -->
+                        <div class="bg-gradient-to-r from-sky-600 via-blue-600 to-indigo-700 text-white px-6 py-5">
+                            <h3 class="text-2xl font-bold text-center tracking-tight">기업홈페이지 시스템</h3>
+                            <p class="text-center text-sky-100 text-sm mt-1">주요기능 안내</p>
+                        </div>
+                        
+                        <!-- 컨텐츠 -->
+                        <div class="p-6 overflow-y-auto max-h-[60vh] space-y-4">
+                            <!-- 기능 1 -->
+                            <div class="bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl p-4 border border-slate-200 hover:shadow-md transition-shadow">
+                                <div class="flex items-start gap-3">
+                                    <span class="flex-shrink-0 w-8 h-8 bg-sky-600 text-white rounded-lg flex items-center justify-center font-bold text-sm">1</span>
+                                    <div>
+                                        <h4 class="font-bold text-slate-800">기업 맞춤형 홈페이지</h4>
+                                        <p class="text-sm text-slate-600 mt-1">• 대외신뢰 및 마케팅 홍보용으로 적절</p>
+                                        <p class="text-sm text-slate-600">• 거래처/고객/입사지원자에게 '정돈된 회사' 인식 어필</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 기능 2 -->
+                            <div class="bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl p-4 border border-slate-200 hover:shadow-md transition-shadow">
+                                <div class="flex items-start gap-3">
+                                    <span class="flex-shrink-0 w-8 h-8 bg-sky-600 text-white rounded-lg flex items-center justify-center font-bold text-sm">2</span>
+                                    <div>
+                                        <h4 class="font-bold text-slate-800">100% 커스터마이징 (브랜드 그대로)</h4>
+                                        <p class="text-sm text-slate-600 mt-1">• 로고, 이미지, 푸터, 인사말, 메뉴 구성 등 회사 맞춤 수정</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 기능 3 -->
+                            <div class="bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl p-4 border border-slate-200 hover:shadow-md transition-shadow">
+                                <div class="flex items-start gap-3">
+                                    <span class="flex-shrink-0 w-8 h-8 bg-sky-600 text-white rounded-lg flex items-center justify-center font-bold text-sm">3</span>
+                                    <div>
+                                        <h4 class="font-bold text-slate-800">연구소 보유시</h4>
+                                        <p class="text-sm text-slate-600 mt-1">• 연구노트/과제 기록/증빙 자료를 구조화 저장</p>
+                                        <p class="text-sm text-slate-600">• 연 1회 실사대응 시 자료 누락방지 및 찾는 시간 감소</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 기능 4 -->
+                            <div class="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-4 border border-amber-200 hover:shadow-md transition-shadow">
+                                <div class="flex items-start gap-3">
+                                    <span class="flex-shrink-0 w-8 h-8 bg-amber-500 text-white rounded-lg flex items-center justify-center font-bold text-sm">4</span>
+                                    <div>
+                                        <h4 class="font-bold text-slate-800">중요문서 시점인증 (타임스탬프) 기록보호</h4>
+                                        <p class="text-sm text-slate-600 mt-1">• 문서를 "언제 생성됐고 위변조가 없다"를 증명하는 장치</p>
+                                        <p class="text-sm text-slate-600">• 분쟁/소명/인정 과정에서 증빙력이 달라짐 (법적보호, 안전장치)</p>
+                                        <p class="text-sm text-slate-500 italic">• 연구노트, 근로계약서, 제휴협약서, 견적서 등</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 기능 5 -->
+                            <div class="bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl p-4 border border-slate-200 hover:shadow-md transition-shadow">
+                                <div class="flex items-start gap-3">
+                                    <span class="flex-shrink-0 w-8 h-8 bg-sky-600 text-white rounded-lg flex items-center justify-center font-bold text-sm">5</span>
+                                    <div>
+                                        <h4 class="font-bold text-slate-800">문서보관/자료실 (사내 인트라넷 기능)</h4>
+                                        <p class="text-sm text-slate-600 mt-1">• 회사 규정/양식/계약서/교육자료/회의록/증빙 등을 보관</p>
+                                        <p class="text-sm text-slate-600">• 담당자 바뀌어도 운영 안정</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 기능 6 -->
+                            <div class="bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl p-4 border border-slate-200 hover:shadow-md transition-shadow">
+                                <div class="flex items-start gap-3">
+                                    <span class="flex-shrink-0 w-8 h-8 bg-sky-600 text-white rounded-lg flex items-center justify-center font-bold text-sm">6</span>
+                                    <div>
+                                        <h4 class="font-bold text-slate-800">업무일지 (전 직원 공용)</h4>
+                                        <p class="text-sm text-slate-600 mt-1">• 일일 업무기록, 업무내용보관, 업무이슈 상시기록보관</p>
+                                        <p class="text-sm text-slate-600">• CEO 전사 업무현황 파악 용이</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 기능 7 -->
+                            <div class="bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl p-4 border border-slate-200 hover:shadow-md transition-shadow">
+                                <div class="flex items-start gap-3">
+                                    <span class="flex-shrink-0 w-8 h-8 bg-sky-600 text-white rounded-lg flex items-center justify-center font-bold text-sm">7</span>
+                                    <div>
+                                        <h4 class="font-bold text-slate-800">출퇴근 관리 (전 직원)</h4>
+                                        <p class="text-sm text-slate-600 mt-1">• 출퇴근 기록, 근태 데이터 누적</p>
+                                        <p class="text-sm text-slate-600">• 시간외수당 및 계약직 급여관리 계산 용이</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 기능 8 -->
+                            <div class="bg-gradient-to-br from-violet-50 to-purple-50 rounded-xl p-4 border border-violet-200 hover:shadow-md transition-shadow">
+                                <div class="flex items-start gap-3">
+                                    <span class="flex-shrink-0 w-8 h-8 bg-violet-600 text-white rounded-lg flex items-center justify-center font-bold text-sm">8</span>
+                                    <div>
+                                        <h4 class="font-bold text-slate-800">생성형 AI 종량제 이용</h4>
+                                        <p class="text-sm text-slate-600 mt-1">• GPT, Gemini 종량제 토큰구입 이용</p>
+                                        <p class="text-sm text-slate-600">• UI (베타버전 제공)</p>
+                                        <p class="text-sm text-violet-600 font-medium">• 상반기 변화: 정식버전 UI제공, Claude, Perplexity 사용 추가</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 기능 9 -->
+                            <div class="bg-gradient-to-br from-violet-50 to-purple-50 rounded-xl p-4 border border-violet-200 hover:shadow-md transition-shadow">
+                                <div class="flex items-start gap-3">
+                                    <span class="flex-shrink-0 w-8 h-8 bg-violet-600 text-white rounded-lg flex items-center justify-center font-bold text-sm">9</span>
+                                    <div>
+                                        <h4 class="font-bold text-slate-800">1:1 고객센터 AI 탑재</h4>
+                                        <p class="text-sm text-slate-600 mt-1">• 고객문의 → AI 또는 직원 중 선택</p>
+                                        <p class="text-sm text-slate-600">• AI문의시 RAG방식 자동답변 시스템 탑재 (문서기반 자동응답)</p>
+                                        <p class="text-sm text-slate-600">• 단순, 반복질문에 대하여 AI가 자동답변</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 기능 10 -->
+                            <div class="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-4 border border-emerald-200 hover:shadow-md transition-shadow">
+                                <div class="flex items-start gap-3">
+                                    <span class="flex-shrink-0 w-8 h-8 bg-emerald-600 text-white rounded-lg flex items-center justify-center font-bold text-sm">10</span>
+                                    <div>
+                                        <h4 class="font-bold text-slate-800">법정의무교육 연동 <span class="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full ml-1">회원사 혜택</span></h4>
+                                        <p class="text-sm text-slate-600 mt-1">• 전직원 법정의무 교육비 회원가 제공 (시장 평균가의 50% 수준)</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 기능 11 -->
+                            <div class="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-4 border border-emerald-200 hover:shadow-md transition-shadow">
+                                <div class="flex items-start gap-3">
+                                    <span class="flex-shrink-0 w-8 h-8 bg-emerald-600 text-white rounded-lg flex items-center justify-center font-bold text-sm">11</span>
+                                    <div>
+                                        <h4 class="font-bold text-slate-800">종합건강검진 <span class="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full ml-1">회원사 혜택</span></h4>
+                                        <p class="text-sm text-slate-600 mt-1">• 대기업 수가 제공</p>
+                                        <p class="text-sm text-slate-600">• 대상: 전임직원 및 가족까지</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 기능 12 -->
+                            <div class="bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl p-4 border border-slate-200 hover:shadow-md transition-shadow">
+                                <div class="flex items-start gap-3">
+                                    <span class="flex-shrink-0 w-8 h-8 bg-sky-600 text-white rounded-lg flex items-center justify-center font-bold text-sm">12</span>
+                                    <div>
+                                        <h4 class="font-bold text-slate-800">ESG경영 전용페이지 제공</h4>
+                                        <p class="text-sm text-slate-600 mt-1">• ESG 실천사항을 게시·축적하는 전용 코너</p>
+                                        <p class="text-sm text-slate-600">• 거래처 혹은 기관이 ESG 요구할 때 "문서가 아닌 홈페이지로 사실증명"</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 기능 13 -->
+                            <div class="bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl p-4 border border-slate-200 hover:shadow-md transition-shadow">
+                                <div class="flex items-start gap-3">
+                                    <span class="flex-shrink-0 w-8 h-8 bg-sky-600 text-white rounded-lg flex items-center justify-center font-bold text-sm">13</span>
+                                    <div>
+                                        <h4 class="font-bold text-slate-800">관리자 페이지 (운영 통제)</h4>
+                                        <p class="text-sm text-slate-600 mt-1">• 기업맞춤형 전용 관리자 페이지 제공</p>
+                                        <p class="text-sm text-slate-600">• 메뉴명칭 변경, 이미지 변경, 콘텐츠업로드 등 통합 관리</p>
+                                        <p class="text-sm text-slate-600">• 외주 의존 없이 내부에서 바로 수정/통제</p>
+                                        <p class="text-sm text-sky-600 font-medium">• 신속한 변경, 업데이트 및 유지보수 비용 제로화</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 기능 14 -->
+                            <div class="bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl p-4 border border-slate-200 hover:shadow-md transition-shadow">
+                                <div class="flex items-start gap-3">
+                                    <span class="flex-shrink-0 w-8 h-8 bg-sky-600 text-white rounded-lg flex items-center justify-center font-bold text-sm">14</span>
+                                    <div>
+                                        <h4 class="font-bold text-slate-800">전 임직원 개별사용</h4>
+                                        <p class="text-sm text-slate-600 mt-1">• 직원별 로그인기능 사용</p>
+                                        <p class="text-sm text-slate-600">• 책임자가 전임직원 콘트롤 (직원 계정을 직접 생성해서 제공)</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 기능 15 -->
+                            <div class="bg-gradient-to-br from-rose-50 to-pink-50 rounded-xl p-4 border border-rose-200 hover:shadow-md transition-shadow">
+                                <div class="flex items-start gap-3">
+                                    <span class="flex-shrink-0 w-8 h-8 bg-gradient-to-r from-rose-500 to-pink-500 text-white rounded-lg flex items-center justify-center font-bold text-sm">15</span>
+                                    <div>
+                                        <h4 class="font-bold text-slate-800">2026년 추가 프로그램 <span class="text-xs bg-rose-100 text-rose-700 px-2 py-0.5 rounded-full ml-1">Coming Soon</span></h4>
+                                        <p class="text-sm text-slate-600 mt-1">• 출퇴근 프로그램 (2월 런칭)</p>
+                                        <p class="text-sm text-slate-600">• 인사노무 관리 프로그램</p>
+                                        <p class="text-sm text-slate-600">• 생성형 AI UI 업데이트</p>
+                                        <p class="text-sm text-slate-600">• AI종량제 추가구축 (Claude, Perplexity)</p>
+                                        <p class="text-sm text-slate-600">• 기업별 결제시스템 구축</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 푸터 -->
+                        <div class="px-6 py-4 bg-slate-50 border-t">
+                            <button type="button" onclick="closeFeaturesModal()" class="w-full py-3 bg-gradient-to-r from-slate-800 to-slate-900 hover:from-slate-900 hover:to-black text-white font-bold rounded-xl transition-all shadow-lg hover:shadow-xl">닫기</button>
+                        </div>
+                    </div>
                 </div>
                 
                 <!-- 가격표 모달 -->
@@ -120,6 +325,12 @@
                 </div>
                 
                 <script>
+                    function showFeaturesModal() {
+                        document.getElementById('features-modal').classList.remove('hidden');
+                    }
+                    function closeFeaturesModal() {
+                        document.getElementById('features-modal').classList.add('hidden');
+                    }
                     function showPriceTableModal() {
                         document.getElementById('price-table-modal').classList.remove('hidden');
                     }
@@ -129,6 +340,9 @@
                     document.addEventListener('DOMContentLoaded', function() {
                         document.getElementById('price-table-modal')?.addEventListener('click', function(e) {
                             if (e.target === this) closePriceTableModal();
+                        });
+                        document.getElementById('features-modal')?.addEventListener('click', function(e) {
+                            if (e.target === this) closeFeaturesModal();
                         });
                     });
                 </script>
