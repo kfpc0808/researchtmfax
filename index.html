@@ -1184,14 +1184,25 @@
         const container = document.getElementById('schedule-checkboxes');
         const dates = getNextWeekDates();
         
-        container.innerHTML = dates.map(d => `
-            <label class="flex items-center gap-2 p-3 border rounded-lg cursor-pointer hover:bg-slate-50 ${d.isHoliday ? 'opacity-50 bg-red-50' : ''}">
+        // 이미 신청된 날짜 목록 가져오기
+        const schedules = await callAPI('readAll', 'Schedule');
+        const myScheduledDates = schedules 
+            ? schedules.filter(s => s['전문위원성명'] === loggedInUser.name).map(s => s['신청일자'])
+            : [];
+        
+        container.innerHTML = dates.map(d => {
+            const isAlreadyScheduled = myScheduledDates.includes(d.date);
+            const isDisabled = d.isHoliday || isAlreadyScheduled;
+            
+            return `
+            <label class="flex items-center gap-2 p-3 border rounded-lg ${isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-slate-50'} ${d.isHoliday ? 'bg-red-50' : ''} ${isAlreadyScheduled ? 'bg-slate-100' : ''}">
                 <input type="checkbox" name="schedule-date" value="${d.date}" 
-                    ${d.isHoliday ? 'disabled' : ''} class="w-5 h-5 text-amber-500">
+                    ${isDisabled ? 'disabled' : ''} class="w-5 h-5 text-amber-500">
                 <span class="${d.isHoliday ? 'text-red-500 line-through' : ''}">${d.display}</span>
                 ${d.isHoliday ? '<span class="text-xs text-red-500">(공휴일)</span>' : ''}
+                ${isAlreadyScheduled ? '<span class="text-xs text-slate-500">(신청완료)</span>' : ''}
             </label>
-        `).join('');
+        `}).join('');
         
         await renderMyScheduleStatus();
     }
