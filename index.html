@@ -72,8 +72,7 @@
                     </div>
                     <div><button type="submit" class="w-full flex justify-center py-3 px-4 text-base font-bold rounded-lg text-white bg-slate-800 hover:bg-slate-900">로그인</button></div>
                 </form>
-                <div class="flex items-center justify-between gap-4">
-                    <button type="button" onclick="showPage('register-page')" class="w-full text-center py-3 px-4 text-sm font-semibold rounded-lg text-slate-800 bg-slate-200 hover:bg-slate-300">회원가입</button>
+                <div class="flex items-center justify-center">
                     <button type="button" onclick="showPage('admin-login-page')" class="w-full text-center py-3 px-4 text-sm font-semibold rounded-lg text-slate-800 bg-slate-200 hover:bg-slate-300">관리자페이지</button>
                 </div>
                 <div class="pt-4 border-t grid grid-cols-2 gap-4">
@@ -157,51 +156,6 @@
                     <div class="pt-4 flex gap-4">
                         <button type="submit" class="w-full flex justify-center py-3 px-4 text-base font-bold rounded-lg text-white bg-slate-800 hover:bg-slate-900">로그인</button>
                         <button type="button" onclick="showPage('login-page')" class="w-full text-center py-3 px-4 text-base font-bold rounded-lg text-slate-800 bg-slate-200 hover:bg-slate-300">취소</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <!-- 회원가입 페이지 -->
-    <div id="register-page" class="hidden">
-        <div class="flex items-center justify-center min-h-screen p-4">
-            <div class="w-full max-w-2xl p-8 md:p-12 space-y-8 bg-white rounded-2xl shadow-xl">
-                <header class="text-center"><h1 class="text-3xl font-bold text-slate-800">회원가입</h1></header>
-                <form id="register-form" class="mt-8 space-y-8">
-                    <fieldset>
-                        <legend class="text-lg font-semibold text-slate-800 mb-4">가입 구분</legend>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <input type="radio" name="role" value="TMer" id="tmer" class="sr-only" checked>
-                                <label for="tmer" class="role-label cursor-pointer border-2 rounded-lg p-6 flex justify-center items-center transition font-bold">TMer</label>
-                            </div>
-                            <div>
-                                <input type="radio" name="role" value="전문위원" id="specialist" class="sr-only">
-                                <label for="specialist" class="role-label cursor-pointer border-2 rounded-lg p-6 flex justify-center items-center transition font-bold">전문위원</label>
-                            </div>
-                        </div>
-                    </fieldset>
-                    <div class="space-y-6">
-                        <div>
-                            <label for="register-name" class="text-sm font-semibold text-slate-700">성명</label>
-                            <input id="register-name" name="name" type="text" required class="mt-1 block w-full px-4 py-3 bg-slate-50 border rounded-lg" placeholder="예: 홍길동">
-                            <p class="mt-2 text-xs text-slate-500">로그인 시 아이디로 사용될 성명을 입력해주세요. (공백 없이)</p>
-                        </div>
-                        <div class="hidden" id="company-field">
-                            <label for="register-company" class="text-sm font-semibold text-slate-700">소속사</label>
-                            <input id="register-company" name="company" type="text" class="mt-1 block w-full px-4 py-3 bg-slate-50 border rounded-lg" placeholder="예: KFPC">
-                            <p class="mt-2 text-xs text-slate-500">소속사를 입력해주세요. (TMer는 자동 입력됩니다)</p>
-                        </div>
-                        <div>
-                            <label for="register-phone" class="text-sm font-semibold text-slate-700">전화번호</label>
-                            <input id="register-phone" name="phone" type="tel" required class="mt-1 block w-full px-4 py-3 bg-slate-50 border rounded-lg" placeholder="예: 01012345678">
-                            <p class="mt-2 text-xs text-slate-500">'-' 기호 없이 숫자만 입력해주세요. 로그인 시 비밀번호로 사용됩니다.</p>
-                        </div>
-                    </div>
-                    <div class="pt-4 flex gap-4">
-                        <button type="submit" class="w-full py-4 text-lg font-bold rounded-lg text-slate-800 bg-amber-400 hover:bg-amber-500">회원가입</button>
-                        <button type="button" onclick="showPage('login-page')" class="w-full py-4 text-lg font-bold rounded-lg text-slate-800 bg-slate-200 hover:bg-slate-300">취소</button>
                     </div>
                 </form>
             </div>
@@ -565,32 +519,6 @@
             } else {
                 alert('관리자 정보가 일치하지 않습니다.');
             }
-        }
-    });
-
-    // === 회원가입 ===
-    document.getElementById('register-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const form = e.target;
-        const role = form.querySelector('input[name="role"]:checked').value;
-        const newUser = {
-            role: role,
-            name: form.querySelector('#register-name').value.trim(),
-            phone: form.querySelector('#register-phone').value.trim(),
-            company: role === 'TMer' ? 'KFPC' : form.querySelector('#register-company').value.trim(),
-            region: '',
-            frequency: '',
-            Membership: ''
-        };
-        const existingUsers = await callAPI('readAll', 'Users');
-        if (existingUsers && existingUsers.some(u => u.name === newUser.name)) {
-            alert('이미 존재하는 이름입니다. 다른 이름을 사용해주세요.');
-            return;
-        }
-        const result = await callAPI('write', 'Users', { data: newUser });
-        if (result && result.success) {
-            alert('회원가입이 완료되었습니다! 로그인해주세요.');
-            showPage('login-page');
         }
     });
 
@@ -992,21 +920,6 @@
         }
     }
 
-    // === UI 헬퍼 함수 ===
-    const roleRadios = document.querySelectorAll('#register-form input[name="role"]');
-    function updateRoleSelection() {
-        const form = document.getElementById('register-form');
-        if (!form.querySelector('input[name="role"]:checked')) return;
-        const selectedRole = form.querySelector('input[name="role"]:checked').value;
-        document.querySelectorAll('#register-form .role-label').forEach(label => 
-            label.classList.toggle('selected', label.htmlFor === (selectedRole === '전문위원' ? 'specialist' : 'tmer'))
-        );
-        const companyField = document.getElementById('company-field');
-        companyField.classList.toggle('hidden', selectedRole !== '전문위원');
-        companyField.querySelector('input').required = selectedRole === '전문위원';
-    }
-    roleRadios.forEach(radio => radio.addEventListener('change', updateRoleSelection));
-
     function handleEnterKey(event) {
         if (event.key === 'Enter' && event.target.tagName.toLowerCase() !== 'textarea') {
             if (event.target.tagName.toLowerCase() === 'select') return;
@@ -1257,7 +1170,6 @@
         } else {
             showPage('login-page');
         }
-        updateRoleSelection();
     });
 </script>
 </body>
