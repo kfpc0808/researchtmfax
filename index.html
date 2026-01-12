@@ -72,9 +72,10 @@
                     </div>
                     <div><button type="submit" class="w-full flex justify-center py-3 px-4 text-base font-bold rounded-lg text-white bg-slate-800 hover:bg-slate-900">로그인</button></div>
                 </form>
-                <div class="pt-4 border-t grid grid-cols-2 gap-4">
-                    <button type="button" onclick="showFeaturesModal()" class="text-center py-3 px-4 text-sm font-semibold rounded-lg text-white bg-sky-600 hover:bg-sky-700">기업홈페이지 주요기능</button>
-                    <button type="button" onclick="showPriceTableModal()" class="text-center py-3 px-4 text-sm font-semibold rounded-lg text-white bg-teal-600 hover:bg-teal-700">기업홈페이지 가격표</button>
+                <div class="pt-4 border-t grid grid-cols-3 gap-3">
+                    <button type="button" onclick="showProcessModal()" class="text-center py-3 px-2 text-sm font-semibold rounded-lg text-white bg-violet-600 hover:bg-violet-700">업무Process</button>
+                    <button type="button" onclick="showFeaturesModal()" class="text-center py-3 px-2 text-sm font-semibold rounded-lg text-white bg-sky-600 hover:bg-sky-700">주요기능</button>
+                    <button type="button" onclick="showPriceTableModal()" class="text-center py-3 px-2 text-sm font-semibold rounded-lg text-white bg-teal-600 hover:bg-teal-700">가격표</button>
                 </div>
                 
                 <!-- 주요기능 모달 -->
@@ -324,7 +325,119 @@
                     </div>
                 </div>
                 
+                <!-- 업무Process 모달 -->
+                <div id="process-modal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
+                    <div class="bg-white rounded-2xl shadow-2xl max-w-xl w-full max-h-[90vh] overflow-hidden">
+                        <!-- 헤더 -->
+                        <div class="bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-700 text-white px-6 py-5">
+                            <h3 class="text-xl font-bold text-center tracking-tight">홈페이지 없는 '연구소 보유기업'</h3>
+                            <p class="text-center text-violet-100 text-sm mt-1">Call Process</p>
+                        </div>
+                        
+                        <!-- 컨텐츠 -->
+                        <div class="p-5 overflow-y-auto max-h-[60vh]">
+                            <!-- 타임라인 -->
+                            <div class="relative">
+                                <!-- 연결선 -->
+                                <div class="absolute left-5 top-0 bottom-0 w-0.5 bg-gradient-to-b from-violet-400 via-purple-400 to-indigo-400"></div>
+                                
+                                <!-- Step 1 -->
+                                <div class="relative flex gap-4 pb-4">
+                                    <div class="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-violet-500 to-purple-600 text-white rounded-full flex items-center justify-center font-bold text-sm shadow-lg z-10">1</div>
+                                    <div class="flex-1 bg-gradient-to-br from-violet-50 to-purple-50 rounded-xl p-3 border border-violet-100">
+                                        <p class="text-sm text-slate-700">로그인 후 <span class="font-semibold text-violet-700">Call가능 일정 선택</span> → 본사에서 피드백</p>
+                                    </div>
+                                </div>
+                                
+                                <!-- Step 2 -->
+                                <div class="relative flex gap-4 pb-4">
+                                    <div class="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-violet-500 to-purple-600 text-white rounded-full flex items-center justify-center font-bold text-sm shadow-lg z-10">2</div>
+                                    <div class="flex-1 bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl p-3 border border-slate-200">
+                                        <p class="text-sm text-slate-700">확정된 일자 <span class="font-semibold text-violet-700">오전 11시</span>에 안내문을 Fax로 전송 (본사)</p>
+                                    </div>
+                                </div>
+                                
+                                <!-- Step 3 -->
+                                <div class="relative flex gap-4 pb-4">
+                                    <div class="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-violet-500 to-purple-600 text-white rounded-full flex items-center justify-center font-bold text-sm shadow-lg z-10">3</div>
+                                    <div class="flex-1 bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl p-3 border border-slate-200">
+                                        <p class="text-sm text-slate-700">안내문 하단에 <span class="font-semibold text-violet-700">'전문위원' 성명과 연락처</span>를 기재하여 발송</p>
+                                    </div>
+                                </div>
+                                
+                                <!-- Step 4 -->
+                                <div class="relative flex gap-4 pb-4">
+                                    <div class="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-violet-500 to-purple-600 text-white rounded-full flex items-center justify-center font-bold text-sm shadow-lg z-10">4</div>
+                                    <div class="flex-1 bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl p-3 border border-slate-200">
+                                        <p class="text-sm text-slate-700">Fax전송 <span class="font-semibold text-violet-700">'성공List'</span> 추출하여 기업정보를 Program에 업로드</p>
+                                    </div>
+                                </div>
+                                
+                                <!-- Step 5 -->
+                                <div class="relative flex gap-4 pb-4">
+                                    <div class="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-amber-500 to-orange-500 text-white rounded-full flex items-center justify-center font-bold text-sm shadow-lg z-10">5</div>
+                                    <div class="flex-1 bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-3 border border-amber-200">
+                                        <p class="text-sm text-slate-700"><span class="font-semibold text-amber-700">오후 2시</span>부터 전문위원 Call 진행</p>
+                                    </div>
+                                </div>
+                                
+                                <!-- Step 6 -->
+                                <div class="relative flex gap-4 pb-4">
+                                    <div class="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-amber-500 to-orange-500 text-white rounded-full flex items-center justify-center font-bold text-sm shadow-lg z-10">6</div>
+                                    <div class="flex-1 bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-3 border border-amber-200">
+                                        <p class="text-sm text-slate-700">Call 진행상황 <span class="font-semibold text-amber-700">P/G에 입력</span></p>
+                                    </div>
+                                </div>
+                                
+                                <!-- Step 7 -->
+                                <div class="relative flex gap-4 pb-4">
+                                    <div class="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-500 text-white rounded-full flex items-center justify-center font-bold text-sm shadow-lg z-10">7</div>
+                                    <div class="flex-1 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-3 border border-emerald-200">
+                                        <p class="text-sm text-slate-700">기업홈페이지 <span class="font-semibold text-emerald-700">관심기업</span> 본사에서 Call → 안내 → 신청완료</p>
+                                    </div>
+                                </div>
+                                
+                                <!-- Step 8 -->
+                                <div class="relative flex gap-4 pb-4">
+                                    <div class="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-500 text-white rounded-full flex items-center justify-center font-bold text-sm shadow-lg z-10">8</div>
+                                    <div class="flex-1 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-3 border border-emerald-200">
+                                        <p class="text-sm text-slate-700">신청기업 → <span class="font-semibold text-emerald-700">홈페이지 제작</span> → 완료 (본사)</p>
+                                        <p class="text-xs text-slate-500 mt-1 italic">* 제작의뢰시 전문위원 전용 URL 사용</p>
+                                    </div>
+                                </div>
+                                
+                                <!-- Step 9 -->
+                                <div class="relative flex gap-4 pb-4">
+                                    <div class="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-sky-500 to-blue-500 text-white rounded-full flex items-center justify-center font-bold text-sm shadow-lg z-10">9</div>
+                                    <div class="flex-1 bg-gradient-to-br from-sky-50 to-blue-50 rounded-xl p-3 border border-sky-200">
+                                        <p class="text-sm text-slate-700">제작완료 홈페이지 → <span class="font-semibold text-sky-700">전문위원에게 전달</span></p>
+                                    </div>
+                                </div>
+                                
+                                <!-- Step 10 -->
+                                <div class="relative flex gap-4">
+                                    <div class="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-rose-500 to-pink-500 text-white rounded-full flex items-center justify-center font-bold text-sm shadow-lg z-10">10</div>
+                                    <div class="flex-1 bg-gradient-to-br from-rose-50 to-pink-50 rounded-xl p-3 border border-rose-200">
+                                        <p class="text-sm text-slate-700"><span class="font-semibold text-rose-700">홈페이지 사용안내</span> 및 <span class="font-semibold text-rose-700">컨설팅 진행</span> (전문위원)</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 푸터 -->
+                        <div class="px-5 py-4 bg-slate-50 border-t">
+                            <button type="button" onclick="closeProcessModal()" class="w-full py-3 bg-gradient-to-r from-violet-700 to-purple-800 hover:from-violet-800 hover:to-purple-900 text-white font-bold rounded-xl transition-all shadow-lg hover:shadow-xl">닫기</button>
+                        </div>
+                    </div>
+                </div>
+                
                 <script>
+                    function showProcessModal() {
+                        document.getElementById('process-modal').classList.remove('hidden');
+                    }
+                    function closeProcessModal() {
+                        document.getElementById('process-modal').classList.add('hidden');
+                    }
                     function showFeaturesModal() {
                         document.getElementById('features-modal').classList.remove('hidden');
                     }
@@ -343,6 +456,9 @@
                         });
                         document.getElementById('features-modal')?.addEventListener('click', function(e) {
                             if (e.target === this) closeFeaturesModal();
+                        });
+                        document.getElementById('process-modal')?.addEventListener('click', function(e) {
+                            if (e.target === this) closeProcessModal();
                         });
                     });
                 </script>
