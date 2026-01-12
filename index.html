@@ -1267,9 +1267,8 @@
         
         if (successCount > 0) {
             alert(`${successCount}개 일정이 신청되었습니다.`);
-            // 체크박스 초기화
-            document.querySelectorAll('input[name="schedule-date"]').forEach(cb => cb.checked = false);
-            await renderMyScheduleStatus();
+            // 전체 스케줄 UI 다시 렌더링 (체크박스 + 신청현황)
+            await renderScheduleUI();
         } else {
             alert('이미 신청된 일자이거나 신청에 실패했습니다.');
         }
