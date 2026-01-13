@@ -739,10 +739,16 @@
     let currentFilter = {};
 
     // === API 호출 ===
+    const apiCache = {};
     function showLoading() { document.getElementById('loading-overlay').classList.remove('hidden'); }
     function hideLoading() { document.getElementById('loading-overlay').classList.add('hidden'); }
 
     async function callAPI(action, sheet, data = {}) {
+        // 캐시 확인 (readAll만 캐싱)
+        if (action === 'readAll' && apiCache[sheet]) {
+            return apiCache[sheet];
+        }
+        
         showLoading();
         try {
             const response = await fetch(GAS_API_URL, {
@@ -756,6 +762,17 @@
                 alert('오류 발생: ' + result.error);
                 return null;
             }
+            
+            // 캐시 저장 (readAll만)
+            if (action === 'readAll') {
+                apiCache[sheet] = result;
+            }
+            
+            // 캐시 무효화 (데이터 변경 시)
+            if (['write', 'update', 'delete'].includes(action)) {
+                delete apiCache[sheet];
+            }
+            
             return result;
         } catch (error) {
             console.error('Fetch Error:', error);
