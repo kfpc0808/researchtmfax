@@ -53,6 +53,36 @@
     
     <div id="global-tooltip"></div>
 
+    <!-- 비밀번호 강제 변경 모달 -->
+    <div id="force-password-modal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[1000]">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden">
+            <div class="bg-gradient-to-r from-red-600 to-red-700 text-white px-6 py-4">
+                <h3 class="text-xl font-bold text-center">🔐 비밀번호 변경 필요</h3>
+            </div>
+            <div class="p-6">
+                <div class="text-center mb-6">
+                    <div class="text-5xl mb-3">⚠️</div>
+                    <p class="text-lg font-semibold text-slate-800 mb-2">최초 로그인 시 비밀번호를 변경해야 합니다.</p>
+                    <p class="text-sm text-slate-500">보안을 위해 새로운 비밀번호를 설정해주세요.</p>
+                </div>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1">새 비밀번호 <span class="text-red-500">*</span></label>
+                        <input type="password" id="force-new-password" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500" placeholder="새 비밀번호 입력">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1">새 비밀번호 확인 <span class="text-red-500">*</span></label>
+                        <input type="password" id="force-new-password-confirm" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500" placeholder="새 비밀번호 다시 입력">
+                    </div>
+                    <p class="text-xs text-red-600">※ 비밀번호 변경 후 서비스를 이용하실 수 있습니다.</p>
+                </div>
+            </div>
+            <div class="px-6 pb-6">
+                <button onclick="saveForcePasswordChange()" class="w-full py-3 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-bold rounded-lg transition-all">비밀번호 변경하기</button>
+            </div>
+        </div>
+    </div>
+
     <!-- 로그인 페이지 -->
     <div id="login-page">
         <div class="flex items-center justify-center min-h-screen">
@@ -730,6 +760,7 @@
     // === 전역 변수 ===
     const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbxT_jFERIyCqadOsT1FQxNu-L-tclH7FT87czgrtZey_PzTVp0S2HRzoJ5F-e1iS8ow/exec';
     let loggedInUser = null;
+    let tempPassword = null;
     let allUsers = [];
     let allCompanies = [];
     let cachedAllCompanies = []; // 전체 데이터 캐시
@@ -833,12 +864,70 @@
             if (user) {
                 loggedInUser = user;
                 sessionStorage.setItem('loggedInUser', JSON.stringify(user));
-                showPage('TM-DB-Table');
+                
+                // 최초 로그인 시 비밀번호 변경 필요 체크
+                if (!user.passwordChanged || user.passwordChanged === 'false' || user.passwordChanged === false) {
+                    tempPassword = password;
+                    document.getElementById('force-password-modal').classList.remove('hidden');
+                } else {
+                    showPage('TM-DB-Table');
+                }
             } else {
                 alert('아이디 또는 비밀번호가 일치하지 않습니다.');
             }
         }
     });
+
+    // === 최초 로그인 비밀번호 강제 변경 ===
+    async function saveForcePasswordChange() {
+        const newPassword = document.getElementById('force-new-password').value;
+        const confirmPassword = document.getElementById('force-new-password-confirm').value;
+        
+        if (!newPassword || !confirmPassword) {
+            alert('비밀번호를 입력해주세요.');
+            return;
+        }
+        
+        if (newPassword.length < 4) {
+            alert('비밀번호는 4자 이상이어야 합니다.');
+            return;
+        }
+        
+        if (newPassword !== confirmPassword) {
+            alert('비밀번호가 일치하지 않습니다.');
+            return;
+        }
+        
+        // 기존 비밀번호와 동일한지 체크
+        if (newPassword === tempPassword) {
+            alert('기존 비밀번호와 다른 비밀번호를 입력해주세요.');
+            return;
+        }
+        
+        // 비밀번호 변경 API 호출
+        const result = await callAPI('update', 'Users', {
+            rowIndex: loggedInUser.originalIndex,
+            data: {
+                phone: newPassword,
+                passwordChanged: true
+            }
+        });
+        
+        if (result && result.success) {
+            loggedInUser.phone = newPassword;
+            loggedInUser.passwordChanged = true;
+            tempPassword = null;
+            sessionStorage.setItem('loggedInUser', JSON.stringify(loggedInUser));
+            document.getElementById('force-password-modal').classList.add('hidden');
+            document.getElementById('force-new-password').value = '';
+            document.getElementById('force-new-password-confirm').value = '';
+            alert('비밀번호가 변경되었습니다. 환영합니다!');
+            showPage('TM-DB-Table');
+        } else {
+            alert('비밀번호 변경에 실패했습니다.');
+        }
+    }
+    window.saveForcePasswordChange = saveForcePasswordChange;
 
     // === 관리자 정보 변경 ===
     document.getElementById('admin-credential-form').addEventListener('submit', async (e) => {
