@@ -990,6 +990,9 @@
     // === 관리자 테이블 렌더링 ===
     async function renderAdminTable() {
         await loadUsers();
+        // 검색창 초기화
+        const searchInput = document.getElementById('user-search');
+        if (searchInput) searchInput.value = '';
         filterAdminUsers();
     }
     
@@ -1660,6 +1663,10 @@
         
         noMsg.classList.add('hidden');
         document.getElementById('admin-schedule-container').classList.remove('hidden');
+        
+        // 검색창 초기화
+        const searchInput = document.getElementById('schedule-search');
+        if (searchInput) searchInput.value = '';
         
         filterAdminSchedule();
     }
