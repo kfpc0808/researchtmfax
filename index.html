@@ -472,8 +472,16 @@
                             <h3 class="text-xl font-bold">📠 Fax 안내문</h3>
                             <button onclick="closeFaxModal()" class="text-white hover:text-amber-200 text-2xl font-bold">&times;</button>
                         </div>
-                        <div class="p-4" style="height: 70vh;">
-                            <iframe src="./fax.pdf" class="w-full h-full border rounded-lg"></iframe>
+                        <div class="px-4 pt-4 pb-2">
+                            <a href="./fax.pdf" target="_blank" class="block w-full py-3 bg-sky-600 text-white font-bold rounded-lg hover:bg-sky-700 text-center">📱 새창에서 보기 (확대 가능)</a>
+                        </div>
+                        <div class="px-4 pb-4 hidden md:block" style="height: 65vh;">
+                            <object data="./fax.pdf" type="application/pdf" class="w-full h-full border rounded-lg">
+                                <p class="text-center py-10">PDF를 표시할 수 없습니다.</p>
+                            </object>
+                        </div>
+                        <div class="px-4 pb-4 md:hidden text-center text-slate-500 text-sm">
+                            <p>위 버튼을 눌러 PDF를 확인하세요.<br>손가락으로 확대/축소가 가능합니다.</p>
                         </div>
                         <div class="px-6 pb-4">
                             <button onclick="closeFaxModal()" class="w-full py-3 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white font-bold rounded-xl transition-all">닫기</button>
