@@ -526,10 +526,19 @@
             <div class="bg-white rounded-xl shadow-lg mb-4">
                 <div class="p-4 border-b"><h2 class="text-lg font-semibold text-slate-800">📅 다음 주 전문위원 스케줄</h2></div>
                 <div class="p-4">
+                    <!-- 검색 및 선택삭제 -->
+                    <div class="flex flex-wrap gap-2 mb-4 items-center justify-between">
+                        <div class="flex gap-2 items-center">
+                            <input type="text" id="schedule-search" placeholder="전문위원 성명 검색" class="px-3 py-2 border rounded-lg text-sm w-48" onkeyup="if(event.key==='Enter') filterAdminSchedule()">
+                            <button onclick="filterAdminSchedule()" class="px-3 py-2 bg-slate-600 text-white text-sm rounded-lg hover:bg-slate-700">검색</button>
+                        </div>
+                        <button onclick="deleteSelectedSchedules()" class="px-3 py-2 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600">선택 삭제</button>
+                    </div>
                     <div id="admin-schedule-container" class="overflow-x-auto">
                         <table class="w-full text-sm text-left text-slate-600">
                             <thead class="text-xs text-slate-700 uppercase bg-slate-100">
                                 <tr>
+                                    <th class="px-4 py-3 text-center"><input type="checkbox" id="schedule-select-all" onclick="toggleAllSchedules(this)"></th>
                                     <th class="px-4 py-3">전문위원</th>
                                     <th class="px-4 py-3">신청일자</th>
                                     <th class="px-4 py-3">상태</th>
@@ -540,29 +549,51 @@
                             <tbody id="admin-schedule-body"></tbody>
                         </table>
                     </div>
+                    <!-- 스케줄 페이지네이션 -->
+                    <div id="schedule-pagination" class="flex justify-center items-center gap-2 mt-4"></div>
                     <p id="no-schedule-msg" class="text-center py-8 text-slate-500 hidden">신청된 스케줄이 없습니다.</p>
                 </div>
             </div>
 
             <div class="bg-white rounded-xl shadow-lg overflow-hidden">
                 <div class="p-4 border-b"><h2 class="text-lg font-semibold text-slate-800">회원 정보 현황</h2></div>
+                <div class="p-4">
+                    <!-- TM/Fax 필터 버튼 및 검색 -->
+                    <div class="flex flex-wrap gap-2 mb-4 items-center justify-between">
+                        <div class="flex gap-2 items-center">
+                            <button onclick="filterUsersByType('all')" id="user-filter-all" class="px-4 py-2 text-sm font-semibold rounded-lg bg-slate-800 text-white">전체</button>
+                            <button onclick="filterUsersByType('TM')" id="user-filter-tm" class="px-4 py-2 text-sm font-semibold rounded-lg bg-slate-200 text-slate-700 hover:bg-slate-300">TM</button>
+                            <button onclick="filterUsersByType('Fax')" id="user-filter-fax" class="px-4 py-2 text-sm font-semibold rounded-lg bg-slate-200 text-slate-700 hover:bg-slate-300">Fax</button>
+                        </div>
+                        <div class="flex gap-2 items-center">
+                            <input type="text" id="user-search" placeholder="성명 검색" class="px-3 py-2 border rounded-lg text-sm w-40" onkeyup="if(event.key==='Enter') filterAdminUsers()">
+                            <button onclick="filterAdminUsers()" class="px-3 py-2 bg-slate-600 text-white text-sm rounded-lg hover:bg-slate-700">검색</button>
+                        </div>
+                    </div>
+                </div>
                 <div class="w-full overflow-x-auto">
                     <table class="w-full text-sm text-left text-slate-600">
                         <thead class="text-xs text-slate-700 uppercase bg-slate-100">
                             <tr>
-                                <th class="px-4 py-3">구분</th>
-                                <th class="px-4 py-3">성명</th>
-                                <th class="px-4 py-3">전화번호</th>
-                                <th class="px-4 py-3">소속사</th>
-                                <th class="px-4 py-3">지역</th>
-                                <th class="px-4 py-3">제공빈도</th>
-                                <th class="px-4 py-3">멤버십</th>
-                                <th class="px-4 py-3 text-center">관리</th>
+                                <th class="px-3 py-3">구분</th>
+                                <th class="px-3 py-3">성명</th>
+                                <th class="px-3 py-3">전화번호</th>
+                                <th class="px-3 py-3">소속사</th>
+                                <th class="px-3 py-3">지역</th>
+                                <th class="px-3 py-3">멤버십</th>
+                                <th class="px-3 py-3">비번변경</th>
+                                <th class="px-3 py-3">TM</th>
+                                <th class="px-3 py-3">Fax</th>
+                                <th class="px-3 py-3">비고</th>
+                                <th class="px-3 py-3">안내</th>
+                                <th class="px-3 py-3 text-center">관리</th>
                             </tr>
                         </thead>
                         <tbody id="admin-table-body"></tbody>
                     </table>
                 </div>
+                <!-- 회원 페이지네이션 -->
+                <div id="user-pagination" class="flex justify-center items-center gap-2 p-4"></div>
             </div>
         </div>
     </div>
@@ -768,6 +799,20 @@
     let currentPage = 1;
     const companiesLimit = 10; // 한 화면에 10행 표시
     let currentFilter = {};
+    
+    // 회원 관리 관련 변수
+    let userCurrentPage = 1;
+    const userPageLimit = 10;
+    let userTypeFilter = 'all';
+    let userSearchKeyword = '';
+    let filteredUsers = [];
+    
+    // 스케줄 관리 관련 변수
+    let scheduleCurrentPage = 1;
+    const schedulePageLimit = 10;
+    let scheduleSearchKeyword = '';
+    let filteredSchedules = [];
+    let allSchedules = [];
 
     // === API 호출 ===
     const apiCache = {};
@@ -945,96 +990,196 @@
     // === 관리자 테이블 렌더링 ===
     async function renderAdminTable() {
         await loadUsers();
+        filterAdminUsers();
+    }
+    
+    function filterAdminUsers() {
+        userSearchKeyword = document.getElementById('user-search')?.value.trim().toLowerCase() || '';
+        
+        // 필터링 적용
+        filteredUsers = allUsers.filter(user => {
+            // TM/Fax 필터
+            if (userTypeFilter === 'TM' && !user.TM) return false;
+            if (userTypeFilter === 'Fax' && !user.Fax) return false;
+            
+            // 검색 필터
+            if (userSearchKeyword && !user.name.toLowerCase().includes(userSearchKeyword)) return false;
+            
+            return true;
+        });
+        
+        userCurrentPage = 1;
+        renderFilteredUsers();
+    }
+    window.filterAdminUsers = filterAdminUsers;
+    
+    function filterUsersByType(type) {
+        userTypeFilter = type;
+        
+        // 버튼 스타일 업데이트
+        document.getElementById('user-filter-all').className = 'px-4 py-2 text-sm font-semibold rounded-lg ' + (type === 'all' ? 'bg-slate-800 text-white' : 'bg-slate-200 text-slate-700 hover:bg-slate-300');
+        document.getElementById('user-filter-tm').className = 'px-4 py-2 text-sm font-semibold rounded-lg ' + (type === 'TM' ? 'bg-slate-800 text-white' : 'bg-slate-200 text-slate-700 hover:bg-slate-300');
+        document.getElementById('user-filter-fax').className = 'px-4 py-2 text-sm font-semibold rounded-lg ' + (type === 'Fax' ? 'bg-slate-800 text-white' : 'bg-slate-200 text-slate-700 hover:bg-slate-300');
+        
+        filterAdminUsers();
+    }
+    window.filterUsersByType = filterUsersByType;
+    
+    function renderFilteredUsers() {
         const tableBody = document.getElementById('admin-table-body');
         tableBody.innerHTML = '';
-        if (allUsers.length === 0) {
-            tableBody.innerHTML = `<tr><td colspan="8" class="text-center py-16 text-slate-500">등록된 회원이 없습니다.</td></tr>`;
+        
+        if (filteredUsers.length === 0) {
+            tableBody.innerHTML = `<tr><td colspan="12" class="text-center py-16 text-slate-500">등록된 회원이 없습니다.</td></tr>`;
+            document.getElementById('user-pagination').innerHTML = '';
             return;
         }
-        allUsers.forEach((member, index) => {
+        
+        // 페이지네이션 계산
+        const totalPages = Math.ceil(filteredUsers.length / userPageLimit);
+        const start = (userCurrentPage - 1) * userPageLimit;
+        const end = start + userPageLimit;
+        const pageUsers = filteredUsers.slice(start, end);
+        
+        pageUsers.forEach((member) => {
             const row = document.createElement('tr');
             row.className = 'bg-white border-b';
-            row.id = `user-row-${index}`;
-            row.innerHTML = getUserRowHtml(member, index);
+            row.id = `user-row-${member.originalIndex}`;
+            row.innerHTML = getUserRowHtml(member);
             tableBody.appendChild(row);
         });
+        
+        // 페이지네이션 렌더링
+        renderUserPagination(totalPages);
     }
+    
+    function renderUserPagination(totalPages) {
+        const container = document.getElementById('user-pagination');
+        if (totalPages <= 1) {
+            container.innerHTML = '';
+            return;
+        }
+        
+        let html = '';
+        html += `<button onclick="goUserPage(${userCurrentPage - 1})" class="px-3 py-1 rounded ${userCurrentPage === 1 ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-slate-200 hover:bg-slate-300'}" ${userCurrentPage === 1 ? 'disabled' : ''}>이전</button>`;
+        
+        for (let i = 1; i <= totalPages; i++) {
+            if (i === 1 || i === totalPages || (i >= userCurrentPage - 2 && i <= userCurrentPage + 2)) {
+                html += `<button onclick="goUserPage(${i})" class="px-3 py-1 rounded ${i === userCurrentPage ? 'bg-slate-800 text-white' : 'bg-slate-200 hover:bg-slate-300'}">${i}</button>`;
+            } else if (i === userCurrentPage - 3 || i === userCurrentPage + 3) {
+                html += `<span class="px-2">...</span>`;
+            }
+        }
+        
+        html += `<button onclick="goUserPage(${userCurrentPage + 1})" class="px-3 py-1 rounded ${userCurrentPage === totalPages ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-slate-200 hover:bg-slate-300'}" ${userCurrentPage === totalPages ? 'disabled' : ''}>다음</button>`;
+        
+        container.innerHTML = html;
+    }
+    
+    function goUserPage(page) {
+        const totalPages = Math.ceil(filteredUsers.length / userPageLimit);
+        if (page < 1 || page > totalPages) return;
+        userCurrentPage = page;
+        renderFilteredUsers();
+    }
+    window.goUserPage = goUserPage;
 
-    function getUserRowHtml(member, index) {
+    function getUserRowHtml(member) {
         return `
-            <td class="px-4 py-3 font-semibold">${member.role}</td>
-            <td class="px-4 py-3">${member.name}</td>
-            <td class="px-4 py-3">${member.phone}</td>
-            <td class="px-4 py-3">${member.company || ''}</td>
-            <td class="px-4 py-3">${member.region || ''}</td>
-            <td class="px-4 py-3">${member.frequency || ''}</td>
-            <td class="px-4 py-3">${member.Membership || ''}</td>
-            <td class="px-4 py-3 text-center">
+            <td class="px-3 py-3 font-semibold">${member.role || ''}</td>
+            <td class="px-3 py-3">${member.name || ''}</td>
+            <td class="px-3 py-3">${member.phone || ''}</td>
+            <td class="px-3 py-3">${member.company || ''}</td>
+            <td class="px-3 py-3">${member.region || ''}</td>
+            <td class="px-3 py-3">${member.Membership || ''}</td>
+            <td class="px-3 py-3">${member.passwordChanged ? '✅' : ''}</td>
+            <td class="px-3 py-3">${member.TM || ''}</td>
+            <td class="px-3 py-3">${member.Fax || ''}</td>
+            <td class="px-3 py-3">${member['비고'] || ''}</td>
+            <td class="px-3 py-3">${member['안내'] || ''}</td>
+            <td class="px-3 py-3 text-center">
                 <div class="flex justify-center items-center gap-2">
-                    <button onclick="editUser(${index})" class="font-semibold text-blue-600 hover:text-blue-800">수정</button>
-                    <button onclick="deleteUser(${index})" class="font-semibold text-red-500 hover:text-red-700">삭제</button>
+                    <button onclick="editUser(${member.originalIndex})" class="font-semibold text-blue-600 hover:text-blue-800">수정</button>
+                    <button onclick="deleteUser(${member.originalIndex})" class="font-semibold text-red-500 hover:text-red-700">삭제</button>
                 </div>
             </td>
         `;
     }
 
-    function getEditUserRowHtml(member, index) {
+    function getEditUserRowHtml(member) {
         return `
-            <td class="px-4 py-2">
-                <select name="role" class="w-full p-1 border rounded bg-slate-50 text-sm">
-                    <option value="TMer" ${member.role === 'TMer' ? 'selected' : ''}>TMer</option>
+            <td class="px-2 py-2">
+                <select name="role" class="w-full p-1 border rounded bg-slate-50 text-xs">
                     <option value="전문위원" ${member.role === '전문위원' ? 'selected' : ''}>전문위원</option>
+                    <option value="TMer" ${member.role === 'TMer' ? 'selected' : ''}>TMer</option>
                 </select>
             </td>
-            <td class="px-4 py-2"><input name="name" type="text" value="${member.name}" class="w-full p-1 border rounded bg-gray-200 text-sm" readonly></td>
-            <td class="px-4 py-2"><input name="phone" type="text" value="${member.phone}" class="w-full p-1 border rounded bg-slate-50 text-sm"></td>
-            <td class="px-4 py-2"><input name="company" type="text" value="${member.company || ''}" class="w-full p-1 border rounded bg-slate-50 text-sm"></td>
-            <td class="px-4 py-2"><input name="region" type="text" value="${member.region || ''}" class="w-full p-1 border rounded bg-slate-50 text-sm" placeholder="서울, 경기"></td>
-            <td class="px-4 py-2"><input name="frequency" type="text" value="${member.frequency || ''}" class="w-full p-1 border rounded bg-slate-50 text-sm" placeholder="주1회"></td>
-            <td class="px-4 py-2"><input name="Membership" type="text" value="${member.Membership || ''}" class="w-full p-1 border rounded bg-slate-50 text-sm" placeholder="Branch"></td>
-            <td class="px-4 py-2 text-center">
-                <div class="flex justify-center items-center gap-2">
-                    <button onclick="saveUser(${index})" class="font-semibold text-green-600 hover:text-green-800">저장</button>
-                    <button onclick="renderAdminTable()" class="font-semibold text-gray-600 hover:text-gray-800">취소</button>
+            <td class="px-2 py-2"><input name="name" type="text" value="${member.name || ''}" class="w-full p-1 border rounded bg-gray-200 text-xs" readonly></td>
+            <td class="px-2 py-2"><input name="phone" type="text" value="${member.phone || ''}" class="w-full p-1 border rounded bg-slate-50 text-xs"></td>
+            <td class="px-2 py-2"><input name="company" type="text" value="${member.company || ''}" class="w-full p-1 border rounded bg-slate-50 text-xs"></td>
+            <td class="px-2 py-2"><input name="region" type="text" value="${member.region || ''}" class="w-full p-1 border rounded bg-slate-50 text-xs"></td>
+            <td class="px-2 py-2"><input name="Membership" type="text" value="${member.Membership || ''}" class="w-full p-1 border rounded bg-slate-50 text-xs"></td>
+            <td class="px-2 py-2">
+                <select name="passwordChanged" class="w-full p-1 border rounded bg-slate-50 text-xs">
+                    <option value="" ${!member.passwordChanged ? 'selected' : ''}></option>
+                    <option value="TRUE" ${member.passwordChanged === 'TRUE' || member.passwordChanged === true ? 'selected' : ''}>TRUE</option>
+                </select>
+            </td>
+            <td class="px-2 py-2"><input name="TM" type="text" value="${member.TM || ''}" class="w-full p-1 border rounded bg-slate-50 text-xs"></td>
+            <td class="px-2 py-2"><input name="Fax" type="text" value="${member.Fax || ''}" class="w-full p-1 border rounded bg-slate-50 text-xs"></td>
+            <td class="px-2 py-2"><input name="비고" type="text" value="${member['비고'] || ''}" class="w-full p-1 border rounded bg-slate-50 text-xs"></td>
+            <td class="px-2 py-2"><input name="안내" type="text" value="${member['안내'] || ''}" class="w-full p-1 border rounded bg-slate-50 text-xs"></td>
+            <td class="px-2 py-2 text-center">
+                <div class="flex justify-center items-center gap-1">
+                    <button onclick="saveUser(${member.originalIndex})" class="text-xs font-semibold text-green-600 hover:text-green-800">저장</button>
+                    <button onclick="renderAdminTable()" class="text-xs font-semibold text-gray-600 hover:text-gray-800">취소</button>
                 </div>
             </td>
         `;
     }
 
-    function editUser(index) {
-        const row = document.getElementById(`user-row-${index}`);
-        row.innerHTML = getEditUserRowHtml(allUsers[index], index);
+    function editUser(originalIndex) {
+        const member = allUsers.find(u => u.originalIndex === originalIndex);
+        if (!member) return;
+        const row = document.getElementById(`user-row-${originalIndex}`);
+        row.innerHTML = getEditUserRowHtml(member);
     }
     window.editUser = editUser;
 
-    async function saveUser(index) {
-        const row = document.getElementById(`user-row-${index}`);
-        const originalUser = allUsers[index];
+    async function saveUser(originalIndex) {
+        const row = document.getElementById(`user-row-${originalIndex}`);
+        const originalUser = allUsers.find(u => u.originalIndex === originalIndex);
         const updatedUserData = {
             role: row.querySelector('[name="role"]').value,
             name: row.querySelector('[name="name"]').value,
             phone: row.querySelector('[name="phone"]').value,
             company: row.querySelector('[name="company"]').value,
             region: row.querySelector('[name="region"]').value,
-            frequency: row.querySelector('[name="frequency"]').value,
-            Membership: row.querySelector('[name="Membership"]').value
+            Membership: row.querySelector('[name="Membership"]').value,
+            passwordChanged: row.querySelector('[name="passwordChanged"]').value,
+            TM: row.querySelector('[name="TM"]').value,
+            Fax: row.querySelector('[name="Fax"]').value,
+            '비고': row.querySelector('[name="비고"]').value,
+            '안내': row.querySelector('[name="안내"]').value
         };
         const result = await callAPI('update', 'Users', { data: updatedUserData, rowIndex: originalUser.originalIndex });
         if (result && result.success) {
             alert('회원 정보가 수정되었습니다.');
             allUsers = [];
+            delete apiCache['Users'];
             await renderAdminTable();
         }
     }
     window.saveUser = saveUser;
 
-    async function deleteUser(index) {
-        const userToDelete = allUsers[index];
+    async function deleteUser(originalIndex) {
+        const userToDelete = allUsers.find(u => u.originalIndex === originalIndex);
         if (confirm(`'${userToDelete.name}' 회원을 정말로 삭제하시겠습니까?`)) {
             const result = await callAPI('delete', 'Users', { rowIndex: userToDelete.originalIndex });
             if (result && result.success) {
                 alert('삭제되었습니다.');
                 allUsers = [];
+                delete apiCache['Users'];
                 await renderAdminTable();
             }
         }
@@ -1503,18 +1648,57 @@
         const noMsg = document.getElementById('no-schedule-msg');
         
         const schedules = await callAPI('readAll', 'Schedule');
+        allSchedules = schedules || [];
         
-        if (!schedules || schedules.length === 0) {
+        if (allSchedules.length === 0) {
             tbody.innerHTML = '';
             noMsg.classList.remove('hidden');
             document.getElementById('admin-schedule-container').classList.add('hidden');
+            document.getElementById('schedule-pagination').innerHTML = '';
             return;
         }
         
         noMsg.classList.add('hidden');
         document.getElementById('admin-schedule-container').classList.remove('hidden');
         
-        tbody.innerHTML = schedules.map((s, idx) => {
+        filterAdminSchedule();
+    }
+    window.renderAdminSchedule = renderAdminSchedule;
+    
+    function filterAdminSchedule() {
+        scheduleSearchKeyword = document.getElementById('schedule-search')?.value.trim().toLowerCase() || '';
+        
+        // 검색 필터 적용
+        filteredSchedules = allSchedules.filter(s => {
+            if (scheduleSearchKeyword && !s['전문위원성명'].toLowerCase().includes(scheduleSearchKeyword)) return false;
+            return true;
+        });
+        
+        scheduleCurrentPage = 1;
+        renderFilteredSchedules();
+    }
+    window.filterAdminSchedule = filterAdminSchedule;
+    
+    function renderFilteredSchedules() {
+        const tbody = document.getElementById('admin-schedule-body');
+        const noMsg = document.getElementById('no-schedule-msg');
+        
+        if (filteredSchedules.length === 0) {
+            tbody.innerHTML = '';
+            noMsg.classList.remove('hidden');
+            document.getElementById('schedule-pagination').innerHTML = '';
+            return;
+        }
+        
+        noMsg.classList.add('hidden');
+        
+        // 페이지네이션 계산
+        const totalPages = Math.ceil(filteredSchedules.length / schedulePageLimit);
+        const start = (scheduleCurrentPage - 1) * schedulePageLimit;
+        const end = start + schedulePageLimit;
+        const pageSchedules = filteredSchedules.slice(start, end);
+        
+        tbody.innerHTML = pageSchedules.map((s) => {
             const status = s['상태'] || '신청';
             let statusBadge = '<span class="px-2 py-1 rounded-full text-xs bg-yellow-100 text-yellow-800">⏳ 신청</span>';
             if (status === '확정') {
@@ -1527,6 +1711,7 @@
             
             return `
                 <tr class="bg-white border-b">
+                    <td class="px-4 py-3 text-center"><input type="checkbox" class="schedule-checkbox" value="${s.originalIndex}"></td>
                     <td class="px-4 py-3 font-semibold">${s['전문위원성명']}</td>
                     <td class="px-4 py-3">${s['신청일자']}</td>
                     <td class="px-4 py-3">${statusBadge}</td>
@@ -1540,8 +1725,70 @@
                 </tr>
             `;
         }).join('');
+        
+        // 페이지네이션 렌더링
+        renderSchedulePagination(totalPages);
     }
-    window.renderAdminSchedule = renderAdminSchedule;
+    
+    function renderSchedulePagination(totalPages) {
+        const container = document.getElementById('schedule-pagination');
+        if (totalPages <= 1) {
+            container.innerHTML = '';
+            return;
+        }
+        
+        let html = '';
+        html += `<button onclick="goSchedulePage(${scheduleCurrentPage - 1})" class="px-3 py-1 rounded ${scheduleCurrentPage === 1 ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-slate-200 hover:bg-slate-300'}" ${scheduleCurrentPage === 1 ? 'disabled' : ''}>이전</button>`;
+        
+        for (let i = 1; i <= totalPages; i++) {
+            if (i === 1 || i === totalPages || (i >= scheduleCurrentPage - 2 && i <= scheduleCurrentPage + 2)) {
+                html += `<button onclick="goSchedulePage(${i})" class="px-3 py-1 rounded ${i === scheduleCurrentPage ? 'bg-slate-800 text-white' : 'bg-slate-200 hover:bg-slate-300'}">${i}</button>`;
+            } else if (i === scheduleCurrentPage - 3 || i === scheduleCurrentPage + 3) {
+                html += `<span class="px-2">...</span>`;
+            }
+        }
+        
+        html += `<button onclick="goSchedulePage(${scheduleCurrentPage + 1})" class="px-3 py-1 rounded ${scheduleCurrentPage === totalPages ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-slate-200 hover:bg-slate-300'}" ${scheduleCurrentPage === totalPages ? 'disabled' : ''}>다음</button>`;
+        
+        container.innerHTML = html;
+    }
+    
+    function goSchedulePage(page) {
+        const totalPages = Math.ceil(filteredSchedules.length / schedulePageLimit);
+        if (page < 1 || page > totalPages) return;
+        scheduleCurrentPage = page;
+        renderFilteredSchedules();
+    }
+    window.goSchedulePage = goSchedulePage;
+    
+    function toggleAllSchedules(checkbox) {
+        document.querySelectorAll('.schedule-checkbox').forEach(cb => cb.checked = checkbox.checked);
+    }
+    window.toggleAllSchedules = toggleAllSchedules;
+    
+    async function deleteSelectedSchedules() {
+        const checkboxes = document.querySelectorAll('.schedule-checkbox:checked');
+        if (checkboxes.length === 0) {
+            alert('삭제할 스케줄을 선택해주세요.');
+            return;
+        }
+        
+        if (!confirm(`선택한 ${checkboxes.length}개의 스케줄을 삭제하시겠습니까?`)) return;
+        
+        // 삭제할 인덱스 수집 (내림차순 정렬 - 아래부터 삭제해야 인덱스 꼬임 방지)
+        const indices = Array.from(checkboxes).map(cb => parseInt(cb.value)).sort((a, b) => b - a);
+        
+        for (const rowIndex of indices) {
+            await callAPI('delete', 'Schedule', { rowIndex });
+        }
+        
+        alert('선택한 스케줄이 삭제되었습니다.');
+        document.getElementById('schedule-select-all').checked = false;
+        delete apiCache['Schedule'];
+        allSchedules = [];
+        await renderAdminSchedule();
+    }
+    window.deleteSelectedSchedules = deleteSelectedSchedules;
 
     async function updateScheduleStatus(rowIndex, newStatus) {
         // 기존 데이터 가져오기
@@ -1569,6 +1816,8 @@
         
         if (result && result.success) {
             alert(`${newStatus} 처리되었습니다.`);
+            delete apiCache['Schedule'];
+            allSchedules = [];
             await renderAdminSchedule();
         }
     }
