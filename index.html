@@ -529,7 +529,7 @@
                     <!-- 검색 및 선택삭제 -->
                     <div class="flex flex-wrap gap-2 mb-4 items-center justify-between">
                         <div class="flex gap-2 items-center">
-                            <input type="text" id="schedule-search" placeholder="전문위원 성명 검색" class="px-3 py-2 border rounded-lg text-sm w-48" onkeyup="if(event.key==='Enter') filterAdminSchedule()">
+                            <input type="text" id="schedule-search" placeholder="전문위원 성명 검색" class="px-3 py-2 border rounded-lg text-sm w-48" autocomplete="off" onkeyup="if(event.key==='Enter') filterAdminSchedule()">
                             <button onclick="filterAdminSchedule()" class="px-3 py-2 bg-slate-600 text-white text-sm rounded-lg hover:bg-slate-700">검색</button>
                         </div>
                         <button onclick="deleteSelectedSchedules()" class="px-3 py-2 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600">선택 삭제</button>
@@ -566,7 +566,7 @@
                             <button onclick="filterUsersByType('Fax')" id="user-filter-fax" class="px-4 py-2 text-sm font-semibold rounded-lg bg-slate-200 text-slate-700 hover:bg-slate-300">Fax</button>
                         </div>
                         <div class="flex gap-2 items-center">
-                            <input type="text" id="user-search" placeholder="성명 검색" class="px-3 py-2 border rounded-lg text-sm w-40" onkeyup="if(event.key==='Enter') filterAdminUsers()">
+                            <input type="text" id="user-search" placeholder="성명 검색" class="px-3 py-2 border rounded-lg text-sm w-40" autocomplete="off" onkeyup="if(event.key==='Enter') filterAdminUsers()">
                             <button onclick="filterAdminUsers()" class="px-3 py-2 bg-slate-600 text-white text-sm rounded-lg hover:bg-slate-700">검색</button>
                         </div>
                     </div>
