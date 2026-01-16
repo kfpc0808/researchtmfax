@@ -107,6 +107,10 @@
                     <button type="button" onclick="showFeaturesModal()" class="text-center py-3 px-2 text-sm font-semibold rounded-lg text-white bg-sky-600 hover:bg-sky-700">주요기능</button>
                     <button type="button" onclick="showPriceTableModal()" class="text-center py-3 px-2 text-sm font-semibold rounded-lg text-white bg-teal-600 hover:bg-teal-700">가격표</button>
                 </div>
+                <div class="pt-3 grid grid-cols-2 gap-3">
+                    <button type="button" onclick="showFaxModal()" class="text-center py-3 px-2 text-sm font-semibold rounded-lg text-white bg-amber-600 hover:bg-amber-700">Fax안내문</button>
+                    <button type="button" onclick="showCallHelpModal()" class="text-center py-3 px-2 text-sm font-semibold rounded-lg text-white bg-rose-600 hover:bg-rose-700">Call도움메세지</button>
+                </div>
                 
                 <!-- 주요기능 모달 -->
                 <div id="features-modal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
@@ -461,6 +465,88 @@
                     </div>
                 </div>
                 
+                <!-- Fax안내문 모달 -->
+                <div id="fax-modal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
+                    <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+                        <div class="bg-gradient-to-r from-amber-500 to-orange-600 text-white px-6 py-4 flex justify-between items-center">
+                            <h3 class="text-xl font-bold">📠 Fax 안내문</h3>
+                            <button onclick="closeFaxModal()" class="text-white hover:text-amber-200 text-2xl font-bold">&times;</button>
+                        </div>
+                        <div class="p-4" style="height: 70vh;">
+                            <iframe src="./fax.pdf" class="w-full h-full border rounded-lg"></iframe>
+                        </div>
+                        <div class="px-6 pb-4">
+                            <button onclick="closeFaxModal()" class="w-full py-3 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white font-bold rounded-xl transition-all">닫기</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Call도움메세지 모달 -->
+                <div id="callhelp-modal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
+                    <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
+                        <div class="bg-gradient-to-r from-rose-500 to-pink-600 text-white px-6 py-4">
+                            <h3 class="text-xl font-bold text-center">📞 Fax전송 후 Call 진행시 도움되는 내용들</h3>
+                        </div>
+                        <div class="p-5 overflow-y-auto max-h-[65vh] space-y-4">
+                            <div class="bg-gradient-to-r from-rose-50 to-pink-50 rounded-xl p-4 border-l-4 border-rose-500">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <span class="text-lg">♣</span>
+                                    <span class="font-bold text-rose-700">나의 소개</span>
+                                </div>
+                                <p class="text-slate-700 pl-6">기업경영연구소의 컨설팅 전문위원입니다.</p>
+                            </div>
+                            <div class="bg-gradient-to-r from-amber-50 to-yellow-50 rounded-xl p-4 border-l-4 border-amber-500">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <span class="text-lg">♣</span>
+                                    <span class="font-bold text-amber-700">아래 내용은 통화에 도움됩니다.</span>
+                                </div>
+                                <p class="text-slate-600 pl-6 text-sm italic">➜ 아래 내용을 여러 번 읽고 숙지하시면 도움이 됩니다.(반드시 소리내서 한 5회 정도?)</p>
+                            </div>
+                            <div class="space-y-3">
+                                <div class="bg-slate-50 rounded-lg p-3 border border-slate-200">
+                                    <div class="flex gap-3"><span class="flex-shrink-0 w-7 h-7 bg-rose-500 text-white rounded-full flex items-center justify-center text-sm font-bold">1</span><p class="text-slate-700">일반직원(여직원 등)과 길게 얘기하지 않습니다.</p></div>
+                                </div>
+                                <div class="bg-slate-50 rounded-lg p-3 border border-slate-200">
+                                    <div class="flex gap-3"><span class="flex-shrink-0 w-7 h-7 bg-rose-500 text-white rounded-full flex items-center justify-center text-sm font-bold">2</span><div><p class="text-slate-700">일반직원과는 Fax 수신여부 확인만 합니다.</p><p class="text-rose-600 text-sm mt-1 pl-2 border-l-2 border-rose-300">☞ 오전에 저희 연구소에서 Fax를 하나 보내드렸는데 혹시 받으셨나요?</p></div></div>
+                                </div>
+                                <div class="bg-slate-50 rounded-lg p-3 border border-slate-200">
+                                    <div class="flex gap-3"><span class="flex-shrink-0 w-7 h-7 bg-rose-500 text-white rounded-full flex items-center justify-center text-sm font-bold">3</span><div><p class="text-slate-700">일반직원이 Fax내용에 대해 문의하는 경우 간단하게 답변합니다.</p><p class="text-rose-600 text-sm mt-1 pl-2 border-l-2 border-rose-300">☞ 국내 연구소 보유기업 중에서 홈페이지가 없는 기업만을 대상으로 보낸 것이고, 안에 구축비 1,000만원 면제 등 특별한 프로모션 내용들이 있어서 대표님께서 보시고 판단하시면 좋겠다. 아마도 좋은 기회가 될 것입니다.</p></div></div>
+                                </div>
+                                <div class="bg-slate-50 rounded-lg p-3 border border-slate-200">
+                                    <div class="flex gap-3"><span class="flex-shrink-0 w-7 h-7 bg-rose-500 text-white rounded-full flex items-center justify-center text-sm font-bold">4</span><p class="text-slate-700">일반직원에게는 대표님 혹은 연구소 책임자에게 Fax안내문 전달을 요청하면서 연결 부탁합니다.</p></div>
+                                </div>
+                                <div class="bg-slate-50 rounded-lg p-3 border border-slate-200">
+                                    <div class="flex gap-3"><span class="flex-shrink-0 w-7 h-7 bg-rose-500 text-white rounded-full flex items-center justify-center text-sm font-bold">5</span><p class="text-slate-700">일반적으로 전화 받는 직원의 지근거리에 Fax가 있어서 전송 후 2~3시간이면 Fax안내문을 거의 확인했을 확률이 높습니다.</p></div>
+                                </div>
+                                <div class="bg-amber-50 rounded-lg p-3 border border-amber-200">
+                                    <div class="flex gap-3"><span class="flex-shrink-0 w-7 h-7 bg-amber-500 text-white rounded-full flex items-center justify-center text-sm font-bold">6</span><p class="text-slate-700"><strong class="text-amber-700">Fax는 당일 오전 11시에 전송됩니다. Call은 오후 1시~2시 사이에 시작합니다.</strong></p></div>
+                                </div>
+                                <div class="bg-slate-50 rounded-lg p-3 border border-slate-200">
+                                    <div class="flex gap-3"><span class="flex-shrink-0 w-7 h-7 bg-rose-500 text-white rounded-full flex items-center justify-center text-sm font-bold">7</span><p class="text-slate-700">대표와의 통화시 홈페이지 및 탑재된 시스템에 대하여 간략한 특징만 언급합니다.(관심 여부만 체크)</p></div>
+                                </div>
+                                <div class="bg-emerald-50 rounded-lg p-3 border border-emerald-200">
+                                    <div class="flex gap-3"><span class="flex-shrink-0 w-7 h-7 bg-emerald-500 text-white rounded-full flex items-center justify-center text-sm font-bold">8</span><p class="text-slate-700">대표가 홈페이지와 추가 시스템에 조금 관심을 보이면 <strong class="text-emerald-700">시스템구축비 1,000만원 면제, 초기셋팅비 100만원 전액면제, 이용전기간 웹호스팅비 전액 본사부담</strong> 등.. 홈페이지를 장만하실 수 있는 아주 좋은 기회라는 것을 어필합니다.</p></div>
+                                </div>
+                                <div class="bg-emerald-50 rounded-lg p-3 border border-emerald-200">
+                                    <div class="flex gap-3"><span class="flex-shrink-0 w-7 h-7 bg-emerald-500 text-white rounded-full flex items-center justify-center text-sm font-bold">9</span><p class="text-slate-700">이러한 큰 혜택은 본사에서 시스템 런칭기념으로 <strong class="text-emerald-700">연구소보유기업 중 홈페이지가 없는 기업들에 한정</strong>해서 진행하는 것임을 강조합니다.</p></div>
+                                </div>
+                                <div class="bg-sky-50 rounded-lg p-3 border border-sky-200">
+                                    <div class="flex gap-3"><span class="flex-shrink-0 w-7 h-7 bg-sky-500 text-white rounded-full flex items-center justify-center text-sm font-bold">10</span><p class="text-slate-700">관심을 보이는 대표에게는 바로 <strong class="text-sky-700">본사의 책임연구원(박신제 본부장)</strong> 통해서 연락한 번 드려서 상세하게 설명 드릴 수 있도록 하겠다.고 얘기하면서 <strong class="text-sky-700">대표성명과 연락처를 바로 요청</strong>합니다.</p></div>
+                                </div>
+                                <div class="bg-sky-50 rounded-lg p-3 border border-sky-200">
+                                    <div class="flex gap-3"><span class="flex-shrink-0 w-7 h-7 bg-sky-500 text-white rounded-full flex items-center justify-center text-sm font-bold">11</span><p class="text-slate-700">10번 항목을 얘기하면서 <strong class="text-sky-700">아마 설명을 들으시면 회사 운영에 큰 도움이 되실 것</strong>이라고 첨언합니다.</p></div>
+                                </div>
+                                <div class="bg-violet-50 rounded-lg p-3 border border-violet-200">
+                                    <div class="flex gap-3"><span class="flex-shrink-0 w-7 h-7 bg-violet-500 text-white rounded-full flex items-center justify-center text-sm font-bold">12</span><p class="text-slate-700">자료나 제안서 등 요청을 하는 경우에도 단순히 홈페이지가 아니구요.. 대표님께서 생각하시는 것 보다 상당히 다양한 시스템들이 장착되어 있어서 <strong class="text-violet-700">본사의 책임연구원 통해서 설명을 들으시고 난 후 받아보시면 많이 도움되실 것</strong>이라고 얘기하면서 본사 담당자와의 설명 듣는 시간을 요청합니다.</p></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="px-5 py-4 bg-slate-50 border-t">
+                            <button onclick="closeCallHelpModal()" class="w-full py-3 bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-700 hover:to-pink-700 text-white font-bold rounded-xl transition-all">닫기</button>
+                        </div>
+                    </div>
+                </div>
+                
                 <script>
                     function showProcessModal() {
                         document.getElementById('process-modal').classList.remove('hidden');
@@ -480,6 +566,18 @@
                     function closePriceTableModal() {
                         document.getElementById('price-table-modal').classList.add('hidden');
                     }
+                    function showFaxModal() {
+                        document.getElementById('fax-modal').classList.remove('hidden');
+                    }
+                    function closeFaxModal() {
+                        document.getElementById('fax-modal').classList.add('hidden');
+                    }
+                    function showCallHelpModal() {
+                        document.getElementById('callhelp-modal').classList.remove('hidden');
+                    }
+                    function closeCallHelpModal() {
+                        document.getElementById('callhelp-modal').classList.add('hidden');
+                    }
                     document.addEventListener('DOMContentLoaded', function() {
                         document.getElementById('price-table-modal')?.addEventListener('click', function(e) {
                             if (e.target === this) closePriceTableModal();
@@ -489,6 +587,12 @@
                         });
                         document.getElementById('process-modal')?.addEventListener('click', function(e) {
                             if (e.target === this) closeProcessModal();
+                        });
+                        document.getElementById('fax-modal')?.addEventListener('click', function(e) {
+                            if (e.target === this) closeFaxModal();
+                        });
+                        document.getElementById('callhelp-modal')?.addEventListener('click', function(e) {
+                            if (e.target === this) closeCallHelpModal();
                         });
                     });
                 </script>
