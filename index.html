@@ -645,9 +645,9 @@
                             <thead class="text-xs text-slate-700 uppercase bg-slate-100">
                                 <tr>
                                     <th class="px-4 py-3 text-center"><input type="checkbox" id="schedule-select-all" onclick="toggleAllSchedules(this)"></th>
-                                    <th class="px-4 py-3">전문위원</th>
+                                    <th class="px-4 py-3 cursor-pointer hover:bg-slate-200" onclick="sortSchedule('name')">전문위원 <span id="sort-name-icon">↕</span></th>
                                     <th class="px-4 py-3">지역</th>
-                                    <th class="px-4 py-3">신청일자</th>
+                                    <th class="px-4 py-3 cursor-pointer hover:bg-slate-200" onclick="sortSchedule('date')">신청일자 <span id="sort-date-icon">↕</span></th>
                                     <th class="px-4 py-3">상태</th>
                                     <th class="px-4 py-3">처리일시</th>
                                     <th class="px-4 py-3 text-center">관리</th>
@@ -920,6 +920,8 @@
     let scheduleSearchKeyword = '';
     let filteredSchedules = [];
     let allSchedules = [];
+    let scheduleSortKey = '';  // 정렬 기준: 'name' 또는 'date'
+    let scheduleSortOrder = 'asc';  // 정렬 순서: 'asc' 또는 'desc'
 
     // === API 호출 ===
     const apiCache = {};
@@ -1796,6 +1798,30 @@
     }
     window.filterAdminSchedule = filterAdminSchedule;
     
+    function sortSchedule(key) {
+        // 같은 키로 다시 클릭하면 순서 반전
+        if (scheduleSortKey === key) {
+            scheduleSortOrder = scheduleSortOrder === 'asc' ? 'desc' : 'asc';
+        } else {
+            scheduleSortKey = key;
+            scheduleSortOrder = 'asc';
+        }
+        
+        // 아이콘 업데이트
+        document.getElementById('sort-name-icon').textContent = '↕';
+        document.getElementById('sort-date-icon').textContent = '↕';
+        
+        if (key === 'name') {
+            document.getElementById('sort-name-icon').textContent = scheduleSortOrder === 'asc' ? '↑' : '↓';
+        } else if (key === 'date') {
+            document.getElementById('sort-date-icon').textContent = scheduleSortOrder === 'asc' ? '↑' : '↓';
+        }
+        
+        scheduleCurrentPage = 1;
+        renderFilteredSchedules();
+    }
+    window.sortSchedule = sortSchedule;
+    
     function renderFilteredSchedules() {
         const tbody = document.getElementById('admin-schedule-body');
         const noMsg = document.getElementById('no-schedule-msg');
@@ -1808,6 +1834,24 @@
         }
         
         noMsg.classList.add('hidden');
+        
+        // 정렬 적용
+        if (scheduleSortKey) {
+            filteredSchedules.sort((a, b) => {
+                let valA, valB;
+                if (scheduleSortKey === 'name') {
+                    valA = a['전문위원성명'] || '';
+                    valB = b['전문위원성명'] || '';
+                } else if (scheduleSortKey === 'date') {
+                    valA = a['신청일자'] || '';
+                    valB = b['신청일자'] || '';
+                }
+                
+                if (valA < valB) return scheduleSortOrder === 'asc' ? -1 : 1;
+                if (valA > valB) return scheduleSortOrder === 'asc' ? 1 : -1;
+                return 0;
+            });
+        }
         
         // 페이지네이션 계산
         const totalPages = Math.ceil(filteredSchedules.length / schedulePageLimit);
