@@ -646,6 +646,7 @@
                                 <tr>
                                     <th class="px-4 py-3 text-center"><input type="checkbox" id="schedule-select-all" onclick="toggleAllSchedules(this)"></th>
                                     <th class="px-4 py-3">전문위원</th>
+                                    <th class="px-4 py-3">지역</th>
                                     <th class="px-4 py-3">신청일자</th>
                                     <th class="px-4 py-3">상태</th>
                                     <th class="px-4 py-3">처리일시</th>
@@ -1756,6 +1757,9 @@
         const tbody = document.getElementById('admin-schedule-body');
         const noMsg = document.getElementById('no-schedule-msg');
         
+        // 회원 정보도 로드 (지역 표시용)
+        await loadUsers();
+        
         const schedules = await callAPI('readAll', 'Schedule');
         allSchedules = schedules || [];
         
@@ -1822,10 +1826,15 @@
             
             const showButtons = status === '신청';
             
+            // 전문위원 이름으로 지역 찾기
+            const user = allUsers.find(u => u.name === s['전문위원성명']);
+            const region = user ? (user.region || '') : '';
+            
             return `
                 <tr class="bg-white border-b">
                     <td class="px-4 py-3 text-center"><input type="checkbox" class="schedule-checkbox" value="${s.originalIndex}"></td>
                     <td class="px-4 py-3 font-semibold">${s['전문위원성명']}</td>
+                    <td class="px-4 py-3 text-sm text-slate-600">${region}</td>
                     <td class="px-4 py-3">${s['신청일자']}</td>
                     <td class="px-4 py-3">${statusBadge}</td>
                     <td class="px-4 py-3 text-sm text-slate-500">${s['처리일시'] || '-'}</td>
