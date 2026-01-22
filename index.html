@@ -775,8 +775,9 @@
                                 <th class="px-3 py-2 min-w-[200px]">통화내용</th>
                                 <th class="px-3 py-2 min-w-[100px]">본사상담요청</th>
                                 <th class="px-3 py-2 min-w-[100px]">홈피안내일</th>
-                                <!-- 본사 입력항목 (3개) -->
+                                <!-- 본사 입력항목 (4개) -->
                                 <th class="px-3 py-2 min-w-[100px]">상담요청확인</th>
+                                <th class="px-3 py-2 min-w-[200px]">본사상담내용</th>
                                 <th class="px-3 py-2 min-w-[150px]">홈페이지url</th>
                                 <th class="px-3 py-2 min-w-[200px]">본사메모</th>
                             </tr>
@@ -878,6 +879,10 @@
                                     <option value=""></option>
                                     <option value="확인함">확인함</option>
                                 </select>
+                            </div>
+                            <div class="lg:col-span-2">
+                                <label class="font-semibold flex items-center">본사상담내용</label>
+                                <textarea name="본사상담내용" rows="2" class="w-full p-2 mt-1 border rounded" placeholder="회사담당자와 소통한 내용을 기록하세요"></textarea>
                             </div>
                             <div>
                                 <label class="font-semibold flex items-center">홈페이지url</label>
@@ -1362,7 +1367,7 @@
         // 표시할 컬럼
         const headers = [
             '기업명', '업종', '기업규모', '회사주소', '연구소주소', '구분', '회사Tel', '회사Fax', '대표자명', '담당 전문위원',
-            '콜일자', '통화대상자', '직함', '통화내용_전문위원', '본사상담요청', '홈페이지안내일자', '상담요청확인', '홈페이지url',
+            '콜일자', '통화대상자', '직함', '통화내용_전문위원', '본사상담요청', '홈페이지안내일자', '상담요청확인', '본사상담내용', '홈페이지url',
             '본사담당자메모'
         ];
 
