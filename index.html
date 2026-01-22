@@ -776,10 +776,10 @@
                                 <th class="px-3 py-2 min-w-[100px]">본사상담요청</th>
                                 <th class="px-3 py-2 min-w-[100px]">홈피안내일</th>
                                 <!-- 본사 입력항목 (4개) -->
-                                <th class="px-3 py-2 min-w-[100px]">상담요청확인</th>
-                                <th class="px-3 py-2 min-w-[200px]">본사상담내용</th>
-                                <th class="px-3 py-2 min-w-[150px]">홈페이지url</th>
-                                <th class="px-3 py-2 min-w-[200px]">본사메모</th>
+                                <th class="px-3 py-2 min-w-[100px] bg-amber-50">상담요청확인</th>
+                                <th class="px-3 py-2 min-w-[200px] bg-amber-50">본사상담내용</th>
+                                <th class="px-3 py-2 min-w-[150px] bg-amber-50">홈페이지url</th>
+                                <th class="px-3 py-2 min-w-[200px] bg-amber-50">본사메모</th>
                             </tr>
                         </thead>
                         <tbody id="db-table-body"></tbody>
@@ -1384,7 +1384,10 @@
                 if (typeof cellValue === 'string' && cellValue.length > 30) {
                     cellValue = cellValue.substring(0, 30) + '...';
                 }
-                rowHtml += `<td class="px-3 py-2 whitespace-nowrap">${cellValue}</td>`;
+                // 본사 입력항목 배경색
+                const hqFields = ['상담요청확인', '본사상담내용', '홈페이지url', '본사담당자메모'];
+                const bgClass = hqFields.includes(header) ? 'bg-amber-50' : '';
+                rowHtml += `<td class="px-3 py-2 whitespace-nowrap ${bgClass}">${cellValue}</td>`;
             });
             
             row.innerHTML = rowHtml;
