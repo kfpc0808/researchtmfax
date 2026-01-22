@@ -775,7 +775,8 @@
                                 <th class="px-3 py-2 min-w-[200px]">통화내용</th>
                                 <th class="px-3 py-2 min-w-[100px]">본사상담요청</th>
                                 <th class="px-3 py-2 min-w-[100px]">홈피안내일</th>
-                                <!-- 본사 입력항목 (2개) -->
+                                <!-- 본사 입력항목 (3개) -->
+                                <th class="px-3 py-2 min-w-[100px]">상담요청확인</th>
                                 <th class="px-3 py-2 min-w-[150px]">홈페이지url</th>
                                 <th class="px-3 py-2 min-w-[200px]">본사메모</th>
                             </tr>
@@ -871,6 +872,13 @@
                         <!-- 본사 입력항목 -->
                         <fieldset id="hq-fieldset" class="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-6">
                             <legend class="lg:col-span-3 font-bold text-lg text-amber-800 border-b-2 border-amber-200 pb-2 mb-4 mt-6">본사 입력항목</legend>
+                            <div>
+                                <label class="font-semibold flex items-center">상담요청확인</label>
+                                <select name="상담요청확인" class="w-full p-2 mt-1 border rounded">
+                                    <option value=""></option>
+                                    <option value="확인함">확인함</option>
+                                </select>
+                            </div>
                             <div>
                                 <label class="font-semibold flex items-center">홈페이지url</label>
                                 <input name="홈페이지url" type="text" class="w-full p-2 mt-1 border rounded">
@@ -1354,7 +1362,7 @@
         // 표시할 컬럼
         const headers = [
             '기업명', '업종', '기업규모', '회사주소', '연구소주소', '구분', '회사Tel', '회사Fax', '대표자명', '담당 전문위원',
-            '콜일자', '통화대상자', '직함', '통화내용_전문위원', '본사상담요청', '홈페이지안내일자', '홈페이지url',
+            '콜일자', '통화대상자', '직함', '통화내용_전문위원', '본사상담요청', '홈페이지안내일자', '상담요청확인', '홈페이지url',
             '본사담당자메모'
         ];
 
