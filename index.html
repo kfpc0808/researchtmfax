@@ -1838,7 +1838,7 @@
     
     // 사용자가 확정된 스케줄을 취소하는 함수
     async function cancelMyConfirmedSchedule(rowIndex, dateStr) {
-        if (!confirm(`${dateStr} 확정된 일정을 취소하시겠습니까?\n\n취소 후에는 관리자가 다시 확정해야 합니다.`)) {
+        if (!confirm(`${dateStr} 확정된 일정을 취소하시겠습니까?\n\n취소 후에는 본사에서 Fax전송을 하지 않습니다.`)) {
             return;
         }
         
