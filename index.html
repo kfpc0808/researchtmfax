@@ -870,8 +870,8 @@
                                 <th class="px-3 py-2 min-w-[80px]">통화대상자</th>
                                 <th class="px-3 py-2 min-w-[70px]">직함</th>
                                 <th class="px-3 py-2 min-w-[200px]">통화내용</th>
-                                <th class="px-3 py-2 min-w-[100px]">본사상담요청</th>
-                                <th class="px-3 py-2 min-w-[100px]">홈피안내일</th>
+                                <th class="px-3 py-2 min-w-[100px]">향후진행</th>
+                                <th class="px-3 py-2 min-w-[100px]">통화일자</th>
                                 <!-- 본사 입력항목 (4개) -->
                                 <th class="px-3 py-2 min-w-[100px] bg-amber-50">상담요청확인</th>
                                 <th class="px-3 py-2 min-w-[200px] bg-amber-50">본사상담내용</th>
@@ -951,19 +951,19 @@
                                 <textarea name="통화내용_전문위원" rows="3" class="w-full p-2 mt-1 border rounded" placeholder="누구와 어떤 내용을 어느정도 대화를 하였는지 그리고 홈페이지에 대한 반응, 기대치 등을 상세하게 입력바랍니다. 본내용을 보고 본사 담당자가 회사에 연락하여 유선 혹은 줌으로 일정을 잡고 클로징을 진행합니다."></textarea>
                             </div>
                             <div>
-                                <label class="font-semibold flex items-center">본사상담요청</label>
-                                <select name="본사상담요청" class="w-full p-2 mt-1 border rounded">
+                                <label class="font-semibold flex items-center">향후진행</label>
+                                <select name="향후진행" class="w-full p-2 mt-1 border rounded">
                                     <option value="">선택</option>
-                                    <option value="요청(관심도_높음)">요청(관심도_높음)</option>
-                                    <option value="요청(관심도_보통)">요청(관심도_보통)</option>
-                                    <option value="요청(관심도_낮음)">요청(관심도_낮음)</option>
+                                    <option value="본사 줌설명회 참여">본사 줌설명회 참여</option>
+                                    <option value="본사 개별안내 요청">본사 개별안내 요청</option>
+                                    <option value="대면미팅 예정">대면미팅 예정</option>
+                                    <option value="재통화 예정">재통화 예정</option>
                                     <option value="대상아님">대상아님</option>
-                                    <option value="추후진행">추후진행</option>
                                 </select>
                             </div>
                             <div>
-                                <label class="font-semibold flex items-center">홈페이지안내일자</label>
-                                <input name="홈페이지안내일자" type="date" class="w-full p-2 mt-1 border rounded">
+                                <label class="font-semibold flex items-center">(실제)홈페이지 통화일자</label>
+                                <input name="(실제)홈페이지 통화일자" type="date" class="w-full p-2 mt-1 border rounded">
                             </div>
                         </fieldset>
                         
@@ -1083,12 +1083,14 @@
         document.querySelectorAll('body > div[id$="-page"], body > div[id="TM-DB-Table"], body > div[id="admin-page"]').forEach(p => p.classList.add('hidden'));
         document.getElementById(pageId)?.classList.remove('hidden');
         if (pageId === 'TM-DB-Table' && loggedInUser) {
-            loadInitialData();
-            if (loggedInUser.role === '전문위원') renderScheduleUI();
+            // 병렬로 동시 실행하여 속도 개선
+            const promises = [loadInitialData()];
+            if (loggedInUser.role === '전문위원') promises.push(renderScheduleUI());
+            Promise.all(promises);
         }
         if (pageId === 'admin-page' && loggedInUser) {
-            renderAdminTable();
-            renderAdminSchedule();
+            // 병렬로 동시 실행
+            Promise.all([renderAdminTable(), renderAdminSchedule()]);
         }
     }
     window.showPage = showPage;
@@ -1464,7 +1466,7 @@
         // 표시할 컬럼
         const headers = [
             '기업명', '업종', '기업규모', '회사주소', '연구소주소', '구분', '회사Tel', '회사Fax', '대표자명', '담당 전문위원',
-            '콜일자', '통화대상자', '직함', '통화내용_전문위원', '본사상담요청', '홈페이지안내일자', '상담요청확인', '본사상담내용', '홈페이지url',
+            '콜일자', '통화대상자', '직함', '통화내용_전문위원', '향후진행', '(실제)홈페이지 통화일자', '상담요청확인', '본사상담내용', '홈페이지url',
             '본사담당자메모'
         ];
 
@@ -1776,7 +1778,7 @@
         const container = document.getElementById('schedule-checkboxes');
         const dates = getNextWeekDates();
         
-        // 이미 신청된 날짜 목록 가져오기
+        // 이미 신청된 날짜 목록 가져오기 (한 번만 호출)
         const schedules = await callAPI('readAll', 'Schedule');
         const myScheduledDates = schedules 
             ? schedules.filter(s => s['전문위원성명'] === loggedInUser.name).map(s => s['신청일자'])
@@ -1796,12 +1798,16 @@
             </label>
         `}).join('');
         
-        await renderMyScheduleStatus();
+        // 이미 가져온 schedules 데이터를 전달하여 중복 API 호출 방지
+        await renderMyScheduleStatus(schedules);
     }
 
-    async function renderMyScheduleStatus() {
+    async function renderMyScheduleStatus(schedules = null) {
         const listContainer = document.getElementById('my-schedule-list');
-        const schedules = await callAPI('readAll', 'Schedule');
+        // schedules가 전달되지 않은 경우에만 API 호출
+        if (!schedules) {
+            schedules = await callAPI('readAll', 'Schedule');
+        }
         
         if (!schedules || schedules.length === 0) {
             listContainer.innerHTML = '<span class="text-sm text-slate-500">신청 내역이 없습니다.</span>';
@@ -1827,7 +1833,7 @@
                 // 확정 상태일 때 취소 버튼 추가
                 cancelButton = `<button onclick="cancelMyConfirmedSchedule(${s.originalIndex}, '${s['신청일자']}')" 
                     class="ml-1 w-5 h-5 rounded-full bg-red-500 text-white text-xs font-bold hover:bg-red-600 transition-colors" 
-                    title="확정 취소">×</button>`;
+                    title="X를 클릭하시면 신청하신 일정에 Fax전송을 하지 않습니다.">×</button>`;
             } else if (status === '취소') {
                 statusClass = 'bg-red-100 text-red-800';
                 statusIcon = '❌';
