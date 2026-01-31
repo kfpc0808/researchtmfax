@@ -1004,7 +1004,22 @@
         </div>
     </div>
 
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 <script>
+    // === Firebase 설정 ===
+    const firebaseConfig = {
+        apiKey: "AIzaSyBHiLDRhm7j5gs2MMZuffH4Fs1xDx2OL9I",
+        authDomain: "kfpc-company-support-project.firebaseapp.com",
+        projectId: "kfpc-company-support-project",
+        storageBucket: "kfpc-company-support-project.firebasestorage.app",
+        messagingSenderId: "1012609333373",
+        appId: "1:1012609333373:web:bfefcf2e587829a756d914"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const firestoreDb = firebase.firestore();
+    firestoreDb.settings({ databaseId: 'tmfax-research' });
+
     // === 전역 변수 ===
     const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbxT_jFERIyCqadOsT1FQxNu-L-tclH7FT87czgrtZey_PzTVp0S2HRzoJ5F-e1iS8ow/exec';
     let loggedInUser = null;
@@ -1038,6 +1053,23 @@
     function showLoading() { document.getElementById('loading-overlay').classList.remove('hidden'); }
     function hideLoading() { document.getElementById('loading-overlay').classList.add('hidden'); }
 
+    // Firestore에서 데이터 읽기
+    async function readFromFirestore(collection) {
+        try {
+            const snapshot = await firestoreDb.collection(collection).get();
+            const data = [];
+            snapshot.forEach(doc => {
+                data.push(doc.data());
+            });
+            // originalIndex 기준 정렬
+            data.sort((a, b) => (a.originalIndex || 0) - (b.originalIndex || 0));
+            return data;
+        } catch (error) {
+            console.error('Firestore 읽기 오류:', error);
+            return null;
+        }
+    }
+
     async function callAPI(action, sheet, data = {}) {
         // 캐시 확인 (readAll만 캐싱)
         if (action === 'readAll' && apiCache[sheet]) {
@@ -1046,6 +1078,48 @@
         
         showLoading();
         try {
+            // 읽기 작업은 Firestore 사용
+            if (action === 'readAll') {
+                const result = await readFromFirestore(sheet);
+                if (result) {
+                    apiCache[sheet] = result;
+                }
+                return result;
+            }
+            
+            // read (페이징, 필터) - Firestore에서 전체 읽은 후 클라이언트에서 처리
+            if (action === 'read') {
+                let allData = apiCache[sheet];
+                if (!allData) {
+                    allData = await readFromFirestore(sheet);
+                    if (allData) apiCache[sheet] = allData;
+                }
+                if (!allData) return null;
+                
+                const { filter = {}, page = 1, limit = 10 } = data;
+                
+                // 필터 적용
+                let filtered = allData;
+                const filterEntries = Object.entries(filter);
+                if (filterEntries.length > 0) {
+                    filtered = allData.filter(row => {
+                        return filterEntries.every(([key, value]) => {
+                            if (!value || value === '') return true;
+                            const rowValue = String(row[key] || '').toLowerCase();
+                            return rowValue.includes(String(value).toLowerCase());
+                        });
+                    });
+                }
+                
+                // 페이징 적용
+                const total = filtered.length;
+                const start = (page - 1) * limit;
+                const paginatedData = filtered.slice(start, start + limit);
+                
+                return { data: paginatedData, total: total };
+            }
+            
+            // 쓰기 작업은 기존 Google Sheets API 사용
             const response = await fetch(GAS_API_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -1056,11 +1130,6 @@
                 console.error('API Error:', result.error);
                 alert('오류 발생: ' + result.error);
                 return null;
-            }
-            
-            // 캐시 저장 (readAll만)
-            if (action === 'readAll') {
-                apiCache[sheet] = result;
             }
             
             // 캐시 무효화 (데이터 변경 시)
