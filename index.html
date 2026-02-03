@@ -703,8 +703,9 @@
         <div class="full-width-container">
             <header class="mb-4 flex flex-wrap justify-between items-center gap-4">
                 <div><h1 class="text-2xl md:text-3xl font-bold text-slate-800">관리자 페이지</h1></div>
-                <div class="flex gap-2">
+                <div class="flex gap-2 items-center">
                     <button onclick="showPage('TM-DB-Table')" class="py-2 px-4 text-sm font-semibold rounded-lg text-slate-700 bg-slate-200 hover:bg-slate-300 transition">DB 현황</button>
+                    <span id="admin-user-name" class="text-sm font-medium text-slate-600"></span>
                     <button onclick="logout()" class="py-2 px-4 text-sm font-semibold rounded-lg text-red-600 bg-red-100 hover:bg-red-200 transition">로그아웃</button>
                 </div>
             </header>
@@ -808,6 +809,7 @@
                 <div><h1 class="text-2xl md:text-3xl font-bold text-slate-800">연구소 DB 현황</h1><p id="welcome-user" class="mt-1 text-sm text-slate-500"></p></div>
                 <div class="flex gap-2 items-center">
                     <button id="admin-page-button" class="hidden py-2 px-4 text-sm font-semibold rounded-lg text-slate-700 bg-slate-200 hover:bg-slate-300 transition" onclick="showPage('admin-page')">관리자</button>
+                    <span id="main-user-name" class="text-sm font-medium text-slate-600"></span>
                     <button onclick="logout()" class="py-2 px-4 text-sm font-semibold rounded-lg text-red-600 bg-red-100 hover:bg-red-200 transition">로그아웃</button>
                 </div>
             </header>
@@ -1536,6 +1538,8 @@
             renderPagination();
             document.getElementById('welcome-user').textContent = `${loggedInUser.name}(${loggedInUser.role})님 환영합니다`;
             document.getElementById('admin-page-button').classList.toggle('hidden', loggedInUser.role !== 'admin');
+            document.getElementById('main-user-name').textContent = loggedInUser.name;
+            document.getElementById('admin-user-name').textContent = loggedInUser.name;
         }
     }
 
