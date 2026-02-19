@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>연구소 DB Project</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Noto Sans KR', sans-serif; word-break: keep-all; }
@@ -703,8 +704,11 @@
         <div class="full-width-container">
             <header class="mb-4 flex flex-wrap justify-between items-center gap-4">
                 <div><h1 class="text-2xl md:text-3xl font-bold text-slate-800">관리자 페이지</h1></div>
-                <div class="flex gap-2 items-center">
+                <div class="flex gap-2 items-center flex-wrap">
                     <button onclick="showPage('TM-DB-Table')" class="py-2 px-4 text-sm font-semibold rounded-lg text-slate-700 bg-slate-200 hover:bg-slate-300 transition">DB 현황</button>
+                    <button onclick="downloadAllDataAsExcel()" id="excel-download-btn" class="py-2 px-4 text-sm font-bold rounded-lg text-white bg-emerald-600 hover:bg-emerald-700 transition flex items-center gap-1">
+                        📥 전체 DB 엑셀 다운로드
+                    </button>
                     <span id="admin-user-name" class="text-sm font-medium text-slate-600"></span>
                     <button onclick="logout()" class="py-2 px-4 text-sm font-semibold rounded-lg text-red-600 bg-red-100 hover:bg-red-200 transition">로그아웃</button>
                 </div>
@@ -1478,6 +1482,132 @@
     }
     window.uploadToFirebase = uploadToFirebase;
     // ===== DB 일괄 업로드 기능 끝 =====
+
+
+    // ===== 전체 DB 엑셀 다운로드 =====
+    async function downloadAllDataAsExcel() {
+        const btn = document.getElementById('excel-download-btn');
+        const originalText = btn.innerHTML;
+
+        // 전체 컬럼 정의 (Firebase에 저장된 모든 필드)
+        const ALL_COLUMNS = [
+            'No', '기업명', '업종', '기업규모', '회사주소', '연구소주소', '연구분야', '구분',
+            '회사Tel', '회사Fax', '대표자명', '담당 전문위원',
+            '콜일자', '통화대상자', '직함', '통화내용_전문위원', '향후진행', '통화일자',
+            '상담요청확인', '본사상담내용', '홈페이지url', '본사담당자메모'
+        ];
+
+        if (!confirm('Firebase의 전체 DB를 엑셀 파일로 다운로드합니다.\n데이터 건수에 따라 시간이 걸릴 수 있습니다.\n\n계속하시겠습니까?')) return;
+
+        try {
+            btn.innerHTML = '⏳ 데이터 불러오는 중...';
+            btn.disabled = true;
+            showLoading();
+
+            // Firebase에서 전체 데이터 로드 (페이지 제한 없이 전체)
+            let allDocs = [];
+            let pageToken = null;
+            let pageCount = 0;
+            do {
+                let url = `${FIRESTORE_BASE_URL}/Companies?pageSize=300`;
+                if (pageToken) url += `&pageToken=${pageToken}`;
+                const res = await fetch(url);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const json = await res.json();
+                if (json.documents) {
+                    json.documents.forEach(doc => {
+                        const row = {};
+                        for (const [key, val] of Object.entries(doc.fields || {})) {
+                            row[key] = parseFirestoreValue(val);
+                        }
+                        allDocs.push(row);
+                    });
+                }
+                pageToken = json.nextPageToken || null;
+                pageCount++;
+                btn.innerHTML = `⏳ 불러오는 중... (${allDocs.length}건)`;
+            } while (pageToken);
+
+            if (allDocs.length === 0) {
+                alert('다운로드할 데이터가 없습니다.');
+                return;
+            }
+
+            // originalIndex 기준 정렬
+            allDocs.sort((a, b) => (Number(a.originalIndex) || 0) - (Number(b.originalIndex) || 0));
+
+            btn.innerHTML = `⏳ 엑셀 파일 생성 중... (${allDocs.length}건)`;
+
+            // SheetJS로 엑셀 생성
+            const wb = XLSX.utils.book_new();
+
+            // 헤더 행 생성
+            const wsData = [ALL_COLUMNS];
+
+            // 데이터 행 생성
+            allDocs.forEach(doc => {
+                const row = ALL_COLUMNS.map(col => {
+                    const val = doc[col];
+                    if (val === null || val === undefined) return '';
+                    return String(val);
+                });
+                wsData.push(row);
+            });
+
+            const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+            // 컬럼 너비 설정
+            const colWidths = [
+                { wch: 6 },  // No
+                { wch: 20 }, // 기업명
+                { wch: 20 }, // 업종
+                { wch: 10 }, // 기업규모
+                { wch: 30 }, // 회사주소
+                { wch: 30 }, // 연구소주소
+                { wch: 20 }, // 연구분야
+                { wch: 8 },  // 구분
+                { wch: 14 }, // 회사Tel
+                { wch: 14 }, // 회사Fax
+                { wch: 10 }, // 대표자명
+                { wch: 12 }, // 담당전문위원
+                { wch: 10 }, // 콜일자
+                { wch: 10 }, // 통화대상자
+                { wch: 8 },  // 직함
+                { wch: 40 }, // 통화내용
+                { wch: 16 }, // 향후진행
+                { wch: 12 }, // 통화일자
+                { wch: 12 }, // 상담요청확인
+                { wch: 30 }, // 본사상담내용
+                { wch: 30 }, // 홈페이지url
+                { wch: 30 }, // 본사담당자메모
+            ];
+            ws['!cols'] = colWidths;
+
+            // 헤더 행 고정 (freeze panes)
+            ws['!freeze'] = { xSplit: 0, ySplit: 1 };
+
+            // 시트 추가
+            const today = new Date();
+            const dateStr = `${today.getFullYear()}${String(today.getMonth()+1).padStart(2,'0')}${String(today.getDate()).padStart(2,'0')}`;
+            XLSX.utils.book_append_sheet(wb, ws, '연구소DB');
+
+            // 파일 다운로드
+            const fileName = `연구소DB_전체_${dateStr}.xlsx`;
+            XLSX.writeFile(wb, fileName);
+
+            alert(`✅ 다운로드 완료!\n파일명: ${fileName}\n총 ${allDocs.length}건`);
+
+        } catch (err) {
+            console.error('엑셀 다운로드 오류:', err);
+            alert('다운로드 중 오류가 발생했습니다: ' + err.message);
+        } finally {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+            hideLoading();
+        }
+    }
+    window.downloadAllDataAsExcel = downloadAllDataAsExcel;
+    // ===== 전체 DB 엑셀 다운로드 끝 =====
 
     function logout() {
         loggedInUser = null;
