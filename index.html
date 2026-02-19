@@ -709,6 +709,108 @@
                     <button onclick="logout()" class="py-2 px-4 text-sm font-semibold rounded-lg text-red-600 bg-red-100 hover:bg-red-200 transition">로그아웃</button>
                 </div>
             </header>
+            <!-- ===== DB 일괄 업로드 섹션 ===== -->
+            <div class="bg-white rounded-xl shadow-lg mb-4 border-2 border-blue-200">
+                <div class="p-4 border-b bg-blue-50 flex justify-between items-center">
+                    <div>
+                        <h2 class="text-lg font-semibold text-blue-800">📋 DB 일괄 업로드 (엑셀 → Firebase 직접 저장)</h2>
+                        <p class="text-sm text-blue-600 mt-1">엑셀에서 데이터를 복사(Ctrl+C) 후 아래 영역에 붙여넣기(Ctrl+V) 하세요. 구글시트 불필요!</p>
+                    </div>
+                    <button onclick="toggleUploadSection()" id="upload-toggle-btn" class="py-2 px-4 text-sm font-semibold rounded-lg text-blue-700 bg-blue-100 hover:bg-blue-200">펼치기 ▼</button>
+                </div>
+                <div id="upload-section-body" class="hidden p-4">
+                    <!-- 컬럼 안내 -->
+                    <div class="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                        <p class="text-sm font-bold text-amber-800 mb-2">⚠️ 엑셀 컬럼 순서 확인 (구글시트와 동일하게)</p>
+                        <div class="overflow-x-auto">
+                            <table class="text-xs text-slate-600 border-collapse">
+                                <tr>
+                                    <td class="border border-slate-300 px-2 py-1 bg-slate-100 font-bold">A</td>
+                                    <td class="border border-slate-300 px-2 py-1 bg-slate-100 font-bold">B</td>
+                                    <td class="border border-slate-300 px-2 py-1 bg-slate-100 font-bold">C</td>
+                                    <td class="border border-slate-300 px-2 py-1 bg-slate-100 font-bold">D</td>
+                                    <td class="border border-slate-300 px-2 py-1 bg-slate-100 font-bold">E</td>
+                                    <td class="border border-slate-300 px-2 py-1 bg-slate-100 font-bold">F</td>
+                                    <td class="border border-slate-300 px-2 py-1 bg-slate-100 font-bold">G</td>
+                                    <td class="border border-slate-300 px-2 py-1 bg-slate-100 font-bold">H</td>
+                                    <td class="border border-slate-300 px-2 py-1 bg-slate-100 font-bold">I</td>
+                                    <td class="border border-slate-300 px-2 py-1 bg-slate-100 font-bold">J</td>
+                                    <td class="border border-slate-300 px-2 py-1 bg-slate-100 font-bold">K</td>
+                                    <td class="border border-slate-300 px-2 py-1 bg-slate-100 font-bold">L</td>
+                                    <td class="border border-slate-300 px-2 py-1 bg-slate-100 font-bold">M</td>
+                                    <td class="border border-slate-300 px-2 py-1 bg-slate-100 font-bold">N</td>
+                                    <td class="border border-slate-300 px-2 py-1 bg-slate-100 font-bold">O</td>
+                                    <td class="border border-slate-300 px-2 py-1 bg-slate-100 font-bold">P</td>
+                                    <td class="border border-slate-300 px-2 py-1 bg-slate-100 font-bold">Q</td>
+                                    <td class="border border-slate-300 px-2 py-1 bg-slate-100 font-bold">R</td>
+                                    <td class="border border-slate-300 px-2 py-1 bg-slate-100 font-bold">S</td>
+                                    <td class="border border-slate-300 px-2 py-1 bg-slate-100 font-bold">T</td>
+                                    <td class="border border-slate-300 px-2 py-1 bg-slate-100 font-bold">U</td>
+                                </tr>
+                                <tr>
+                                    <td class="border border-slate-300 px-2 py-1">No</td>
+                                    <td class="border border-slate-300 px-2 py-1">기업명</td>
+                                    <td class="border border-slate-300 px-2 py-1">업종</td>
+                                    <td class="border border-slate-300 px-2 py-1">기업규모</td>
+                                    <td class="border border-slate-300 px-2 py-1">회사주소</td>
+                                    <td class="border border-slate-300 px-2 py-1">연구소주소</td>
+                                    <td class="border border-slate-300 px-2 py-1">연구분야</td>
+                                    <td class="border border-slate-300 px-2 py-1">구분</td>
+                                    <td class="border border-slate-300 px-2 py-1">회사Tel</td>
+                                    <td class="border border-slate-300 px-2 py-1">회사Fax</td>
+                                    <td class="border border-slate-300 px-2 py-1">대표자명</td>
+                                    <td class="border border-slate-300 px-2 py-1">담당전문위원</td>
+                                    <td class="border border-slate-300 px-2 py-1">콜일자</td>
+                                    <td class="border border-slate-300 px-2 py-1">통화대상자</td>
+                                    <td class="border border-slate-300 px-2 py-1">직함</td>
+                                    <td class="border border-slate-300 px-2 py-1">통화내용</td>
+                                    <td class="border border-slate-300 px-2 py-1">향후진행</td>
+                                    <td class="border border-slate-300 px-2 py-1">통화일자</td>
+                                    <td class="border border-slate-300 px-2 py-1">상담요청확인</td>
+                                    <td class="border border-slate-300 px-2 py-1">본사상담내용</td>
+                                    <td class="border border-slate-300 px-2 py-1">홈페이지url</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <p class="text-xs text-amber-700 mt-2">※ 첫 행이 헤더(컬럼명)인 경우 자동으로 건너뜁니다. No 기준으로 기존 데이터는 업데이트, 신규는 추가됩니다.</p>
+                    </div>
+
+                    <!-- 붙여넣기 영역 -->
+                    <div class="mb-4">
+                        <label class="block text-sm font-bold text-slate-700 mb-2">엑셀 데이터 붙여넣기 영역 <span class="text-red-500">*</span></label>
+                        <textarea id="excel-paste-area" 
+                            class="w-full h-48 p-3 border-2 border-dashed border-blue-300 rounded-lg text-xs font-mono focus:outline-none focus:border-blue-500 bg-slate-50"
+                            placeholder="여기를 클릭한 후 엑셀에서 복사한 데이터를 붙여넣기(Ctrl+V) 하세요..."></textarea>
+                    </div>
+
+                    <!-- 미리보기 영역 -->
+                    <div id="upload-preview-area" class="hidden mb-4">
+                        <div class="flex justify-between items-center mb-2">
+                            <p class="text-sm font-bold text-slate-700">📊 미리보기 <span id="upload-row-count" class="text-blue-600"></span></p>
+                            <button onclick="clearUploadArea()" class="text-xs text-slate-500 hover:text-red-500">초기화</button>
+                        </div>
+                        <div class="overflow-x-auto max-h-48 border rounded-lg">
+                            <table class="w-full text-xs text-left text-slate-600" id="upload-preview-table">
+                                <thead class="sticky top-0 bg-slate-100 text-slate-700"></thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- 업로드 버튼 -->
+                    <div class="flex gap-3 items-center">
+                        <button onclick="parseAndPreviewExcel()" class="py-2 px-6 text-sm font-bold rounded-lg text-white bg-blue-600 hover:bg-blue-700">
+                            1단계: 데이터 확인
+                        </button>
+                        <button onclick="uploadToFirebase()" id="upload-confirm-btn" class="hidden py-2 px-6 text-sm font-bold rounded-lg text-white bg-emerald-600 hover:bg-emerald-700">
+                            2단계: Firebase 저장 🚀
+                        </button>
+                        <span id="upload-status-msg" class="text-sm font-semibold"></span>
+                    </div>
+                </div>
+            </div>
+            <!-- ===== DB 일괄 업로드 섹션 끝 ===== -->
+
             <div class="bg-white rounded-xl shadow-lg mb-4">
                 <div class="p-4 border-b"><h2 class="text-lg font-semibold text-slate-800">관리자 정보 변경</h2></div>
                 <form id="admin-credential-form" class="p-4">
@@ -1182,6 +1284,152 @@
         }
     }
     window.showPage = showPage;
+
+    // ===== DB 일괄 업로드 기능 =====
+    
+    // 컬럼 순서 정의 (구글시트와 동일)
+    const UPLOAD_COLUMNS = [
+        'No', '기업명', '업종', '기업규모', '회사주소', '연구소주소', '연구분야', '구분',
+        '회사Tel', '회사Fax', '대표자명', '담당 전문위원',
+        '콜일자', '통화대상자', '직함', '통화내용_전문위원', '향후진행', '통화일자',
+        '상담요청확인', '본사상담내용', '홈페이지url'
+    ];
+
+    function toggleUploadSection() {
+        const body = document.getElementById('upload-section-body');
+        const btn = document.getElementById('upload-toggle-btn');
+        if (body.classList.contains('hidden')) {
+            body.classList.remove('hidden');
+            btn.textContent = '접기 ▲';
+        } else {
+            body.classList.add('hidden');
+            btn.textContent = '펼치기 ▼';
+        }
+    }
+    window.toggleUploadSection = toggleUploadSection;
+
+    function clearUploadArea() {
+        document.getElementById('excel-paste-area').value = '';
+        document.getElementById('upload-preview-area').classList.add('hidden');
+        document.getElementById('upload-confirm-btn').classList.add('hidden');
+        document.getElementById('upload-status-msg').textContent = '';
+        window._uploadParsedRows = null;
+    }
+    window.clearUploadArea = clearUploadArea;
+
+    function parseAndPreviewExcel() {
+        const rawText = document.getElementById('excel-paste-area').value.trim();
+        if (!rawText) { alert('붙여넣기 영역에 데이터가 없습니다. 엑셀에서 복사 후 붙여넣기 해주세요.'); return; }
+        const lines = rawText.split('\n').filter(l => l.trim() !== '');
+        if (lines.length === 0) { alert('데이터가 없습니다.'); return; }
+        const firstCell = lines[0].split('\t')[0].trim();
+        const isFirstRowHeader = isNaN(firstCell) && firstCell !== '';
+        const dataLines = isFirstRowHeader ? lines.slice(1) : lines;
+        if (dataLines.length === 0) { alert('헤더 행 외에 데이터가 없습니다.'); return; }
+        const parsedRows = dataLines.map(line => {
+            const cells = line.split('\t');
+            const row = {};
+            UPLOAD_COLUMNS.forEach((col, idx) => { row[col] = (cells[idx] || '').trim(); });
+            return row;
+        }).filter(row => row['기업명'] !== '');
+        if (parsedRows.length === 0) { alert('유효한 데이터가 없습니다.'); return; }
+        const previewCols = ['No', '기업명', '업종', '담당 전문위원', '콜일자'];
+        const thead = document.querySelector('#upload-preview-table thead');
+        const tbody = document.querySelector('#upload-preview-table tbody');
+        thead.innerHTML = '<tr>' + previewCols.map(c => `<th class="px-3 py-2 bg-slate-100 font-bold whitespace-nowrap">${c}</th>`).join('') + '<th class="px-3 py-2 bg-slate-100">...</th></tr>';
+        tbody.innerHTML = parsedRows.slice(0, 10).map(row =>
+            '<tr class="border-t hover:bg-slate-50">' +
+            previewCols.map(c => `<td class="px-3 py-2 whitespace-nowrap">${row[c] || ''}</td>`).join('') +
+            `<td class="px-3 py-2 text-slate-400">전체 ${UPLOAD_COLUMNS.length}개 컬럼</td></tr>`
+        ).join('');
+        document.getElementById('upload-row-count').textContent = `총 ${parsedRows.length}건 (미리보기: 최대 10건)`;
+        document.getElementById('upload-preview-area').classList.remove('hidden');
+        document.getElementById('upload-confirm-btn').classList.remove('hidden');
+        const statusEl = document.getElementById('upload-status-msg');
+        statusEl.textContent = `✅ ${parsedRows.length}건 확인 완료. Firebase 저장 버튼을 누르세요.`;
+        statusEl.className = 'text-sm font-semibold text-emerald-600';
+        window._uploadParsedRows = parsedRows;
+    }
+    window.parseAndPreviewExcel = parseAndPreviewExcel;
+
+    function toFirestoreValue(val) {
+        if (val === null || val === undefined || val === '') return { nullValue: null };
+        const num = Number(val);
+        if (!isNaN(num) && String(val).trim() !== '') return { integerValue: num };
+        return { stringValue: String(val) };
+    }
+
+    async function uploadToFirebase() {
+        const rows = window._uploadParsedRows;
+        if (!rows || rows.length === 0) { alert('먼저 1단계 "데이터 확인"을 눌러주세요.'); return; }
+        if (!confirm(`총 ${rows.length}건을 Firebase에 저장합니다.\n(No 기준: 기존 데이터 업데이트, 신규 데이터 추가)\n\n계속 진행하시겠습니까?`)) return;
+        showLoading();
+        const statusEl = document.getElementById('upload-status-msg');
+        statusEl.textContent = '⏳ 기존 데이터 확인 중...';
+        statusEl.className = 'text-sm font-semibold text-blue-600';
+        let existingDocs = {};
+        try {
+            let pageToken = null;
+            do {
+                let url = `${FIRESTORE_BASE_URL}/Companies?pageSize=300`;
+                if (pageToken) url += `&pageToken=${pageToken}`;
+                const res = await fetch(url);
+                const json = await res.json();
+                if (json.documents) {
+                    json.documents.forEach(doc => {
+                        const noField = doc.fields?.No;
+                        const noVal = noField ? (noField.integerValue || noField.stringValue || '') : '';
+                        if (noVal !== '') {
+                            const docId = doc.name.split('/').pop();
+                            existingDocs[String(noVal)] = docId;
+                        }
+                    });
+                }
+                pageToken = json.nextPageToken || null;
+            } while (pageToken);
+        } catch(e) { console.error('기존 데이터 로드 오류:', e); }
+        let successCount = 0, errorCount = 0;
+        for (let i = 0; i < rows.length; i++) {
+            const row = rows[i];
+            const noVal = String(row['No'] || '').trim();
+            const fields = {};
+            UPLOAD_COLUMNS.forEach(col => { fields[col] = toFirestoreValue(row[col]); });
+            fields['originalIndex'] = { integerValue: i };
+            try {
+                const existingDocId = noVal ? existingDocs[noVal] : null;
+                if (existingDocId) {
+                    await fetch(`${FIRESTORE_BASE_URL}/Companies/${existingDocId}`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ fields })
+                    });
+                } else {
+                    await fetch(`${FIRESTORE_BASE_URL}/Companies`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ fields })
+                    });
+                }
+                successCount++;
+            } catch(e) { console.error(`행 ${i+1} 저장 오류:`, e); errorCount++; }
+            if ((i + 1) % 10 === 0) { statusEl.textContent = `⏳ 저장 중... ${i+1}/${rows.length}건`; }
+        }
+        delete apiCache['Companies'];
+        hideLoading();
+        if (errorCount === 0) {
+            statusEl.textContent = `🎉 완료! 총 ${successCount}건 Firebase 저장 성공!`;
+            statusEl.className = 'text-sm font-semibold text-emerald-600';
+            alert(`✅ 저장 완료!\n성공: ${successCount}건\n\n구글시트 없이 Firebase에 직접 저장되었습니다.`);
+        } else {
+            statusEl.textContent = `⚠️ 성공 ${successCount}건 / 실패 ${errorCount}건`;
+            statusEl.className = 'text-sm font-semibold text-amber-600';
+            alert(`저장 완료 (일부 오류)\n성공: ${successCount}건\n실패: ${errorCount}건`);
+        }
+        window._uploadParsedRows = null;
+        document.getElementById('upload-confirm-btn').classList.add('hidden');
+    }
+    window.uploadToFirebase = uploadToFirebase;
+    // ===== DB 일괄 업로드 기능 끝 =====
 
     function logout() {
         loggedInUser = null;
