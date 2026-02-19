@@ -1954,8 +1954,9 @@
     function initAdminAdvancedFilter() {
         if (loggedInUser && loggedInUser.role === 'admin') {
             document.getElementById('admin-advanced-filter').classList.remove('hidden');
-            // 전문위원 목록 동적 로드
+            // 이미 전문위원 목록이 로드된 경우 재초기화 하지 않음
             const assigneeSelect = document.getElementById('adv-filter-assignee');
+            if (assigneeSelect.options.length > 1) return;
             assigneeSelect.innerHTML = '<option value="">전체</option>';
             const cached = apiCache['Users'] || [];
             if (cached.length > 0) {
@@ -1966,7 +1967,6 @@
                     if (opt.value) assigneeSelect.appendChild(opt);
                 });
             } else {
-                // Users 컬렉션에서 직접 로드
                 readFromFirestore('Users').then(users => {
                     if (users) {
                         users.forEach(u => {
