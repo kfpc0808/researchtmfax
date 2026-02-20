@@ -2894,8 +2894,8 @@
                     <td class="px-4 py-3 text-sm text-slate-500">${s['처리일시'] || '-'}</td>
                     <td class="px-4 py-3 text-center">
                         ${showButtons ? `
-                            <button onclick="updateScheduleStatus(${s.originalIndex}, '확정')" class="px-2 py-1 text-xs font-semibold rounded bg-green-500 text-white hover:bg-green-600 mr-1">확정</button>
-                            <button onclick="updateScheduleStatus(${s.originalIndex}, '취소')" class="px-2 py-1 text-xs font-semibold rounded bg-red-500 text-white hover:bg-red-600">취소</button>
+                            <button onclick="updateScheduleStatus('${s._docId}', '확정')" class="px-2 py-1 text-xs font-semibold rounded bg-green-500 text-white hover:bg-green-600 mr-1">확정</button>
+                            <button onclick="updateScheduleStatus('${s._docId}', '취소')" class="px-2 py-1 text-xs font-semibold rounded bg-red-500 text-white hover:bg-red-600">취소</button>
                         ` : '<span class="text-xs text-slate-400">처리완료</span>'}
                     </td>
                 </tr>
@@ -2966,35 +2966,38 @@
     }
     window.deleteSelectedSchedules = deleteSelectedSchedules;
 
-    async function updateScheduleStatus(rowIndex, newStatus) {
-        // 기존 데이터 가져오기
-        const schedules = await callAPI('readAll', 'Schedule');
-        const targetSchedule = schedules.find(s => s.originalIndex === rowIndex);
-        
-        if (!targetSchedule) {
+    async function updateScheduleStatus(docId, newStatus) {
+        // _docId로 직접 Firestore PATCH (originalIndex 중복 문제 우회)
+        const target = allSchedules.find(s => s._docId === docId);
+        if (!target) {
             alert('해당 스케줄을 찾을 수 없습니다.');
             return;
         }
-        
         const now = new Date();
         const timestamp = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
         
-        // 기존 데이터 유지하면서 상태와 처리일시만 업데이트
-        const result = await callAPI('update', 'Schedule', {
-            rowIndex: rowIndex,
-            data: {
-                '전문위원성명': targetSchedule['전문위원성명'],
-                '신청일자': targetSchedule['신청일자'],
-                '상태': newStatus,
-                '처리일시': timestamp
-            }
-        });
-        
-        if (result && result.success) {
+        showLoading();
+        try {
+            const fields = {
+                '전문위원성명': toFirestoreValue(target['전문위원성명']),
+                '신청일자': toFirestoreValue(target['신청일자']),
+                '상태': toFirestoreValue(newStatus),
+                '처리일시': toFirestoreValue(timestamp)
+            };
+            const res = await fetch(`${FIRESTORE_BASE_URL}/Schedule/${docId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ fields })
+            });
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
             alert(`${newStatus} 처리되었습니다.`);
             delete apiCache['Schedule'];
             allSchedules = [];
             await renderAdminSchedule();
+        } catch(err) {
+            alert('처리 중 오류: ' + err.message);
+        } finally {
+            hideLoading();
         }
     }
     window.updateScheduleStatus = updateScheduleStatus;
