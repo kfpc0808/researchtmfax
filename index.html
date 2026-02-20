@@ -1090,6 +1090,7 @@
                                 <th class="px-3 py-2 min-w-[200px] bg-amber-50">본사상담내용</th>
                                 <th class="px-3 py-2 min-w-[150px] bg-amber-50">홈페이지url</th>
                                 <th class="px-3 py-2 min-w-[200px] bg-amber-50">본사메모</th>
+                                <th id="admin-delete-col-header" class="px-3 py-2 hidden">삭제</th>
                             </tr>
                         </thead>
                         <tbody id="db-table-body"></tbody>
@@ -1371,10 +1372,12 @@
 
             if (action === 'update') {
                 // 문서 수정 (PATCH) - _docId 기준
-                // Companies는 페이지네이션 방식이라 cachedAllCompanies 우선 사용
+                // 컬렉션별 캐시 우선 사용 (_docId 확보)
                 let allData;
                 if (sheet === 'Companies') {
                     allData = cachedAllCompanies.length > 0 ? cachedAllCompanies : await readFromFirestore(sheet);
+                } else if (sheet === 'Schedule') {
+                    allData = allSchedules.length > 0 ? allSchedules : await readFromFirestore(sheet);
                 } else {
                     allData = apiCache[sheet] || await readFromFirestore(sheet);
                 }
@@ -1403,6 +1406,8 @@
                 let allData;
                 if (sheet === 'Companies') {
                     allData = cachedAllCompanies.length > 0 ? cachedAllCompanies : await readFromFirestore(sheet);
+                } else if (sheet === 'Schedule') {
+                    allData = allSchedules.length > 0 ? allSchedules : await readFromFirestore(sheet);
                 } else {
                     allData = apiCache[sheet] || await readFromFirestore(sheet);
                 }
@@ -2221,11 +2226,38 @@
                 const bgClass = hqFields.includes(header) ? 'bg-amber-50' : '';
                 rowHtml += `<td class="px-3 py-2 whitespace-nowrap ${bgClass}">${cellValue}</td>`;
             });
+
+            // 관리자 전용 삭제 버튼
+            if (loggedInUser && loggedInUser.role === 'admin') {
+                rowHtml += `<td class="px-3 py-2 whitespace-nowrap text-center">
+                    <button onclick="event.stopPropagation(); deleteCompanyByDocId('${company._docId}', '${(company['기업명']||'').replace(/'/g,"\\'")}');" 
+                        class="px-2 py-1 text-xs font-semibold rounded bg-red-100 text-red-600 hover:bg-red-500 hover:text-white transition">삭제</button>
+                </td>`;
+            }
             
             row.innerHTML = rowHtml;
             tableBody.appendChild(row);
         });
     }
+
+    async function deleteCompanyByDocId(docId, companyName) {
+        if (!confirm(`'${companyName}' 기업을 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`)) return;
+        showLoading();
+        try {
+            const res = await fetch(`${FIRESTORE_BASE_URL}/Companies/${docId}`, { method: 'DELETE' });
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            // 캐시에서도 제거
+            cachedAllCompanies = cachedAllCompanies.filter(c => c._docId !== docId);
+            delete apiCache['Companies'];
+            alert(`'${companyName}' 삭제 완료`);
+            await loadInitialData(currentPage);
+        } catch(err) {
+            alert('삭제 중 오류: ' + err.message);
+        } finally {
+            hideLoading();
+        }
+    }
+    window.deleteCompanyByDocId = deleteCompanyByDocId;
 
     // === 페이지네이션 ===
     function renderPagination() {
@@ -2307,6 +2339,10 @@
         if (loggedInUser && loggedInUser.role === 'admin') {
             document.getElementById('admin-advanced-filter').classList.remove('hidden');
             document.getElementById('page-limit-select').classList.remove('hidden');
+            const delHeader = document.getElementById('admin-delete-col-header');
+            if (delHeader) delHeader.classList.remove('hidden');
+            const delHeader = document.getElementById('admin-delete-col-header');
+            if (delHeader) delHeader.classList.remove('hidden');
             // 이미 전문위원 목록이 로드된 경우 재초기화 하지 않음
             const assigneeSelect = document.getElementById('adv-filter-assignee');
             if (assigneeSelect.options.length > 1) return;
