@@ -2660,7 +2660,8 @@
             return;
         }
         
-        const mySchedules = schedules.filter(s => s['전문위원성명'] === loggedInUser.name);
+        const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+        const mySchedules = schedules.filter(s => s['전문위원성명'] === loggedInUser.name && s['신청일자'] >= today);
         
         if (mySchedules.length === 0) {
             listContainer.innerHTML = '<span class="text-sm text-slate-500">신청 내역이 없습니다.</span>';
