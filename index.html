@@ -1363,9 +1363,20 @@
 
             if (action === 'update') {
                 // 문서 수정 (PATCH) - _docId 기준
-                const allData = apiCache[sheet] || await readFromFirestore(sheet);
-                const target = allData.find(u => u.originalIndex === data.rowIndex);
-                if (!target || !target._docId) throw new Error('문서를 찾을 수 없습니다.');
+                // Companies는 페이지네이션 방식이라 cachedAllCompanies 우선 사용
+                let allData;
+                if (sheet === 'Companies') {
+                    allData = cachedAllCompanies.length > 0 ? cachedAllCompanies : await readFromFirestore(sheet);
+                } else {
+                    allData = apiCache[sheet] || await readFromFirestore(sheet);
+                }
+                let target = allData.find(u => u.originalIndex === data.rowIndex);
+                // _docId 없으면 Firestore에서 직접 조회
+                if (!target || !target._docId) {
+                    const fresh = await readFromFirestore(sheet);
+                    target = fresh ? fresh.find(u => u.originalIndex === data.rowIndex) : null;
+                }
+                if (!target || !target._docId) throw new Error('문서를 찾을 수 없습니다. (docId 없음)');
                 const fields = {};
                 Object.entries(data.data || {}).forEach(([k, v]) => { fields[k] = toFirestoreValue(v); });
                 fields['originalIndex'] = toFirestoreValue(data.rowIndex);
@@ -1381,9 +1392,18 @@
 
             if (action === 'delete') {
                 // 문서 삭제 (DELETE) - _docId 기준
-                const allData = apiCache[sheet] || await readFromFirestore(sheet);
-                const target = allData.find(u => u.originalIndex === data.rowIndex);
-                if (!target || !target._docId) throw new Error('문서를 찾을 수 없습니다.');
+                let allData;
+                if (sheet === 'Companies') {
+                    allData = cachedAllCompanies.length > 0 ? cachedAllCompanies : await readFromFirestore(sheet);
+                } else {
+                    allData = apiCache[sheet] || await readFromFirestore(sheet);
+                }
+                let target = allData.find(u => u.originalIndex === data.rowIndex);
+                if (!target || !target._docId) {
+                    const fresh = await readFromFirestore(sheet);
+                    target = fresh ? fresh.find(u => u.originalIndex === data.rowIndex) : null;
+                }
+                if (!target || !target._docId) throw new Error('문서를 찾을 수 없습니다. (docId 없음)');
                 const res = await fetch(`${FIRESTORE_BASE_URL}/${sheet}/${target._docId}`, {
                     method: 'DELETE'
                 });
