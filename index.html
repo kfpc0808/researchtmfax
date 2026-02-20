@@ -997,6 +997,14 @@
                     <div class="flex items-center gap-2">
                         <h2 class="text-lg font-semibold text-slate-800">기업 리스트</h2>
                         <span id="data-count-display" class="text-sm text-slate-500"></span>
+                        <!-- 관리자 전용: 페이지당 표시 건수 -->
+                        <select id="page-limit-select" class="hidden border rounded-md px-2 py-1 text-sm bg-white text-slate-700" onchange="changePageLimit(this.value)">
+                            <option value="10">10건씩</option>
+                            <option value="30">30건씩</option>
+                            <option value="50">50건씩</option>
+                            <option value="100">100건씩</option>
+                        </select>
+                        <span id="duplicate-warning" class="hidden text-xs font-bold text-red-600">⚠️ 중복 데이터 있음</span>
                     </div>
                     <div id="filter-container" class="flex flex-wrap items-center gap-2">
                         <select id="search-column-select" class="border rounded-md p-2 text-sm bg-white">
@@ -1219,7 +1227,7 @@
     let cachedAllCompanies = []; // 전체 데이터 캐시
     let totalCompanies = 0;
     let currentPage = 1;
-    const companiesLimit = 10; // 한 화면에 10행 표시
+    let companiesLimit = 10; // 한 화면에 10행 표시
     let currentFilter = {};
     
     // 회원 관리 관련 변수
@@ -2172,12 +2180,20 @@
             '본사담당자메모'
         ];
 
+        // 중복 originalIndex 감지
+        const idxCount = {};
+        allCompanies.forEach(c => { const k = String(c.originalIndex); idxCount[k] = (idxCount[k] || 0) + 1; });
+        const hasDuplicate = Object.values(idxCount).some(v => v > 1);
+        const dupWarn = document.getElementById('duplicate-warning');
+        if (dupWarn) dupWarn.classList.toggle('hidden', !hasDuplicate);
+
         allCompanies.forEach((company, index) => {
             const row = document.createElement('tr');
-            row.className = 'cursor-pointer hover:bg-amber-50 border-b';
-            row.onclick = () => openEditModal(company.originalIndex);
+            const isDuplicate = idxCount[String(company.originalIndex)] > 1;
+            row.className = 'cursor-pointer hover:bg-amber-50 border-b' + (isDuplicate ? ' bg-red-50' : '');
+            row.onclick = () => openEditModal(company._docId, company.originalIndex);
 
-            let rowHtml = `<td class="px-3 py-2 whitespace-nowrap">${(currentPage - 1) * companiesLimit + index + 1}</td>`;
+            let rowHtml = `<td class="px-3 py-2 whitespace-nowrap">${(currentPage - 1) * companiesLimit + index + 1}${isDuplicate ? ' <span class="text-red-500 text-xs font-bold">⚠️중복</span>' : ''}</td>`;
             
             headers.forEach(header => {
                 let cellValue = company[header] || '';
@@ -2266,9 +2282,16 @@
 
 
     // === 관리자 고급 필터 ===
+    function changePageLimit(val) {
+        companiesLimit = parseInt(val);
+        loadInitialData(1);
+    }
+    window.changePageLimit = changePageLimit;
+
     function initAdminAdvancedFilter() {
         if (loggedInUser && loggedInUser.role === 'admin') {
             document.getElementById('admin-advanced-filter').classList.remove('hidden');
+            document.getElementById('page-limit-select').classList.remove('hidden');
             // 이미 전문위원 목록이 로드된 경우 재초기화 하지 않음
             const assigneeSelect = document.getElementById('adv-filter-assignee');
             if (assigneeSelect.options.length > 1) return;
@@ -2340,24 +2363,28 @@
     window.resetSearch = resetSearch;
 
     // === 모달 로직 ===
-    async function openEditModal(originalIndex) {
-        // 먼저 현재 페이지 데이터에서 찾기
-        let company = allCompanies.find(c => c.originalIndex === originalIndex);
-        
-        // 없으면 캐시에서 찾기
-        if (!company && cachedAllCompanies.length > 0) {
-            company = cachedAllCompanies.find(c => c.originalIndex === originalIndex);
-        }
-        
-        // 그래도 없으면 API 호출
-        if (!company) {
-            showLoading();
-            const fullList = await callAPI('readAll', 'Companies');
-            hideLoading();
-            if (fullList) {
-                cachedAllCompanies = fullList;
-                company = fullList.find(c => c.originalIndex === originalIndex);
+    async function openEditModal(docId, originalIndex) {
+        // _docId로 정확하게 찾기 (중복 originalIndex 문제 해결)
+        let company = null;
+        if (docId) {
+            company = allCompanies.find(c => c._docId === docId);
+            if (!company && cachedAllCompanies.length > 0) {
+                company = cachedAllCompanies.find(c => c._docId === docId);
             }
+            if (!company) {
+                showLoading();
+                const fullList = await callAPI('readAll', 'Companies');
+                hideLoading();
+                if (fullList) {
+                    cachedAllCompanies = fullList;
+                    company = fullList.find(c => c._docId === docId);
+                }
+            }
+        }
+        // fallback: _docId 없으면 originalIndex로 찾기
+        if (!company) {
+            company = allCompanies.find(c => c.originalIndex === originalIndex)
+                   || cachedAllCompanies.find(c => c.originalIndex === originalIndex);
         }
         
         if (company) {
