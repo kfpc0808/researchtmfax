@@ -867,7 +867,62 @@
             </div>
 
             <div class="bg-white rounded-xl shadow-lg overflow-hidden">
-                <div class="p-4 border-b"><h2 class="text-lg font-semibold text-slate-800">회원 정보 현황</h2></div>
+                <div class="p-4 border-b flex justify-between items-center">
+                    <h2 class="text-lg font-semibold text-slate-800">회원 정보 현황</h2>
+                    <button onclick="toggleAddUserForm()" id="add-user-toggle-btn" class="py-2 px-4 text-sm font-bold rounded-lg text-white bg-blue-600 hover:bg-blue-700">+ 신규 회원 추가</button>
+                </div>
+                <!-- 신규 회원 추가 폼 -->
+                <div id="add-user-form" class="hidden p-4 bg-blue-50 border-b border-blue-200">
+                    <p class="text-sm font-bold text-blue-800 mb-3">✏️ 신규 회원 추가</p>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
+                        <div>
+                            <label class="text-xs font-semibold text-slate-600 block mb-1">구분 <span class="text-red-500">*</span></label>
+                            <select id="new-user-role" class="w-full border rounded-md px-2 py-2 text-sm bg-white">
+                                <option value="전문위원">전문위원</option>
+                                <option value="TM">TM</option>
+                                <option value="Fax">Fax</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-xs font-semibold text-slate-600 block mb-1">성명 <span class="text-red-500">*</span></label>
+                            <input id="new-user-name" type="text" class="w-full border rounded-md px-2 py-2 text-sm" placeholder="성명 입력">
+                        </div>
+                        <div>
+                            <label class="text-xs font-semibold text-slate-600 block mb-1">전화번호(비밀번호) <span class="text-red-500">*</span></label>
+                            <input id="new-user-phone" type="text" class="w-full border rounded-md px-2 py-2 text-sm" placeholder="'-' 제외">
+                        </div>
+                        <div>
+                            <label class="text-xs font-semibold text-slate-600 block mb-1">소속사</label>
+                            <input id="new-user-company" type="text" class="w-full border rounded-md px-2 py-2 text-sm" placeholder="소속사">
+                        </div>
+                        <div>
+                            <label class="text-xs font-semibold text-slate-600 block mb-1">지역</label>
+                            <input id="new-user-region" type="text" class="w-full border rounded-md px-2 py-2 text-sm" placeholder="지역">
+                        </div>
+                        <div>
+                            <label class="text-xs font-semibold text-slate-600 block mb-1">멤버십</label>
+                            <input id="new-user-membership" type="text" class="w-full border rounded-md px-2 py-2 text-sm" placeholder="멤버십">
+                        </div>
+                        <div>
+                            <label class="text-xs font-semibold text-slate-600 block mb-1">TM</label>
+                            <select id="new-user-tm" class="w-full border rounded-md px-2 py-2 text-sm bg-white">
+                                <option value="">-</option>
+                                <option value="Y">Y</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-xs font-semibold text-slate-600 block mb-1">Fax</label>
+                            <select id="new-user-fax" class="w-full border rounded-md px-2 py-2 text-sm bg-white">
+                                <option value="">-</option>
+                                <option value="Y">Y</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="addNewUser()" class="py-2 px-6 text-sm font-bold rounded-lg text-white bg-emerald-600 hover:bg-emerald-700">저장</button>
+                        <button onclick="toggleAddUserForm()" class="py-2 px-4 text-sm font-semibold rounded-lg text-slate-600 bg-slate-200 hover:bg-slate-300">취소</button>
+                    </div>
+                </div>
                 <div class="p-4">
                     <!-- TM/Fax 필터 버튼 및 검색 -->
                     <div class="flex flex-wrap gap-2 mb-4 items-center justify-between">
@@ -1222,6 +1277,7 @@
                 if (json.documents) {
                     json.documents.forEach(doc => {
                         const row = {};
+                        row['_docId'] = doc.name.split('/').pop(); // Firestore 문서 ID 저장
                         for (const [key, val] of Object.entries(doc.fields || {})) {
                             row[key] = parseFirestoreValue(val);
                         }
@@ -1286,7 +1342,76 @@
                 return { data: paginatedData, total: total };
             }
 
-            // 쓰기 작업은 기존 Google Sheets API 사용
+            // 쓰기 작업은 Firestore REST API 사용
+            if (action === 'write') {
+                // 신규 문서 추가 (POST)
+                const fields = {};
+                Object.entries(data.data || {}).forEach(([k, v]) => { fields[k] = toFirestoreValue(v); });
+                // originalIndex: Users 컬렉션의 최대값 + 1
+                const existingAll = apiCache[sheet] || [];
+                const maxIdx = existingAll.reduce((m, u) => Math.max(m, u.originalIndex || 0), 0);
+                fields['originalIndex'] = { integerValue: maxIdx + 1 };
+                const res = await fetch(`${FIRESTORE_BASE_URL}/${sheet}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ fields })
+                });
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                delete apiCache[sheet];
+                return { success: true };
+            }
+
+            if (action === 'update') {
+                // 문서 수정 (PATCH) - _docId 기준
+                const allData = apiCache[sheet] || await readFromFirestore(sheet);
+                const target = allData.find(u => u.originalIndex === data.rowIndex);
+                if (!target || !target._docId) throw new Error('문서를 찾을 수 없습니다.');
+                const fields = {};
+                Object.entries(data.data || {}).forEach(([k, v]) => { fields[k] = toFirestoreValue(v); });
+                fields['originalIndex'] = toFirestoreValue(data.rowIndex);
+                const res = await fetch(`${FIRESTORE_BASE_URL}/${sheet}/${target._docId}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ fields })
+                });
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                delete apiCache[sheet];
+                return { success: true };
+            }
+
+            if (action === 'delete') {
+                // 문서 삭제 (DELETE) - _docId 기준
+                const allData = apiCache[sheet] || await readFromFirestore(sheet);
+                const target = allData.find(u => u.originalIndex === data.rowIndex);
+                if (!target || !target._docId) throw new Error('문서를 찾을 수 없습니다.');
+                const res = await fetch(`${FIRESTORE_BASE_URL}/${sheet}/${target._docId}`, {
+                    method: 'DELETE'
+                });
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                delete apiCache[sheet];
+                return { success: true };
+            }
+
+            // Admin 특수 처리 (관리자 정보 변경 - credentials 문서)
+            if (action === 'updateAdmin') {
+                const allData = await readFromFirestore('Admin');
+                const credDoc = allData.find(u => u._docId);
+                if (!credDoc) throw new Error('Admin 문서를 찾을 수 없습니다.');
+                const fields = {
+                    id: toFirestoreValue(data.data.id),
+                    pw: toFirestoreValue(data.data.pw)
+                };
+                const res = await fetch(`${FIRESTORE_BASE_URL}/Admin/${credDoc._docId}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ fields })
+                });
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                delete apiCache['Admin'];
+                return { success: true };
+            }
+
+            // 기타 미처리 액션 (GAS fallback - 향후 제거 가능)
             const response = await fetch(GAS_API_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -1298,12 +1423,9 @@
                 alert('오류 발생: ' + result.error);
                 return null;
             }
-            
-            // 캐시 무효화 (데이터 변경 시)
             if (['write', 'update', 'delete'].includes(action)) {
                 delete apiCache[sheet];
             }
-            
             return result;
         } catch (error) {
             console.error('Fetch Error:', error);
@@ -1715,12 +1837,55 @@
         const newId = document.getElementById('new-admin-id').value.trim();
         const newPw = document.getElementById('new-admin-pw').value.trim();
         if (newId && newPw) {
-            const result = await callAPI('update', 'Admin', { data: { id: newId, pw: newPw }, rowIndex: 2 });
-            alert('관리자 정보가 성공적으로 변경되었습니다.');
+            const result = await callAPI('updateAdmin', 'Admin', { data: { id: newId, pw: newPw } });
+            if (result && result.success) {
+                alert('관리자 정보가 성공적으로 변경되었습니다.');
+                document.getElementById('new-admin-id').value = '';
+                document.getElementById('new-admin-pw').value = '';
+            }
         } else {
             alert('새로운 아이디와 비밀번호를 모두 입력해주세요.');
         }
     });
+
+    function toggleAddUserForm() {
+        const form = document.getElementById('add-user-form');
+        form.classList.toggle('hidden');
+    }
+    window.toggleAddUserForm = toggleAddUserForm;
+
+    async function addNewUser() {
+        const name = document.getElementById('new-user-name').value.trim();
+        const phone = document.getElementById('new-user-phone').value.trim();
+        if (!name || !phone) { alert('성명과 전화번호는 필수입니다.'); return; }
+        const newUser = {
+            role: document.getElementById('new-user-role').value,
+            name: name,
+            phone: phone,
+            company: document.getElementById('new-user-company').value.trim(),
+            region: document.getElementById('new-user-region').value.trim(),
+            Membership: document.getElementById('new-user-membership').value.trim(),
+            TM: document.getElementById('new-user-tm').value,
+            Fax: document.getElementById('new-user-fax').value,
+            passwordChanged: 'false',
+            '비고': '',
+            '안내': ''
+        };
+        const result = await callAPI('write', 'Users', { data: newUser });
+        if (result && result.success) {
+            alert(`✅ '${name}' 회원이 추가되었습니다.\n초기 비밀번호: ${phone}`);
+            // 폼 초기화
+            ['new-user-name','new-user-phone','new-user-company','new-user-region','new-user-membership'].forEach(id => document.getElementById(id).value = '');
+            document.getElementById('new-user-role').value = '전문위원';
+            document.getElementById('new-user-tm').value = '';
+            document.getElementById('new-user-fax').value = '';
+            document.getElementById('add-user-form').classList.add('hidden');
+            allUsers = [];
+            delete apiCache['Users'];
+            await renderAdminTable();
+        }
+    }
+    window.addNewUser = addNewUser;
 
     // === 관리자 테이블 렌더링 ===
     async function renderAdminTable() {
