@@ -2180,16 +2180,31 @@
             '본사담당자메모'
         ];
 
-        // 중복 originalIndex 감지
+        // 중복 originalIndex 감지 (유효한 값만, null/0/빈값 제외)
         const idxCount = {};
-        allCompanies.forEach(c => { const k = String(c.originalIndex); idxCount[k] = (idxCount[k] || 0) + 1; });
+        allCompanies.forEach(c => {
+            const k = c.originalIndex;
+            if (k !== null && k !== undefined && k !== '' && k !== 0) {
+                idxCount[String(k)] = (idxCount[String(k)] || 0) + 1;
+            }
+        });
         const hasDuplicate = Object.values(idxCount).some(v => v > 1);
         const dupWarn = document.getElementById('duplicate-warning');
-        if (dupWarn) dupWarn.classList.toggle('hidden', !hasDuplicate);
+        // 중복 경고는 관리자만 표시
+        if (dupWarn) {
+            if (loggedInUser && loggedInUser.role === 'admin' && hasDuplicate) {
+                dupWarn.classList.remove('hidden');
+            } else {
+                dupWarn.classList.add('hidden');
+            }
+        }
 
         allCompanies.forEach((company, index) => {
             const row = document.createElement('tr');
-            const isDuplicate = idxCount[String(company.originalIndex)] > 1;
+            // 중복 표시: 관리자이고 유효한 originalIndex가 중복인 경우만
+            const k = company.originalIndex;
+            const isValidIdx = k !== null && k !== undefined && k !== '' && k !== 0;
+            const isDuplicate = loggedInUser && loggedInUser.role === 'admin' && isValidIdx && idxCount[String(k)] > 1;
             row.className = 'cursor-pointer hover:bg-amber-50 border-b' + (isDuplicate ? ' bg-red-50' : '');
             row.onclick = () => openEditModal(company._docId, company.originalIndex);
 
