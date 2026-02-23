@@ -1012,33 +1012,66 @@
             </header>
             
             <!-- TM 근무시간 입력 섹션 (TMer만 표시) -->
+            <!-- TMer 근무시간 입력 섹션 -->
             <div id="tm-worktime-section" class="hidden bg-white rounded-xl shadow-lg mb-4">
                 <div class="p-4 border-b flex flex-wrap justify-between items-center gap-2">
                     <h2 class="text-lg font-semibold text-slate-800">🕐 나의 월간 근무시간</h2>
                     <div class="flex items-center gap-3">
-                        <button onclick="changeWorktimeMonth(-1)" class="px-3 py-1 bg-slate-200 hover:bg-slate-300 rounded-lg font-bold">◀</button>
+                        <button onclick="changeWorktimeMonth(-1)" class="px-3 py-2 bg-slate-200 hover:bg-slate-300 rounded-lg font-bold">◀</button>
                         <span id="worktime-month-label" class="text-base font-bold text-slate-700 min-w-[120px] text-center"></span>
-                        <button onclick="changeWorktimeMonth(1)" class="px-3 py-1 bg-slate-200 hover:bg-slate-300 rounded-lg font-bold">▶</button>
+                        <button onclick="changeWorktimeMonth(1)" class="px-3 py-2 bg-slate-200 hover:bg-slate-300 rounded-lg font-bold">▶</button>
                     </div>
                     <div class="text-sm font-semibold text-blue-700 bg-blue-50 px-4 py-2 rounded-lg">
-                        월 합계: <span id="worktime-total" class="font-bold text-blue-900">0</span>시간
+                        월 합계: <span id="worktime-total" class="font-bold text-blue-900">0시간 0분</span>
                     </div>
                 </div>
+                <p class="px-4 pt-3 text-xs text-slate-400">📌 날짜를 클릭하면 출퇴근 시간을 입력할 수 있습니다</p>
                 <div class="p-4 overflow-x-auto">
-                    <table class="w-full text-sm border-collapse">
+                    <table class="w-full text-sm border-collapse min-w-[600px]">
                         <thead>
                             <tr class="bg-slate-100">
-                                <th class="border border-slate-200 px-2 py-2 text-red-500">일</th>
-                                <th class="border border-slate-200 px-2 py-2">월</th>
-                                <th class="border border-slate-200 px-2 py-2">화</th>
-                                <th class="border border-slate-200 px-2 py-2">수</th>
-                                <th class="border border-slate-200 px-2 py-2">목</th>
-                                <th class="border border-slate-200 px-2 py-2">금</th>
-                                <th class="border border-slate-200 px-2 py-2 text-blue-500">토</th>
+                                <th class="border border-slate-200 px-2 py-2 text-red-500 text-center">일</th>
+                                <th class="border border-slate-200 px-2 py-2 text-center">월</th>
+                                <th class="border border-slate-200 px-2 py-2 text-center">화</th>
+                                <th class="border border-slate-200 px-2 py-2 text-center">수</th>
+                                <th class="border border-slate-200 px-2 py-2 text-center">목</th>
+                                <th class="border border-slate-200 px-2 py-2 text-center">금</th>
+                                <th class="border border-slate-200 px-2 py-2 text-blue-500 text-center">토</th>
                             </tr>
                         </thead>
                         <tbody id="worktime-calendar-body"></tbody>
                     </table>
+                </div>
+            </div>
+
+            <!-- 근무시간 입력 모달 -->
+            <div id="worktime-modal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[2000]" onclick="if(event.target===this) closeWorktimeModal()">
+                <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4">
+                    <div class="bg-slate-800 text-white px-6 py-4 rounded-t-2xl flex justify-between items-center">
+                        <h3 class="text-base font-bold" id="worktime-modal-title">근무시간 입력</h3>
+                        <button onclick="closeWorktimeModal()" class="text-slate-300 hover:text-white text-xl font-bold">✕</button>
+                    </div>
+                    <div class="p-6 space-y-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-600 mb-1">🟢 출근시간</label>
+                                <input type="time" id="wt-start" class="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-slate-500 focus:outline-none text-lg font-semibold text-center">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-600 mb-1">🔴 퇴근시간</label>
+                                <input type="time" id="wt-end" class="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-slate-500 focus:outline-none text-lg font-semibold text-center">
+                            </div>
+                        </div>
+                        <div id="wt-calc-result" class="hidden p-3 bg-green-50 border border-green-200 rounded-xl text-center">
+                            <span class="text-sm text-green-600">근무시간</span>
+                            <div id="wt-calc-hours" class="text-2xl font-bold text-green-700 mt-1"></div>
+                        </div>
+                        <button onclick="clearWorktimeEntry()" id="wt-clear-btn" class="hidden w-full py-2 text-sm text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition">🗑 이 날 기록 삭제</button>
+                    </div>
+                    <div class="px-6 pb-6 flex gap-3">
+                        <button onclick="closeWorktimeModal()" class="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl">취소</button>
+                        <button onclick="saveWorktimeEntry()" class="flex-1 py-3 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-xl">저장</button>
+                    </div>
                 </div>
             </div>
 
@@ -3076,6 +3109,7 @@
     let worktimeData = {}; // { 'YYYY-MM-DD': { startTime, endTime, workHours } }
     let adminWorktimeYear = new Date().getFullYear();
     let adminWorktimeMonth = new Date().getMonth();
+    let adminWorktimeData = {};
 
     // WorkTime Firestore 읽기
     async function loadWorktimeData(name, year, month) {
@@ -3173,7 +3207,8 @@
     }
     window.changeWorktimeMonth = changeWorktimeMonth;
 
-    // 달력 공통 빌더 (TMer: 편집가능, 관리자: 읽기전용)
+    // ── 달력 빌더 ──
+    // editable=true: 날짜 클릭 시 모달 오픈, editable=false: 읽기 전용(관리자)
     function buildWorktimeCalendar(tbodyId, year, month, data, editable) {
         const tbody = document.getElementById(tbodyId);
         if (!tbody) return;
@@ -3183,39 +3218,36 @@
 
         let html = '<tr>';
         for (let i = 0; i < firstDay; i++)
-            html += '<td class="border border-slate-100 p-1 min-h-[80px] bg-slate-50"></td>';
+            html += '<td class="border border-slate-100 bg-slate-50 h-20"></td>';
 
         let dayOfWeek = firstDay;
         for (let d = 1; d <= daysInMonth; d++) {
             const dateStr = year + '-' + String(month+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
             const rec = data[dateStr] || {};
             const isToday = dateStr === today;
-            const isFuture = new Date(year, month, d) > new Date();
             const isSun = dayOfWeek === 0, isSat = dayOfWeek === 6;
             const dayColor = isSun ? 'text-red-500' : isSat ? 'text-blue-500' : 'text-slate-700';
-            const bg = isToday ? 'bg-blue-50' : rec.startTime ? 'bg-green-50' : 'bg-white';
             const wh = rec.workHours || 0;
-            const whText = wh > 0 ? minutesToHHMM(Math.round(wh * 60)) : '';
+            const whMins = Math.round(wh * 60);
+            const hasData = rec.startTime && rec.endTime;
 
-            if (editable && !isFuture) {
-                html += '<td class="border border-slate-200 p-1 align-top ' + bg + '" style="min-width:90px">' +
-                    '<div class="flex justify-between items-center mb-1">' +
-                        '<span class="text-xs font-bold ' + dayColor + '">' + d + '</span>' +
-                        (whText ? '<span class="text-xs text-green-700 font-bold">' + whText + '</span>' : '') +
-                    '</div>' +
-                    '<input type="time" value="' + (rec.startTime||'') + '" class="w-full text-xs border rounded p-0.5 mb-0.5" placeholder="출근"' +
-                        ' onchange="saveWorktimeCellAndRefresh(\'' + dateStr + '\', this.value, this.parentElement.querySelectorAll(\'input\')[1].value)">' +
-                    '<input type="time" value="' + (rec.endTime||'') + '" class="w-full text-xs border rounded p-0.5" placeholder="퇴근"' +
-                        ' onchange="saveWorktimeCellAndRefresh(\'' + dateStr + '\', this.parentElement.querySelectorAll(\'input\')[0].value, this.value)">' +
+            let bg = isToday ? 'bg-blue-50' : hasData ? 'bg-green-50' : 'bg-white';
+            let ring = isToday ? ' ring-2 ring-inset ring-blue-400' : '';
+
+            if (editable) {
+                // 클릭 가능 - 모달 오픈
+                const timeDisp = hasData
+                    ? '<div class="text-xs font-semibold text-green-700 leading-tight mt-1">' + rec.startTime + ' ~</div><div class="text-xs font-semibold text-green-700 leading-tight">' + rec.endTime + '</div><div class="text-xs font-bold text-green-800 mt-0.5">' + minutesToHHMM(whMins) + '</div>'
+                    : '<div class="text-xs text-slate-300 mt-2 text-center">+</div>';
+                html += '<td class="border border-slate-200 p-1.5 align-top cursor-pointer hover:bg-slate-100 transition ' + bg + ring + '" style="min-width:85px; height:80px" data-date="' + dateStr + '" onclick="openWorktimeDateCell(this)">' +
+                    '<div class="text-sm font-bold ' + dayColor + '">' + d + '</div>' +
+                    timeDisp +
                 '</td>';
             } else {
-                html += '<td class="border border-slate-200 p-1 align-top ' + bg + (isFuture ? ' opacity-40' : '') + '" style="min-width:80px">' +
-                    '<div class="flex justify-between items-center mb-1">' +
-                        '<span class="text-xs font-bold ' + dayColor + '">' + d + '</span>' +
-                        (whText ? '<span class="text-xs text-green-700 font-bold">' + whText + '</span>' : '') +
-                    '</div>' +
-                    (rec.startTime ? '<div class="text-xs text-slate-500">출: ' + rec.startTime + '</div>' : '') +
-                    (rec.endTime ? '<div class="text-xs text-slate-500">퇴: ' + rec.endTime + '</div>' : '') +
+                // 읽기 전용 (관리자)
+                html += '<td class="border border-slate-200 p-1.5 align-top ' + bg + ring + '" style="min-width:80px; height:80px">' +
+                    '<div class="text-sm font-bold ' + dayColor + '">' + d + '</div>' +
+                    (hasData ? '<div class="text-xs text-slate-600 mt-1">' + rec.startTime + ' ~<br>' + rec.endTime + '</div><div class="text-xs font-bold text-green-700">' + minutesToHHMM(whMins) + '</div>' : '') +
                 '</td>';
             }
 
@@ -3224,24 +3256,96 @@
         }
         if (dayOfWeek > 0)
             for (let i = dayOfWeek; i < 7; i++)
-                html += '<td class="border border-slate-100 p-1 bg-slate-50"></td>';
+                html += '<td class="border border-slate-100 bg-slate-50"></td>';
         html += '</tr>';
         tbody.innerHTML = html;
     }
 
-    // 셀 시간 변경 시 저장 및 갱신
-    async function saveWorktimeCellAndRefresh(date, startTime, endTime) {
-        if (!startTime || !endTime) return;
+    // ── 모달 함수들 ──
+    let worktimeDateSelected = null;
+
+    function openWorktimeModal(dateStr) {
+        worktimeDateSelected = dateStr;
+        const rec = worktimeData[dateStr] || {};
+        // 날짜 포맷: 2026-02-23 → 2월 23일
+        const parts = dateStr.split('-');
+        document.getElementById('worktime-modal-title').textContent =
+            parseInt(parts[1]) + '월 ' + parseInt(parts[2]) + '일 근무시간';
+        document.getElementById('wt-start').value = rec.startTime || '';
+        document.getElementById('wt-end').value = rec.endTime || '';
+        // 삭제 버튼: 기존 데이터 있을 때만 표시
+        document.getElementById('wt-clear-btn').classList.toggle('hidden', !rec.startTime);
+        updateWtCalcResult();
+        document.getElementById('worktime-modal').classList.remove('hidden');
+    }
+    window.openWorktimeModal = openWorktimeModal;
+    function openWorktimeDateCell(el) { openWorktimeModal(el.dataset.date); }
+    window.openWorktimeDateCell = openWorktimeDateCell;
+
+    function closeWorktimeModal() {
+        document.getElementById('worktime-modal').classList.add('hidden');
+        worktimeDateSelected = null;
+    }
+    window.closeWorktimeModal = closeWorktimeModal;
+
+    function updateWtCalcResult() {
+        const s = document.getElementById('wt-start').value;
+        const e = document.getElementById('wt-end').value;
+        const div = document.getElementById('wt-calc-result');
+        if (s && e) {
+            const [sh,sm] = s.split(':').map(Number);
+            const [eh,em] = e.split(':').map(Number);
+            const mins = (eh*60+em)-(sh*60+sm);
+            if (mins > 0) {
+                document.getElementById('wt-calc-hours').textContent = minutesToHHMM(mins);
+                div.classList.remove('hidden'); return;
+            }
+        }
+        div.classList.add('hidden');
+    }
+    window.updateWtCalcResult = updateWtCalcResult;
+
+    async function saveWorktimeEntry() {
+        const start = document.getElementById('wt-start').value;
+        const end = document.getElementById('wt-end').value;
+        if (!start || !end) { alert('출근시간과 퇴근시간을 모두 입력해주세요.'); return; }
+        const [sh,sm] = start.split(':').map(Number);
+        const [eh,em] = end.split(':').map(Number);
+        if ((eh*60+em)-(sh*60+sm) <= 0) { alert('퇴근시간이 출근시간보다 늦어야 합니다.'); return; }
         showLoading();
-        const wh = await saveWorktimeRecord(loggedInUser.name, date, startTime, endTime);
+        const wh = await saveWorktimeRecord(loggedInUser.name, worktimeDateSelected, start, end);
         hideLoading();
         if (wh !== null && wh !== undefined) {
-            worktimeData[date] = { startTime, endTime, workHours: wh };
+            worktimeData[worktimeDateSelected] = { startTime: start, endTime: end, workHours: wh };
             buildWorktimeCalendar('worktime-calendar-body', worktimeYear, worktimeMonth, worktimeData, true);
             updateWorktimeTotalDisplay();
+            closeWorktimeModal();
         }
     }
-    window.saveWorktimeCellAndRefresh = saveWorktimeCellAndRefresh;
+    window.saveWorktimeEntry = saveWorktimeEntry;
+
+    async function clearWorktimeEntry() {
+        if (!confirm('이 날의 근무시간 기록을 삭제할까요?')) return;
+        const docId = loggedInUser.name + '_' + worktimeDateSelected;
+        showLoading();
+        try {
+            await fetch(FIRESTORE_BASE_URL + '/WorkTime/' + docId, { method: 'DELETE' });
+            delete worktimeData[worktimeDateSelected];
+            buildWorktimeCalendar('worktime-calendar-body', worktimeYear, worktimeMonth, worktimeData, true);
+            updateWorktimeTotalDisplay();
+            closeWorktimeModal();
+        } catch(e) { alert('삭제 오류: ' + e.message); }
+        finally { hideLoading(); }
+    }
+    window.clearWorktimeEntry = clearWorktimeEntry;
+
+    // time input 이벤트
+    document.addEventListener('DOMContentLoaded', function() {
+        var s = document.getElementById('wt-start');
+        var e = document.getElementById('wt-end');
+        if (s) s.addEventListener('input', updateWtCalcResult);
+        if (e) e.addEventListener('input', updateWtCalcResult);
+    });
 
     // ── 관리자 근무시간 조회 ──
     async function initAdminWorktimeSection() {
