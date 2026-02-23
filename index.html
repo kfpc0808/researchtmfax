@@ -2050,7 +2050,7 @@
                     <option value="TMer" ${member.role === 'TMer' ? 'selected' : ''}>TMer</option>
                 </select>
             </td>
-            <td class="px-2 py-2"><input name="name" type="text" value="${member.name || ''}" class="w-full p-1 border rounded bg-gray-200 text-xs" readonly></td>
+            <td class="px-2 py-2"><input name="name" type="text" value="${member.name || ''}" class="w-full p-1 border rounded bg-slate-50 text-xs"></td>
             <td class="px-2 py-2"><input name="phone" type="text" value="${member.phone || ''}" class="w-full p-1 border rounded bg-slate-50 text-xs"></td>
             <td class="px-2 py-2"><input name="company" type="text" value="${member.company || ''}" class="w-full p-1 border rounded bg-slate-50 text-xs"></td>
             <td class="px-2 py-2"><input name="region" type="text" value="${member.region || ''}" class="w-full p-1 border rounded bg-slate-50 text-xs"></td>
@@ -2075,8 +2075,8 @@
     }
 
     function editUser(originalIndex) {
-        const member = allUsers.find(u => u.originalIndex === originalIndex);
-        if (!member) return;
+        const member = allUsers.find(u => String(u.originalIndex) === String(originalIndex));
+        if (!member) { alert('회원 정보를 찾을 수 없습니다. 페이지를 새로고침 후 다시 시도하세요.'); return; }
         const row = document.getElementById(`user-row-${originalIndex}`);
         row.innerHTML = getEditUserRowHtml(member);
     }
@@ -2084,7 +2084,7 @@
 
     async function saveUser(originalIndex) {
         const row = document.getElementById(`user-row-${originalIndex}`);
-        const originalUser = allUsers.find(u => u.originalIndex === originalIndex);
+        const originalUser = allUsers.find(u => String(u.originalIndex) === String(originalIndex));
         const updatedUserData = {
             role: row.querySelector('[name="role"]').value,
             name: row.querySelector('[name="name"]').value,
