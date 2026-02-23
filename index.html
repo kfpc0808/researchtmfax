@@ -832,6 +832,40 @@
                     </div>
                 </form>
             </div>
+                        <!-- TM 근무시간 조회 섹션 (관리자용) -->
+            <div class="bg-white rounded-xl shadow-lg mb-4">
+                <div class="p-4 border-b flex flex-wrap justify-between items-center gap-2">
+                    <h2 class="text-lg font-semibold text-slate-800">⏰ TM 근무시간 현황</h2>
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <select id="admin-wt-name-filter" class="border rounded-lg px-3 py-2 text-sm bg-white" onchange="loadAdminWorktime()">
+                            <option value="">전체 TM</option>
+                        </select>
+                        <button onclick="prevAdminWtMonth()" class="px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 font-bold">◀</button>
+                        <span id="admin-wt-month-title" class="text-sm font-bold text-slate-800 min-w-[110px] text-center"></span>
+                        <button onclick="nextAdminWtMonth()" class="px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 font-bold">▶</button>
+                    </div>
+                </div>
+                <div class="p-4">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm text-left text-slate-600">
+                            <thead class="bg-slate-100 text-xs uppercase">
+                                <tr>
+                                    <th class="px-4 py-3">TM 성명</th>
+                                    <th class="px-4 py-3">날짜</th>
+                                    <th class="px-4 py-3">출근시간</th>
+                                    <th class="px-4 py-3">퇴근시간</th>
+                                    <th class="px-4 py-3">근무시간</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-wt-table-body">
+                                <tr><td colspan="5" class="text-center py-8 text-slate-400">조회할 TM을 선택하거나 전체를 클릭하세요.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="admin-wt-month-total" class="mt-4 p-3 bg-blue-50 rounded-xl border border-blue-200 text-sm font-semibold text-blue-800 hidden"></div>
+                </div>
+            </div>
+
             <!-- 스케줄 관리 섹션 -->
             <div class="bg-white rounded-xl shadow-lg mb-4">
                 <div class="p-4 border-b"><h2 class="text-lg font-semibold text-slate-800">📅 다음 주 전문위원 스케줄</h2></div>
@@ -863,6 +897,41 @@
                     <!-- 스케줄 페이지네이션 -->
                     <div id="schedule-pagination" class="flex justify-center items-center gap-2 mt-4"></div>
                     <p id="no-schedule-msg" class="text-center py-8 text-slate-500 hidden">신청된 스케줄이 없습니다.</p>
+                </div>
+            </div>
+
+            <!-- TM 근무시간 관리 섹션 (관리자) -->
+            <div class="bg-white rounded-xl shadow-lg mb-4">
+                <div class="p-4 border-b flex flex-wrap justify-between items-center gap-2">
+                    <h2 class="text-lg font-semibold text-slate-800">🕐 TM 근무시간 현황</h2>
+                    <div class="flex flex-wrap items-center gap-3">
+                        <select id="admin-worktime-name" class="border rounded-lg px-3 py-2 text-sm bg-white" onchange="renderAdminWorktimeCalendar()">
+                            <option value="">TM 선택</option>
+                        </select>
+                        <button onclick="changeAdminWorktimeMonth(-1)" class="px-3 py-1 bg-slate-200 hover:bg-slate-300 rounded-lg font-bold">◀</button>
+                        <span id="admin-worktime-month-label" class="text-base font-bold text-slate-700 min-w-[120px] text-center"></span>
+                        <button onclick="changeAdminWorktimeMonth(1)" class="px-3 py-1 bg-slate-200 hover:bg-slate-300 rounded-lg font-bold">▶</button>
+                        <div class="text-sm font-semibold text-blue-700 bg-blue-50 px-4 py-2 rounded-lg">
+                            월 합계: <span id="admin-worktime-total" class="font-bold text-blue-900">0</span>시간
+                        </div>
+                    </div>
+                </div>
+                <div class="p-4 overflow-x-auto">
+                    <table class="w-full text-sm border-collapse">
+                        <thead>
+                            <tr class="bg-slate-100">
+                                <th class="border border-slate-200 px-2 py-2 text-red-500">일</th>
+                                <th class="border border-slate-200 px-2 py-2">월</th>
+                                <th class="border border-slate-200 px-2 py-2">화</th>
+                                <th class="border border-slate-200 px-2 py-2">수</th>
+                                <th class="border border-slate-200 px-2 py-2">목</th>
+                                <th class="border border-slate-200 px-2 py-2">금</th>
+                                <th class="border border-slate-200 px-2 py-2 text-blue-500">토</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-worktime-calendar-body"></tbody>
+                    </table>
+                    <p id="admin-worktime-empty" class="text-center py-8 text-slate-400 hidden">TM을 선택하면 근무시간이 표시됩니다.</p>
                 </div>
             </div>
 
@@ -976,6 +1045,37 @@
                 </div>
             </header>
             
+            <!-- TM 근무시간 입력 섹션 (TMer만 표시) -->
+            <div id="tm-worktime-section" class="hidden bg-white rounded-xl shadow-lg mb-4">
+                <div class="p-4 border-b flex flex-wrap justify-between items-center gap-2">
+                    <h2 class="text-lg font-semibold text-slate-800">🕐 나의 월간 근무시간</h2>
+                    <div class="flex items-center gap-3">
+                        <button onclick="changeWorktimeMonth(-1)" class="px-3 py-1 bg-slate-200 hover:bg-slate-300 rounded-lg font-bold">◀</button>
+                        <span id="worktime-month-label" class="text-base font-bold text-slate-700 min-w-[120px] text-center"></span>
+                        <button onclick="changeWorktimeMonth(1)" class="px-3 py-1 bg-slate-200 hover:bg-slate-300 rounded-lg font-bold">▶</button>
+                    </div>
+                    <div class="text-sm font-semibold text-blue-700 bg-blue-50 px-4 py-2 rounded-lg">
+                        월 합계: <span id="worktime-total" class="font-bold text-blue-900">0</span>시간
+                    </div>
+                </div>
+                <div class="p-4 overflow-x-auto">
+                    <table class="w-full text-sm border-collapse">
+                        <thead>
+                            <tr class="bg-slate-100">
+                                <th class="border border-slate-200 px-2 py-2 text-red-500">일</th>
+                                <th class="border border-slate-200 px-2 py-2">월</th>
+                                <th class="border border-slate-200 px-2 py-2">화</th>
+                                <th class="border border-slate-200 px-2 py-2">수</th>
+                                <th class="border border-slate-200 px-2 py-2">목</th>
+                                <th class="border border-slate-200 px-2 py-2">금</th>
+                                <th class="border border-slate-200 px-2 py-2 text-blue-500">토</th>
+                            </tr>
+                        </thead>
+                        <tbody id="worktime-calendar-body"></tbody>
+                    </table>
+                </div>
+            </div>
+
             <!-- 전문위원 스케줄 신청 섹션 (전문위원만 표시) -->
             <div id="specialist-schedule-section" class="hidden bg-white rounded-xl shadow-lg mb-4">
                 <div class="p-4 border-b flex flex-wrap justify-between items-center gap-2">
@@ -1477,11 +1577,12 @@
             // 병렬로 동시 실행하여 속도 개선
             const promises = [loadInitialData()];
             if (loggedInUser.role === '전문위원') promises.push(renderScheduleUI());
+            if (loggedInUser.role === 'TMer') promises.push(renderWorktimeSection());
             Promise.all(promises);
         }
         if (pageId === 'admin-page' && loggedInUser) {
             // 병렬로 동시 실행
-            Promise.all([renderAdminTable(), renderAdminSchedule()]);
+            Promise.all([renderAdminTable(), renderAdminSchedule(), initAdminWorktimeSection()]);
         }
     }
     window.showPage = showPage;
@@ -3002,6 +3103,266 @@
         }
     }
     window.updateScheduleStatus = updateScheduleStatus;
+
+    // ===== TM 근무시간 기능 =====
+    let worktimeYear = new Date().getFullYear();
+    let worktimeMonth = new Date().getMonth(); // 0-based
+    let worktimeData = {}; // { 'YYYY-MM-DD': { startTime, endTime, workHours } }
+    let adminWorktimeYear = new Date().getFullYear();
+    let adminWorktimeMonth = new Date().getMonth();
+    let adminWorktimeData = {};
+
+    // WorkTime Firestore 읽기
+    async function loadWorktimeData(name, year, month) {
+        const prefix = `${String(year)}-${String(month+1).padStart(2,'0')}`;
+        try {
+            const url = `${FIRESTORE_BASE_URL}/WorkTime?pageSize=300`;
+            const res = await fetch(url);
+            if (!res.ok) return {};
+            const json = await res.json();
+            const result = {};
+            (json.documents || []).forEach(doc => {
+                const fields = doc.fields || {};
+                const docName = fields.name?.stringValue || '';
+                const docDate = fields.date?.stringValue || '';
+                if (docName === name && docDate.startsWith(prefix)) {
+                    result[docDate] = {
+                        startTime: fields.startTime?.stringValue || '',
+                        endTime: fields.endTime?.stringValue || '',
+                        workHours: fields.workHours?.doubleValue || fields.workHours?.integerValue || 0,
+                        _docId: doc.name.split('/').pop()
+                    };
+                }
+            });
+            return result;
+        } catch(e) { return {}; }
+    }
+
+    // WorkTime 저장
+    async function saveWorktimeRecord(name, date, startTime, endTime) {
+        if (!startTime || !endTime) return;
+        // 근무시간 계산
+        const [sh, sm] = startTime.split(':').map(Number);
+        const [eh, em] = endTime.split(':').map(Number);
+        const totalMins = (eh * 60 + em) - (sh * 60 + sm);
+        if (totalMins <= 0) { alert('퇴근시간이 출근시간보다 늦어야 합니다.'); return; }
+        const workHours = Math.round(totalMins / 60 * 100) / 100;
+
+        const docId = `${name}_${date}`;
+        const fields = {
+            name: { stringValue: name },
+            date: { stringValue: date },
+            startTime: { stringValue: startTime },
+            endTime: { stringValue: endTime },
+            workHours: { doubleValue: workHours }
+        };
+        try {
+            // PATCH로 upsert (문서 없으면 생성, 있으면 덮어쓰기)
+            const res = await fetch(`${FIRESTORE_BASE_URL}/WorkTime/${docId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ fields })
+            });
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            return workHours;
+        } catch(e) { alert('저장 오류: ' + e.message); return null; }
+    }
+
+
+
+
+
+    // ===== TM 근무시간 기능 =====
+    function minutesToHHMM(mins) {
+        if (mins <= 0) return '0시간 0분';
+        return Math.floor(mins/60) + '시간 ' + (mins%60) + '분';
+    }
+
+    // TMer 근무시간 섹션 표시 및 초기 렌더링
+    async function renderWorktimeSection() {
+        if (!loggedInUser || loggedInUser.role !== 'TMer') return;
+        document.getElementById('tm-worktime-section').classList.remove('hidden');
+        document.getElementById('worktime-month-label').textContent =
+            worktimeYear + '년 ' + (worktimeMonth + 1) + '월';
+        showLoading();
+        worktimeData = await loadWorktimeData(loggedInUser.name, worktimeYear, worktimeMonth);
+        hideLoading();
+        buildWorktimeCalendar('worktime-calendar-body', worktimeYear, worktimeMonth, worktimeData, true);
+        updateWorktimeTotalDisplay();
+    }
+
+    function updateWorktimeTotalDisplay() {
+        const totalMins = Object.values(worktimeData).reduce(function(sum, r) {
+            return sum + Math.round((r.workHours || 0) * 60);
+        }, 0);
+        const days = Object.keys(worktimeData).length;
+        document.getElementById('worktime-total').textContent =
+            Math.floor(totalMins/60) + '시간 ' + (totalMins%60) + '분 (총 ' + days + '일)';
+    }
+
+    function changeWorktimeMonth(delta) {
+        worktimeMonth += delta;
+        if (worktimeMonth < 0) { worktimeMonth = 11; worktimeYear--; }
+        if (worktimeMonth > 11) { worktimeMonth = 0; worktimeYear++; }
+        renderWorktimeSection();
+    }
+    window.changeWorktimeMonth = changeWorktimeMonth;
+
+    // 달력 공통 빌더 (TMer: 편집가능, 관리자: 읽기전용)
+    function buildWorktimeCalendar(tbodyId, year, month, data, editable) {
+        const tbody = document.getElementById(tbodyId);
+        if (!tbody) return;
+        const today = new Date().toISOString().split('T')[0];
+        const firstDay = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+        let html = '<tr>';
+        for (let i = 0; i < firstDay; i++)
+            html += '<td class="border border-slate-100 p-1 min-h-[80px] bg-slate-50"></td>';
+
+        let dayOfWeek = firstDay;
+        for (let d = 1; d <= daysInMonth; d++) {
+            const dateStr = year + '-' + String(month+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+            const rec = data[dateStr] || {};
+            const isToday = dateStr === today;
+            const isFuture = new Date(year, month, d) > new Date();
+            const isSun = dayOfWeek === 0, isSat = dayOfWeek === 6;
+            const dayColor = isSun ? 'text-red-500' : isSat ? 'text-blue-500' : 'text-slate-700';
+            const bg = isToday ? 'bg-blue-50' : rec.startTime ? 'bg-green-50' : 'bg-white';
+            const wh = rec.workHours || 0;
+            const whText = wh > 0 ? minutesToHHMM(Math.round(wh * 60)) : '';
+
+            if (editable && !isFuture) {
+                html += '<td class="border border-slate-200 p-1 align-top ' + bg + '" style="min-width:90px">' +
+                    '<div class="flex justify-between items-center mb-1">' +
+                        '<span class="text-xs font-bold ' + dayColor + '">' + d + '</span>' +
+                        (whText ? '<span class="text-xs text-green-700 font-bold">' + whText + '</span>' : '') +
+                    '</div>' +
+                    '<input type="time" value="' + (rec.startTime||'') + '" class="w-full text-xs border rounded p-0.5 mb-0.5" placeholder="출근"' +
+                        ' onchange="saveWorktimeCellAndRefresh('' + dateStr + '', this.value, this.parentElement.querySelectorAll('input')[1].value)">' +
+                    '<input type="time" value="' + (rec.endTime||'') + '" class="w-full text-xs border rounded p-0.5" placeholder="퇴근"' +
+                        ' onchange="saveWorktimeCellAndRefresh('' + dateStr + '', this.parentElement.querySelectorAll('input')[0].value, this.value)">' +
+                '</td>';
+            } else {
+                html += '<td class="border border-slate-200 p-1 align-top ' + bg + (isFuture ? ' opacity-40' : '') + '" style="min-width:80px">' +
+                    '<div class="flex justify-between items-center mb-1">' +
+                        '<span class="text-xs font-bold ' + dayColor + '">' + d + '</span>' +
+                        (whText ? '<span class="text-xs text-green-700 font-bold">' + whText + '</span>' : '') +
+                    '</div>' +
+                    (rec.startTime ? '<div class="text-xs text-slate-500">출: ' + rec.startTime + '</div>' : '') +
+                    (rec.endTime ? '<div class="text-xs text-slate-500">퇴: ' + rec.endTime + '</div>' : '') +
+                '</td>';
+            }
+
+            dayOfWeek++;
+            if (dayOfWeek === 7) { dayOfWeek = 0; html += '</tr><tr>'; }
+        }
+        if (dayOfWeek > 0)
+            for (let i = dayOfWeek; i < 7; i++)
+                html += '<td class="border border-slate-100 p-1 bg-slate-50"></td>';
+        html += '</tr>';
+        tbody.innerHTML = html;
+    }
+
+    // 셀 시간 변경 시 저장 및 갱신
+    async function saveWorktimeCellAndRefresh(date, startTime, endTime) {
+        if (!startTime || !endTime) return;
+        showLoading();
+        const wh = await saveWorktimeRecord(loggedInUser.name, date, startTime, endTime);
+        hideLoading();
+        if (wh !== null && wh !== undefined) {
+            worktimeData[date] = { startTime, endTime, workHours: wh };
+            buildWorktimeCalendar('worktime-calendar-body', worktimeYear, worktimeMonth, worktimeData, true);
+            updateWorktimeTotalDisplay();
+        }
+    }
+    window.saveWorktimeCellAndRefresh = saveWorktimeCellAndRefresh;
+
+    // ── 관리자 근무시간 조회 ──
+    async function initAdminWorktimeSection() {
+        const monthStr = String(adminWorktimeMonth + 1).padStart(2,'0');
+        document.getElementById('admin-wt-month-title').textContent =
+            adminWorktimeYear + '년 ' + monthStr + '월';
+        const users = apiCache['Users'] || await readFromFirestore('Users');
+        const tmers = (users || []).filter(function(u){ return u.role === 'TMer'; });
+        const sel = document.getElementById('admin-wt-name-filter');
+        sel.innerHTML = '<option value="">전체 TM</option>' +
+            tmers.map(function(u){ return '<option value="' + u.name + '">' + u.name + '</option>'; }).join('');
+        await loadAdminWorktime();
+    }
+
+    async function loadAdminWorktime() {
+        const monthStr = String(adminWorktimeMonth + 1).padStart(2,'0');
+        document.getElementById('admin-wt-month-title').textContent =
+            adminWorktimeYear + '년 ' + monthStr + '월';
+        const nameFilter = document.getElementById('admin-wt-name-filter').value;
+        const prefix = adminWorktimeYear + '-' + monthStr;
+        showLoading();
+        try {
+            const res = await fetch(FIRESTORE_BASE_URL + '/WorkTime?pageSize=300');
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            const json = await res.json();
+            const rows = [];
+            (json.documents || []).forEach(function(doc) {
+                const f = doc.fields || {};
+                const name = f.name?.stringValue || '';
+                const date = f.date?.stringValue || '';
+                if (date.startsWith(prefix) && (!nameFilter || name === nameFilter)) {
+                    const wh = f.workHours?.doubleValue || f.workHours?.integerValue || 0;
+                    rows.push({ name, date,
+                        startTime: f.startTime?.stringValue || '',
+                        endTime: f.endTime?.stringValue || '',
+                        workMins: Math.round(wh * 60)
+                    });
+                }
+            });
+            rows.sort(function(a,b){ return a.name.localeCompare(b.name) || a.date.localeCompare(b.date); });
+            renderAdminWtTable(rows);
+        } catch(e) {
+            document.getElementById('admin-wt-table-body').innerHTML =
+                '<tr><td colspan="5" class="text-center py-8 text-red-400">오류: ' + e.message + '</td></tr>';
+        } finally { hideLoading(); }
+    }
+    window.loadAdminWorktime = loadAdminWorktime;
+
+    function renderAdminWtTable(rows) {
+        const tbody = document.getElementById('admin-wt-table-body');
+        const totalDiv = document.getElementById('admin-wt-month-total');
+        if (!rows || rows.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-slate-400">근무 기록이 없습니다.</td></tr>';
+            totalDiv.classList.add('hidden'); return;
+        }
+        const summaryMap = {};
+        let grand = 0;
+        rows.forEach(function(r) {
+            summaryMap[r.name] = (summaryMap[r.name] || 0) + r.workMins;
+            grand += r.workMins;
+        });
+        tbody.innerHTML = rows.map(function(r) {
+            return '<tr class="border-b hover:bg-slate-50">' +
+                '<td class="px-4 py-3 font-semibold">' + r.name + '</td>' +
+                '<td class="px-4 py-3">' + r.date + '</td>' +
+                '<td class="px-4 py-3">' + r.startTime + '</td>' +
+                '<td class="px-4 py-3">' + r.endTime + '</td>' +
+                '<td class="px-4 py-3 font-semibold text-green-700">' + minutesToHHMM(r.workMins) + '</td>' +
+            '</tr>';
+        }).join('');
+        const summaryText = Object.entries(summaryMap)
+            .map(function(e){ return e[0] + ': <strong>' + minutesToHHMM(e[1]) + '</strong>'; }).join(' &nbsp;|&nbsp; ');
+        totalDiv.innerHTML = '📊 월 합계 → ' + summaryText + ' &nbsp;|&nbsp; 전체: <strong>' + minutesToHHMM(grand) + '</strong>';
+        totalDiv.classList.remove('hidden');
+    }
+
+    function prevAdminWtMonth() {
+        if (adminWorktimeMonth === 0) { adminWorktimeMonth = 11; adminWorktimeYear--; } else adminWorktimeMonth--;
+        loadAdminWorktime();
+    }
+    function nextAdminWtMonth() {
+        if (adminWorktimeMonth === 11) { adminWorktimeMonth = 0; adminWorktimeYear++; } else adminWorktimeMonth++;
+        loadAdminWorktime();
+    }
+    window.prevAdminWtMonth = prevAdminWtMonth;
+    window.nextAdminWtMonth = nextAdminWtMonth;
 
     // === 페이지 첫 로드 ===
     document.addEventListener('DOMContentLoaded', () => {
