@@ -1795,7 +1795,7 @@
         const users = await callAPI('readAll', 'Users');
         if (users) {
             allUsers = users;
-            const user = users.find(u => u.name === username && u.phone === password);
+            const user = users.find(u => u.name === username && String(u.phone) === String(password));
             if (user) {
                 loggedInUser = user;
                 sessionStorage.setItem('loggedInUser', JSON.stringify(user));
