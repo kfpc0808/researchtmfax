@@ -900,40 +900,6 @@
                 </div>
             </div>
 
-            <!-- TM 근무시간 관리 섹션 (관리자) -->
-            <div class="bg-white rounded-xl shadow-lg mb-4">
-                <div class="p-4 border-b flex flex-wrap justify-between items-center gap-2">
-                    <h2 class="text-lg font-semibold text-slate-800">🕐 TM 근무시간 현황</h2>
-                    <div class="flex flex-wrap items-center gap-3">
-                        <select id="admin-worktime-name" class="border rounded-lg px-3 py-2 text-sm bg-white" onchange="renderAdminWorktimeCalendar()">
-                            <option value="">TM 선택</option>
-                        </select>
-                        <button onclick="changeAdminWorktimeMonth(-1)" class="px-3 py-1 bg-slate-200 hover:bg-slate-300 rounded-lg font-bold">◀</button>
-                        <span id="admin-worktime-month-label" class="text-base font-bold text-slate-700 min-w-[120px] text-center"></span>
-                        <button onclick="changeAdminWorktimeMonth(1)" class="px-3 py-1 bg-slate-200 hover:bg-slate-300 rounded-lg font-bold">▶</button>
-                        <div class="text-sm font-semibold text-blue-700 bg-blue-50 px-4 py-2 rounded-lg">
-                            월 합계: <span id="admin-worktime-total" class="font-bold text-blue-900">0</span>시간
-                        </div>
-                    </div>
-                </div>
-                <div class="p-4 overflow-x-auto">
-                    <table class="w-full text-sm border-collapse">
-                        <thead>
-                            <tr class="bg-slate-100">
-                                <th class="border border-slate-200 px-2 py-2 text-red-500">일</th>
-                                <th class="border border-slate-200 px-2 py-2">월</th>
-                                <th class="border border-slate-200 px-2 py-2">화</th>
-                                <th class="border border-slate-200 px-2 py-2">수</th>
-                                <th class="border border-slate-200 px-2 py-2">목</th>
-                                <th class="border border-slate-200 px-2 py-2">금</th>
-                                <th class="border border-slate-200 px-2 py-2 text-blue-500">토</th>
-                            </tr>
-                        </thead>
-                        <tbody id="admin-worktime-calendar-body"></tbody>
-                    </table>
-                    <p id="admin-worktime-empty" class="text-center py-8 text-slate-400 hidden">TM을 선택하면 근무시간이 표시됩니다.</p>
-                </div>
-            </div>
 
             <div class="bg-white rounded-xl shadow-lg overflow-hidden">
                 <div class="p-4 border-b flex justify-between items-center">
@@ -3110,7 +3076,6 @@
     let worktimeData = {}; // { 'YYYY-MM-DD': { startTime, endTime, workHours } }
     let adminWorktimeYear = new Date().getFullYear();
     let adminWorktimeMonth = new Date().getMonth();
-    let adminWorktimeData = {};
 
     // WorkTime Firestore 읽기
     async function loadWorktimeData(name, year, month) {
@@ -3239,9 +3204,9 @@
                         (whText ? '<span class="text-xs text-green-700 font-bold">' + whText + '</span>' : '') +
                     '</div>' +
                     '<input type="time" value="' + (rec.startTime||'') + '" class="w-full text-xs border rounded p-0.5 mb-0.5" placeholder="출근"' +
-                        ' onchange="saveWorktimeCellAndRefresh('' + dateStr + '', this.value, this.parentElement.querySelectorAll('input')[1].value)">' +
+                        ' onchange="saveWorktimeCellAndRefresh(\'' + dateStr + '\', this.value, this.parentElement.querySelectorAll(\'input\')[1].value)">' +
                     '<input type="time" value="' + (rec.endTime||'') + '" class="w-full text-xs border rounded p-0.5" placeholder="퇴근"' +
-                        ' onchange="saveWorktimeCellAndRefresh('' + dateStr + '', this.parentElement.querySelectorAll('input')[0].value, this.value)">' +
+                        ' onchange="saveWorktimeCellAndRefresh(\'' + dateStr + '\', this.parentElement.querySelectorAll(\'input\')[0].value, this.value)">' +
                 '</td>';
             } else {
                 html += '<td class="border border-slate-200 p-1 align-top ' + bg + (isFuture ? ' opacity-40' : '') + '" style="min-width:80px">' +
