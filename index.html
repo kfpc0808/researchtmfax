@@ -98,8 +98,8 @@
                         <input id="username" type="text" required class="mt-2 block w-full px-4 py-3 bg-slate-50 border rounded-lg" placeholder="가입하신 성명을 입력하세요">
                     </div>
                     <div>
-                        <label for="password" class="text-sm font-semibold text-slate-700">전화번호 (비밀번호)</label>
-                        <input id="password" type="password" required class="mt-2 block w-full px-4 py-3 bg-slate-50 border rounded-lg" placeholder="'-'를 제외한 전화번호를 입력하세요">
+                        <label for="password" class="text-sm font-semibold text-slate-700">비밀번호</label>
+                        <input id="password" type="password" required class="mt-2 block w-full px-4 py-3 bg-slate-50 border rounded-lg" placeholder="비밀번호를 입력하세요">
                     </div>
                     <div><button type="submit" class="w-full flex justify-center py-3 px-4 text-base font-bold rounded-lg text-white bg-slate-800 hover:bg-slate-900">로그인</button></div>
                 </form>
@@ -1800,8 +1800,8 @@
                 loggedInUser = user;
                 sessionStorage.setItem('loggedInUser', JSON.stringify(user));
                 
-                // 최초 로그인 시 비밀번호 변경 필요 체크
-                if (!user.passwordChanged || user.passwordChanged === 'false' || user.passwordChanged === false) {
+                // 최초 로그인 시 비밀번호 변경 필요 체크 (명시적으로 'false'인 경우만 강제 변경)
+                if (user.passwordChanged === 'false' || user.passwordChanged === false) {
                     tempPassword = password;
                     document.getElementById('force-password-modal').classList.remove('hidden');
                 } else {
