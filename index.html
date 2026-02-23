@@ -2136,8 +2136,8 @@
 
         let effectiveFilter = { ...filter };
         
-        // 전문위원 로그인 시: W열(담당 전문위원)이 본인 이름인 행만 필터링
-        if (loggedInUser.role === '전문위원') {
+        // 전문위원/TMer 로그인 시: 담당 전문위원 열이 본인 이름인 행만 필터링
+        if (loggedInUser.role === '전문위원' || loggedInUser.role === 'TMer') {
             effectiveFilter['담당 전문위원'] = loggedInUser.name;
         }
 
