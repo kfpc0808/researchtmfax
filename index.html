@@ -855,10 +855,11 @@
                                     <th class="px-4 py-3">출근시간</th>
                                     <th class="px-4 py-3">퇴근시간</th>
                                     <th class="px-4 py-3">근무시간</th>
+                                    <th class="px-4 py-3 text-emerald-700">수수료</th>
                                 </tr>
                             </thead>
                             <tbody id="admin-wt-table-body">
-                                <tr><td colspan="5" class="text-center py-8 text-slate-400">조회할 TM을 선택하거나 전체를 클릭하세요.</td></tr>
+                                <tr><td colspan="6" class="text-center py-8 text-slate-400">조회할 TM을 선택하거나 전체를 클릭하세요.</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -1020,8 +1021,13 @@
                         <h2 class="text-lg font-semibold text-slate-800">🕐 나의 월간 근무시간</h2>
                         <span id="worktime-toggle-icon" class="text-slate-400 text-sm font-bold">▼ 펼치기</span>
                     </div>
-                    <div class="text-sm font-semibold text-blue-700 bg-blue-50 px-4 py-2 rounded-lg" onclick="event.stopPropagation()">
-                        월 합계: <span id="worktime-total" class="font-bold text-blue-900">0시간 0분</span>
+                    <div class="flex gap-3 flex-wrap" onclick="event.stopPropagation()">
+                        <div class="text-sm font-semibold text-blue-700 bg-blue-50 px-4 py-2 rounded-lg">
+                            월 합계: <span id="worktime-total" class="font-bold text-blue-900">0시간 0분</span>
+                        </div>
+                        <div class="text-sm font-semibold text-emerald-700 bg-emerald-50 px-4 py-2 rounded-lg">
+                            월 수수료: <span id="worktime-commission" class="font-bold text-emerald-900">0원</span>
+                        </div>
                     </div>
                 </div>
                 <!-- 달력 영역: 기본 접혀있음 -->
@@ -3207,6 +3213,7 @@
         updateWorktimeTotalDisplay();
     }
 
+    const HOURLY_RATE = 15000;
     function updateWorktimeTotalDisplay() {
         const totalMins = Object.values(worktimeData).reduce(function(sum, r) {
             return sum + Math.round((r.workHours || 0) * 60);
@@ -3214,6 +3221,9 @@
         const days = Object.keys(worktimeData).length;
         document.getElementById('worktime-total').textContent =
             Math.floor(totalMins/60) + '시간 ' + (totalMins%60) + '분 (총 ' + days + '일)';
+        const commission = Math.round((totalMins / 60) * HOURLY_RATE);
+        document.getElementById('worktime-commission').textContent =
+            commission.toLocaleString() + '원';
     }
 
     function changeWorktimeMonth(delta) {
@@ -3253,8 +3263,9 @@
 
             if (editable) {
                 // 클릭 가능 - 모달 오픈
+                const commission = hasData ? Math.round((wh) * HOURLY_RATE).toLocaleString() + '원' : '';
                 const timeDisp = hasData
-                    ? '<div class="text-xs font-semibold text-green-700 leading-tight mt-1">' + rec.startTime + ' ~</div><div class="text-xs font-semibold text-green-700 leading-tight">' + rec.endTime + '</div><div class="text-xs font-bold text-green-800 mt-0.5">' + minutesToHHMM(whMins) + '</div>'
+                    ? '<div class="text-xs font-semibold text-green-700 leading-tight mt-1">' + rec.startTime + ' ~</div><div class="text-xs font-semibold text-green-700 leading-tight">' + rec.endTime + '</div><div class="text-xs font-bold text-green-800 mt-0.5">' + minutesToHHMM(whMins) + '</div><div class="text-xs text-emerald-600 font-semibold mt-0.5">' + commission + '</div>'
                     : '<div class="text-xs text-slate-300 mt-2 text-center">+</div>';
                 html += '<td class="border border-slate-200 p-1.5 align-top cursor-pointer hover:bg-slate-100 transition ' + bg + ring + '" style="min-width:85px; height:80px" data-date="' + dateStr + '" onclick="openWorktimeDateCell(this)">' +
                     '<div class="text-sm font-bold ' + dayColor + '">' + d + '</div>' +
@@ -3454,27 +3465,32 @@
         const tbody = document.getElementById('admin-wt-table-body');
         const totalDiv = document.getElementById('admin-wt-month-total');
         if (!rows || rows.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-slate-400">근무 기록이 없습니다.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-slate-400">근무 기록이 없습니다.</td></tr>';
             totalDiv.classList.add('hidden'); return;
         }
-        const summaryMap = {};
-        let grand = 0;
+        const summaryMap = {};   // name → {mins, commission}
+        let grand = 0, grandCommission = 0;
         rows.forEach(function(r) {
-            summaryMap[r.name] = (summaryMap[r.name] || 0) + r.workMins;
+            if (!summaryMap[r.name]) summaryMap[r.name] = { mins: 0, commission: 0 };
+            summaryMap[r.name].mins += r.workMins;
+            summaryMap[r.name].commission += Math.round((r.workMins / 60) * HOURLY_RATE);
             grand += r.workMins;
+            grandCommission += Math.round((r.workMins / 60) * HOURLY_RATE);
         });
         tbody.innerHTML = rows.map(function(r) {
+            const rowCommission = Math.round((r.workMins / 60) * HOURLY_RATE);
             return '<tr class="border-b hover:bg-slate-50">' +
                 '<td class="px-4 py-3 font-semibold">' + r.name + '</td>' +
                 '<td class="px-4 py-3">' + r.date + '</td>' +
                 '<td class="px-4 py-3">' + r.startTime + '</td>' +
                 '<td class="px-4 py-3">' + r.endTime + '</td>' +
                 '<td class="px-4 py-3 font-semibold text-green-700">' + minutesToHHMM(r.workMins) + '</td>' +
+                '<td class="px-4 py-3 font-semibold text-emerald-700">' + rowCommission.toLocaleString() + '원</td>' +
             '</tr>';
         }).join('');
         const summaryText = Object.entries(summaryMap)
-            .map(function(e){ return e[0] + ': <strong>' + minutesToHHMM(e[1]) + '</strong>'; }).join(' &nbsp;|&nbsp; ');
-        totalDiv.innerHTML = '📊 월 합계 → ' + summaryText + ' &nbsp;|&nbsp; 전체: <strong>' + minutesToHHMM(grand) + '</strong>';
+            .map(function(e){ return e[0] + ': <strong>' + minutesToHHMM(e[1].mins) + ' / ' + e[1].commission.toLocaleString() + '원</strong>'; }).join(' &nbsp;|&nbsp; ');
+        totalDiv.innerHTML = '📊 월 합계 → ' + summaryText + ' &nbsp;|&nbsp; 전체: <strong>' + minutesToHHMM(grand) + ' / ' + grandCommission.toLocaleString() + '원</strong>';
         totalDiv.classList.remove('hidden');
     }
 
