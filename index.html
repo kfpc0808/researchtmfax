@@ -1260,6 +1260,7 @@
                         <span id="duplicate-warning" class="hidden text-xs font-bold text-red-600">⚠️ 중복 데이터 있음</span>
                     </div>
                     <div id="filter-container" class="flex flex-wrap items-center gap-2">
+                        <button id="bulk-delete-btn" onclick="bulkDeleteSelected()" class="hidden py-2 px-3 text-sm font-bold rounded-lg text-white bg-red-500 hover:bg-red-600">🗑 선택삭제</button>
                         <select id="search-column-select" class="border rounded-md p-2 text-sm bg-white">
                             <option value="기업명">기업명</option>
                             <option value="담당 전문위원">담당 전문위원</option>
@@ -1344,7 +1345,7 @@
                                 <th class="px-3 py-2 min-w-[200px] bg-amber-50">본사상담내용</th>
                                 <th class="px-3 py-2 min-w-[150px] bg-amber-50">홈페이지url</th>
                                 <th class="px-3 py-2 min-w-[200px] bg-amber-50">본사메모</th>
-                                <th id="admin-delete-col-header" class="px-3 py-2 hidden">삭제</th>
+                                <th id="admin-delete-col-header" class="px-3 py-2 hidden text-center"><input type="checkbox" id="select-all-checkbox" onclick="toggleSelectAll(this)" title="전체 선택/해제"><br><span class="text-xs">삭제</span></th>
                             </tr>
                         </thead>
                         <tbody id="db-table-body"></tbody>
@@ -2505,9 +2506,10 @@
                 rowHtml += `<td class="px-3 py-2 whitespace-nowrap ${bgClass}">${cellValue}</td>`;
             });
 
-            // 관리자 전용 삭제 버튼
+            // 관리자 전용 체크박스 + 삭제 버튼
             if (loggedInUser && loggedInUser.role === 'admin') {
-                rowHtml += `<td class="px-3 py-2 whitespace-nowrap text-center">
+                rowHtml += `<td class="px-3 py-2 whitespace-nowrap text-center" onclick="event.stopPropagation()">
+                    <input type="checkbox" class="company-select-cb mr-1" data-docid="${company._docId}" data-name="${(company['기업명']||'').replace(/"/g,'&quot;')}">
                     <button onclick="event.stopPropagation(); deleteCompanyByDocId('${company._docId}', '${(company['기업명']||'').replace(/'/g,"\\'")}');" 
                         class="px-2 py-1 text-xs font-semibold rounded bg-red-100 text-red-600 hover:bg-red-500 hover:text-white transition">삭제</button>
                 </td>`;
@@ -2573,6 +2575,43 @@
         }
     }
     window.deleteCompanyByDocId = deleteCompanyByDocId;
+
+    // ── 전체선택/해제 ──
+    function toggleSelectAll(masterCb) {
+        document.querySelectorAll('.company-select-cb').forEach(function(cb) {
+            cb.checked = masterCb.checked;
+        });
+    }
+    window.toggleSelectAll = toggleSelectAll;
+
+    // ── 선택삭제 ──
+    async function bulkDeleteSelected() {
+        var checked = Array.from(document.querySelectorAll('.company-select-cb:checked'));
+        if (checked.length === 0) { alert('삭제할 항목을 선택해주세요.'); return; }
+        var names = checked.map(function(cb) { return cb.dataset.name; }).join('\n');
+        if (!confirm(checked.length + '건을 삭제하시겠습니까?\n\n' + names)) return;
+        showLoading();
+        var errorCount = 0;
+        for (var i = 0; i < checked.length; i++) {
+            var docId = checked[i].dataset.docid;
+            try {
+                var res = await fetch(FIRESTORE_BASE_URL + '/Companies/' + docId, { method: 'DELETE' });
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                cachedAllCompanies = cachedAllCompanies.filter(function(c) { return c._docId !== docId; });
+            } catch(e) { errorCount++; }
+        }
+        delete apiCache['Companies'];
+        hideLoading();
+        if (errorCount === 0) {
+            alert('✅ ' + checked.length + '건 삭제 완료');
+        } else {
+            alert('삭제 완료 (일부 오류 ' + errorCount + '건)');
+        }
+        var master = document.getElementById('select-all-checkbox');
+        if (master) master.checked = false;
+        await loadInitialData(currentPage);
+    }
+    window.bulkDeleteSelected = bulkDeleteSelected;
 
     // === 페이지네이션 ===
     function renderPagination() {
@@ -2656,6 +2695,8 @@
             document.getElementById('page-limit-select').classList.remove('hidden');
             const delHeader = document.getElementById('admin-delete-col-header');
             if (delHeader) delHeader.classList.remove('hidden');
+            const bulkBtn = document.getElementById('bulk-delete-btn');
+            if (bulkBtn) bulkBtn.classList.remove('hidden');
             // 이미 전문위원 목록이 로드된 경우 재초기화 하지 않음
             const assigneeSelect = document.getElementById('adv-filter-assignee');
             if (assigneeSelect.options.length > 1) return;
