@@ -2473,18 +2473,15 @@
             '본사담당자메모'
         ];
 
-        // 중복 감지: 기업명 + 전화번호 두 가지 모두 일치해야 진짜 중복
-        // 전체 캐시 기준으로 감지 (현재 페이지에 없는 중복도 감지)
-        const dupKeyCount = {};
-        (cachedAllCompanies.length > 0 ? cachedAllCompanies : allCompanies).forEach(c => {
-            const name = (c['기업명'] || '').trim();
-            const tel = (c['회사Tel'] || '').trim();
-            if (name && tel) {
-                const k = name + '||' + tel;
-                dupKeyCount[k] = (dupKeyCount[k] || 0) + 1;
+        // 중복 originalIndex 감지 (유효한 값만, null/0/빈값 제외)
+        const idxCount = {};
+        allCompanies.forEach(c => {
+            const k = c.originalIndex;
+            if (k !== null && k !== undefined && k !== '' && k !== 0) {
+                idxCount[String(k)] = (idxCount[String(k)] || 0) + 1;
             }
         });
-        const hasDuplicate = Object.values(dupKeyCount).some(v => v > 1);
+        const hasDuplicate = Object.values(idxCount).some(v => v > 1);
         const dupWarn = document.getElementById('duplicate-warning');
         // 중복 경고는 관리자만 표시
         if (dupWarn) {
@@ -2497,11 +2494,10 @@
 
         allCompanies.forEach((company, index) => {
             const row = document.createElement('tr');
-            // 중복 표시: 기업명+전화번호 모두 일치, 전화번호 비어있지 않은 경우만
-            const _name = (company['기업명'] || '').trim();
-            const _tel = (company['회사Tel'] || '').trim();
-            const isDuplicate = loggedInUser && loggedInUser.role === 'admin'
-                && _name && _tel && (dupKeyCount[_name + '||' + _tel] || 0) > 1;
+            // 중복 표시: 관리자이고 유효한 originalIndex가 중복인 경우만
+            const k = company.originalIndex;
+            const isValidIdx = k !== null && k !== undefined && k !== '' && k !== 0;
+            const isDuplicate = loggedInUser && loggedInUser.role === 'admin' && isValidIdx && idxCount[String(k)] > 1;
             row.className = 'cursor-pointer hover:bg-amber-50 border-b' + (isDuplicate ? ' bg-red-50' : '');
             row.onclick = () => openEditModal(company._docId, company.originalIndex);
 
