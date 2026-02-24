@@ -856,14 +856,53 @@
                                     <th class="px-4 py-3">퇴근시간</th>
                                     <th class="px-4 py-3">근무시간</th>
                                     <th class="px-4 py-3 text-emerald-700">수수료</th>
+                                    <th class="px-4 py-3 text-center">상태</th>
+                                    <th class="px-4 py-3 text-center">관리</th>
                                 </tr>
                             </thead>
                             <tbody id="admin-wt-table-body">
-                                <tr><td colspan="6" class="text-center py-8 text-slate-400">조회할 TM을 선택하거나 전체를 클릭하세요.</td></tr>
+                                <tr><td colspan="8" class="text-center py-8 text-slate-400">조회할 TM을 선택하거나 전체를 클릭하세요.</td></tr>
                             </tbody>
                         </table>
                     </div>
                     <div id="admin-wt-month-total" class="mt-4 p-3 bg-blue-50 rounded-xl border border-blue-200 text-sm font-semibold text-blue-800 hidden"></div>
+                </div>
+            </div>
+
+            <!-- 관리자 근무시간 수정 모달 -->
+            <div id="admin-wt-edit-modal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[2000]" onclick="if(event.target===this)closeAdminWtModal()">
+                <div class="bg-white rounded-2xl shadow-2xl w-full max-w-xs mx-4">
+                    <div class="bg-slate-800 text-white px-5 py-4 rounded-t-2xl flex justify-between items-center">
+                        <h3 class="text-base font-bold" id="admin-wt-modal-title">근무시간 수정</h3>
+                        <button onclick="closeAdminWtModal()" class="text-slate-300 hover:text-white text-xl font-bold leading-none">&#x2715;</button>
+                    </div>
+                    <div class="p-5 space-y-4">
+                        <input type="hidden" id="admin-wt-modal-docid">
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-600 mb-2">&#x1F7E2; 출근시간</label>
+                            <div class="flex gap-2 items-center">
+                                <select id="admin-wt-sh" onchange="updateAdminWtCalc()" class="flex-1 p-3 border-2 border-slate-200 rounded-xl text-lg font-bold text-center focus:border-slate-500 focus:outline-none bg-white"></select>
+                                <span class="font-bold text-slate-500">:</span>
+                                <select id="admin-wt-sm" onchange="updateAdminWtCalc()" class="flex-1 p-3 border-2 border-slate-200 rounded-xl text-lg font-bold text-center focus:border-slate-500 focus:outline-none bg-white"></select>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-600 mb-2">&#x1F534; 퇴근시간</label>
+                            <div class="flex gap-2 items-center">
+                                <select id="admin-wt-eh" onchange="updateAdminWtCalc()" class="flex-1 p-3 border-2 border-slate-200 rounded-xl text-lg font-bold text-center focus:border-slate-500 focus:outline-none bg-white"></select>
+                                <span class="font-bold text-slate-500">:</span>
+                                <select id="admin-wt-em" onchange="updateAdminWtCalc()" class="flex-1 p-3 border-2 border-slate-200 rounded-xl text-lg font-bold text-center focus:border-slate-500 focus:outline-none bg-white"></select>
+                            </div>
+                        </div>
+                        <div id="admin-wt-calc-box" class="hidden p-3 bg-green-50 border border-green-200 rounded-xl text-center">
+                            <div class="text-sm text-green-600">근무시간</div>
+                            <div id="admin-wt-calc-result" class="text-2xl font-bold text-green-700 mt-1"></div>
+                        </div>
+                    </div>
+                    <div class="px-5 pb-5 flex gap-3">
+                        <button onclick="closeAdminWtModal()" class="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl">취소</button>
+                        <button onclick="saveAdminWtEdit()" class="flex-1 py-3 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-xl">저장</button>
+                    </div>
                 </div>
             </div>
 
@@ -3152,6 +3191,7 @@
                         startTime: fields.startTime?.stringValue || '',
                         endTime: fields.endTime?.stringValue || '',
                         workHours: fields.workHours?.doubleValue || fields.workHours?.integerValue || 0,
+                        status: fields.status?.stringValue || 'pending',
                         _docId: doc.name.split('/').pop()
                     };
                 }
@@ -3176,7 +3216,8 @@
             date: { stringValue: date },
             startTime: { stringValue: startTime },
             endTime: { stringValue: endTime },
-            workHours: { doubleValue: workHours }
+            workHours: { doubleValue: workHours },
+            status: { stringValue: 'pending' }
         };
         try {
             // PATCH로 upsert (문서 없으면 생성, 있으면 덮어쓰기)
@@ -3262,15 +3303,34 @@
             let ring = isToday ? ' ring-2 ring-inset ring-blue-400' : '';
 
             if (editable) {
-                // 클릭 가능 - 모달 오픈
+                const recStatus = rec.status || (hasData ? 'pending' : '');
+                const isApproved = recStatus === 'approved';
+                // 배경색: 승인=초록, 반려=빨강, 대기=노랑
+                if (hasData) {
+                    if (isApproved) bg = isToday ? 'bg-blue-50' : 'bg-green-100';
+                    else if (recStatus === 'rejected') bg = isToday ? 'bg-blue-50' : 'bg-red-50';
+                    else bg = isToday ? 'bg-blue-50' : 'bg-yellow-50';
+                }
+                const statusBadge = isApproved ? '<div class="text-xs font-bold text-green-700 mt-0.5">\u2705 승인</div>'
+                    : recStatus === 'rejected' ? '<div class="text-xs font-bold text-red-600 mt-0.5">\u274c 반려</div>'
+                    : hasData ? '<div class="text-xs font-semibold text-amber-600 mt-0.5">\u23f0 대기</div>' : '';
                 const commission = hasData ? Math.round((wh) * HOURLY_RATE).toLocaleString() + '원' : '';
                 const timeDisp = hasData
-                    ? '<div class="text-xs font-semibold text-green-700 leading-tight mt-1">' + rec.startTime + ' ~</div><div class="text-xs font-semibold text-green-700 leading-tight">' + rec.endTime + '</div><div class="text-xs font-bold text-green-800 mt-0.5">' + minutesToHHMM(whMins) + '</div><div class="text-xs text-emerald-600 font-semibold mt-0.5">' + commission + '</div>'
+                    ? '<div class="text-xs font-semibold text-slate-700 leading-tight mt-1">' + rec.startTime + ' ~</div>'
+                    + '<div class="text-xs font-semibold text-slate-700 leading-tight">' + rec.endTime + '</div>'
+                    + '<div class="text-xs font-bold text-slate-800 mt-0.5">' + minutesToHHMM(whMins) + '</div>'
+                    + '<div class="text-xs text-emerald-600 font-semibold">' + commission + '</div>'
+                    + statusBadge
                     : '<div class="text-xs text-slate-300 mt-2 text-center">+</div>';
-                html += '<td class="border border-slate-200 p-1.5 align-top cursor-pointer hover:bg-slate-100 transition ' + bg + ring + '" style="min-width:85px; height:80px" data-date="' + dateStr + '" onclick="openWorktimeDateCell(this)">' +
-                    '<div class="text-sm font-bold ' + dayColor + '">' + d + '</div>' +
-                    timeDisp +
-                '</td>';
+                if (isApproved) {
+                    html += '<td class="border border-slate-200 p-1.5 align-top ' + bg + ring + '" style="min-width:85px;height:95px;cursor:not-allowed" title="승인된 항목은 수정할 수 없습니다">'
+                        + '<div class="text-sm font-bold ' + dayColor + '">' + d + '</div>'
+                        + timeDisp + '</td>';
+                } else {
+                    html += '<td class="border border-slate-200 p-1.5 align-top cursor-pointer hover:bg-slate-100 transition ' + bg + ring + '" style="min-width:85px;height:95px" data-date="' + dateStr + '" onclick="openWorktimeDateCell(this)">'
+                        + '<div class="text-sm font-bold ' + dayColor + '">' + d + '</div>'
+                        + timeDisp + '</td>';
+                }
             } else {
                 // 읽기 전용 (관리자)
                 html += '<td class="border border-slate-200 p-1.5 align-top ' + bg + ring + '" style="min-width:80px; height:80px">' +
@@ -3448,7 +3508,9 @@
                     rows.push({ name, date,
                         startTime: f.startTime?.stringValue || '',
                         endTime: f.endTime?.stringValue || '',
-                        workMins: Math.round(wh * 60)
+                        workMins: Math.round(wh * 60),
+                        status: f.status?.stringValue || 'pending',
+                        docId: doc.name.split('/').pop()
                     });
                 }
             });
@@ -3465,33 +3527,50 @@
         const tbody = document.getElementById('admin-wt-table-body');
         const totalDiv = document.getElementById('admin-wt-month-total');
         if (!rows || rows.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-slate-400">근무 기록이 없습니다.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="8" class="text-center py-8 text-slate-400">근무 기록이 없습니다.</td></tr>';
             totalDiv.classList.add('hidden'); return;
         }
-        const summaryMap = {};   // name → {mins, commission}
+        const summaryMap = {};
         let grand = 0, grandCommission = 0;
         rows.forEach(function(r) {
-            if (!summaryMap[r.name]) summaryMap[r.name] = { mins: 0, commission: 0 };
-            summaryMap[r.name].mins += r.workMins;
-            summaryMap[r.name].commission += Math.round((r.workMins / 60) * HOURLY_RATE);
-            grand += r.workMins;
-            grandCommission += Math.round((r.workMins / 60) * HOURLY_RATE);
+            if (r.status === 'approved') {
+                if (!summaryMap[r.name]) summaryMap[r.name] = { mins: 0, commission: 0 };
+                summaryMap[r.name].mins += r.workMins;
+                summaryMap[r.name].commission += Math.round((r.workMins / 60) * HOURLY_RATE);
+                grand += r.workMins;
+                grandCommission += Math.round((r.workMins / 60) * HOURLY_RATE);
+            }
         });
         tbody.innerHTML = rows.map(function(r) {
             const rowCommission = Math.round((r.workMins / 60) * HOURLY_RATE);
-            return '<tr class="border-b hover:bg-slate-50">' +
-                '<td class="px-4 py-3 font-semibold">' + r.name + '</td>' +
-                '<td class="px-4 py-3">' + r.date + '</td>' +
-                '<td class="px-4 py-3">' + r.startTime + '</td>' +
-                '<td class="px-4 py-3">' + r.endTime + '</td>' +
-                '<td class="px-4 py-3 font-semibold text-green-700">' + minutesToHHMM(r.workMins) + '</td>' +
-                '<td class="px-4 py-3 font-semibold text-emerald-700">' + rowCommission.toLocaleString() + '원</td>' +
-            '</tr>';
+            const st = r.status || 'pending';
+            const statusBadge = st === 'approved'
+                ? '<span class="px-2 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-700">\u2705 승인</span>'
+                : st === 'rejected'
+                ? '<span class="px-2 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-600">\u274c 반려</span>'
+                : '<span class="px-2 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-700">\u23f0 대기</span>';
+            return '<tr class="border-b hover:bg-slate-50">'
+                + '<td class="px-4 py-3 font-semibold">' + r.name + '</td>'
+                + '<td class="px-4 py-3">' + r.date + '</td>'
+                + '<td class="px-4 py-3">' + r.startTime + '</td>'
+                + '<td class="px-4 py-3">' + r.endTime + '</td>'
+                + '<td class="px-4 py-3 font-semibold text-green-700">' + minutesToHHMM(r.workMins) + '</td>'
+                + '<td class="px-4 py-3 font-semibold text-emerald-700">' + rowCommission.toLocaleString() + '원</td>'
+                + '<td class="px-4 py-3 text-center">' + statusBadge + '</td>'
+                + '<td class="px-3 py-2 whitespace-nowrap text-center">'
+                +   '<button class="px-2 py-1 mr-1 text-xs font-bold rounded ' + (st==='approved' ? 'bg-green-200 text-green-500 cursor-default' : 'bg-green-500 hover:bg-green-600 text-white') + '" data-docid="' + r.docId + '" onclick="adminApproveWT(this)" ' + (st==='approved' ? 'disabled' : '') + '>승인</button>'
+                +   '<button class="px-2 py-1 mr-1 text-xs font-bold rounded ' + (st==='rejected' ? 'bg-orange-200 text-orange-400 cursor-default' : 'bg-orange-400 hover:bg-orange-500 text-white') + '" data-docid="' + r.docId + '" onclick="adminRejectWT(this)" ' + (st==='rejected' ? 'disabled' : '') + '>반려</button>'
+                +   '<button class="px-2 py-1 mr-1 text-xs font-bold rounded bg-blue-500 hover:bg-blue-600 text-white" data-docid="' + r.docId + '" data-name="' + r.name + '" data-date="' + r.date + '" data-start="' + r.startTime + '" data-end="' + r.endTime + '" onclick="adminEditWT(this)">수정</button>'
+                +   '<button class="px-2 py-1 text-xs font-bold rounded bg-red-500 hover:bg-red-600 text-white" data-docid="' + r.docId + '" data-name="' + r.name + '" data-date="' + r.date + '" onclick="adminDeleteWT(this)">삭제</button>'
+                + '</td>'
+                + '</tr>';
         }).join('');
-        const summaryText = Object.entries(summaryMap)
-            .map(function(e){ return e[0] + ': <strong>' + minutesToHHMM(e[1].mins) + ' / ' + e[1].commission.toLocaleString() + '원</strong>'; }).join(' &nbsp;|&nbsp; ');
-        totalDiv.innerHTML = '📊 월 합계 → ' + summaryText + ' &nbsp;|&nbsp; 전체: <strong>' + minutesToHHMM(grand) + ' / ' + grandCommission.toLocaleString() + '원</strong>';
-        totalDiv.classList.remove('hidden');
+        if (Object.keys(summaryMap).length > 0) {
+            const summaryText = Object.entries(summaryMap)
+                .map(function(e){ return e[0] + ': <strong>' + minutesToHHMM(e[1].mins) + ' / ' + e[1].commission.toLocaleString() + '원</strong>'; }).join(' &nbsp;|&nbsp; ');
+            totalDiv.innerHTML = '📊 승인 합계 → ' + summaryText + ' &nbsp;|&nbsp; 전체: <strong>' + minutesToHHMM(grand) + ' / ' + grandCommission.toLocaleString() + '원</strong>';
+            totalDiv.classList.remove('hidden');
+        } else { totalDiv.classList.add('hidden'); }
     }
 
     function prevAdminWtMonth() {
@@ -3504,6 +3583,117 @@
     }
     window.prevAdminWtMonth = prevAdminWtMonth;
     window.nextAdminWtMonth = nextAdminWtMonth;
+
+    // ── 관리자 근무시간 승인/반려/삭제/수정 ──
+    async function adminApproveWT(btn) {
+        var docId = btn.dataset.docid;
+        showLoading();
+        try {
+            var res = await fetch(FIRESTORE_BASE_URL + '/WorkTime/' + docId + '?updateMask.fieldPaths=status', {
+                method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ fields: { status: { stringValue: 'approved' } } })
+            });
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            await loadAdminWorktime();
+        } catch(e) { alert('오류: ' + e.message); } finally { hideLoading(); }
+    }
+    window.adminApproveWT = adminApproveWT;
+
+    async function adminRejectWT(btn) {
+        var docId = btn.dataset.docid;
+        if (!confirm('반려 처리하시겠습니까?')) return;
+        showLoading();
+        try {
+            var res = await fetch(FIRESTORE_BASE_URL + '/WorkTime/' + docId + '?updateMask.fieldPaths=status', {
+                method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ fields: { status: { stringValue: 'rejected' } } })
+            });
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            await loadAdminWorktime();
+        } catch(e) { alert('오류: ' + e.message); } finally { hideLoading(); }
+    }
+    window.adminRejectWT = adminRejectWT;
+
+    async function adminDeleteWT(btn) {
+        var docId = btn.dataset.docid;
+        var name = btn.dataset.name; var date = btn.dataset.date;
+        if (!confirm(name + ' ' + date + ' 기록을 삭제할까요?')) return;
+        showLoading();
+        try {
+            await fetch(FIRESTORE_BASE_URL + '/WorkTime/' + docId, { method: 'DELETE' });
+            await loadAdminWorktime();
+        } catch(e) { alert('오류: ' + e.message); } finally { hideLoading(); }
+    }
+    window.adminDeleteWT = adminDeleteWT;
+
+    function adminEditWT(btn) {
+        var docId = btn.dataset.docid; var name = btn.dataset.name;
+        var date = btn.dataset.date; var startTime = btn.dataset.start; var endTime = btn.dataset.end;
+        document.getElementById('admin-wt-modal-docid').value = docId;
+        document.getElementById('admin-wt-modal-title').textContent = name + ' ' + date + ' 수정';
+        // 시/분 select 초기화
+        var hOpts = '<option value="">--</option>';
+        for (var h = 0; h < 24; h++) { var hv = String(h).padStart(2,'0'); hOpts += '<option value="' + hv + '">' + hv + '시</option>'; }
+        var mVals = ['','00','05','10','15','20','25','30','35','40','45','50','55'];
+        var mOpts = mVals.map(function(m){ return '<option value="' + m + '">' + (m==='' ? '--' : m+'분') + '</option>'; }).join('');
+        ['admin-wt-sh','admin-wt-eh'].forEach(function(id){ document.getElementById(id).innerHTML = hOpts; });
+        ['admin-wt-sm','admin-wt-em'].forEach(function(id){ document.getElementById(id).innerHTML = mOpts; });
+        // 기존 값 세팅
+        function setT(hId, mId, t) {
+            if (!t) return;
+            var p = t.split(':'); var h = p[0];
+            var mRaw = parseInt(p[1]); var m = String(Math.round(mRaw/5)*5).padStart(2,'0');
+            if (m === '60') m = '55';
+            document.getElementById(hId).value = h; document.getElementById(mId).value = m;
+        }
+        setT('admin-wt-sh','admin-wt-sm', startTime);
+        setT('admin-wt-eh','admin-wt-em', endTime);
+        updateAdminWtCalc();
+        document.getElementById('admin-wt-edit-modal').classList.remove('hidden');
+    }
+    window.adminEditWT = adminEditWT;
+
+    function closeAdminWtModal() {
+        document.getElementById('admin-wt-edit-modal').classList.add('hidden');
+    }
+    window.closeAdminWtModal = closeAdminWtModal;
+
+    function updateAdminWtCalc() {
+        var sh = document.getElementById('admin-wt-sh').value; var sm = document.getElementById('admin-wt-sm').value;
+        var eh = document.getElementById('admin-wt-eh').value; var em = document.getElementById('admin-wt-em').value;
+        var box = document.getElementById('admin-wt-calc-box');
+        if (sh && sm && eh && em) {
+            var mins = (parseInt(eh)*60+parseInt(em)) - (parseInt(sh)*60+parseInt(sm));
+            if (mins > 0) { document.getElementById('admin-wt-calc-result').textContent = minutesToHHMM(mins); box.classList.remove('hidden'); return; }
+        }
+        box.classList.add('hidden');
+    }
+    window.updateAdminWtCalc = updateAdminWtCalc;
+
+    async function saveAdminWtEdit() {
+        var docId = document.getElementById('admin-wt-modal-docid').value;
+        var sh = document.getElementById('admin-wt-sh').value; var sm = document.getElementById('admin-wt-sm').value;
+        var eh = document.getElementById('admin-wt-eh').value; var em = document.getElementById('admin-wt-em').value;
+        if (!sh || !sm || !eh || !em) { alert('시간을 모두 선택해주세요.'); return; }
+        var totalMins = (parseInt(eh)*60+parseInt(em)) - (parseInt(sh)*60+parseInt(sm));
+        if (totalMins <= 0) { alert('퇴근시간이 출근시간보다 늦어야 합니다.'); return; }
+        var start = sh + ':' + sm; var end = eh + ':' + em;
+        var workHours = Math.round(totalMins / 60 * 100) / 100;
+        showLoading();
+        try {
+            var res = await fetch(FIRESTORE_BASE_URL + '/WorkTime/' + docId, {
+                method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ fields: {
+                    startTime: { stringValue: start }, endTime: { stringValue: end },
+                    workHours: { doubleValue: workHours }, status: { stringValue: 'pending' }
+                }})
+            });
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            closeAdminWtModal();
+            await loadAdminWorktime();
+        } catch(e) { alert('저장 오류: ' + e.message); } finally { hideLoading(); }
+    }
+    window.saveAdminWtEdit = saveAdminWtEdit;
 
     // === 페이지 첫 로드 ===
     document.addEventListener('DOMContentLoaded', () => {
