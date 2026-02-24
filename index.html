@@ -2451,6 +2451,9 @@
     function renderDbTable() {
         const tableBody = document.getElementById('db-table-body');
         tableBody.innerHTML = '';
+        // 페이지 이동 시 전체선택 체크박스 초기화
+        var masterCb = document.getElementById('select-all-checkbox');
+        if (masterCb) masterCb.checked = false;
 
         if (allCompanies.length === 0) {
             tableBody.innerHTML = `<tr><td colspan="19" class="text-center py-10 text-slate-500">표시할 기업 정보가 없습니다.</td></tr>`;
