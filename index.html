@@ -1289,6 +1289,8 @@
                                     <option value="대면미팅 예정">대면미팅 예정</option>
                                     <option value="재통화 예정">재통화 예정</option>
                                     <option value="대상아님">대상아님</option>
+                                    <option value="전문위원 미팅확정">전문위원 미팅확정</option>
+                                    <option value="유가망">유가망</option>
                                 </select>
                             </div>
                             <div>
@@ -1308,6 +1310,25 @@
                             </div>
                             <button onclick="applyAdvancedFilter()" class="py-2 px-4 text-sm font-bold rounded-lg text-white bg-blue-600 hover:bg-blue-700">필터 적용</button>
                             <button onclick="resetAdvancedFilter()" class="py-2 px-4 text-sm font-semibold rounded-lg text-blue-700 bg-blue-100 hover:bg-blue-200">초기화</button>
+                        </div>
+                    </div>
+                    <!-- TM/전문위원 향후진행 필터 (비관리자 로그인 시에만 표시) -->
+                    <div id="tm-status-filter" class="hidden w-full mt-2 p-3 bg-green-50 border border-green-200 rounded-lg">
+                        <div class="flex flex-wrap gap-2 items-end">
+                            <div>
+                                <label class="text-xs text-slate-600 block mb-1">🔍 향후진행 필터</label>
+                                <select id="tm-filter-status" class="border rounded-md p-2 text-sm bg-white min-w-[160px]" onchange="applyTmStatusFilter()">
+                                    <option value="">전체</option>
+                                    <option value="본사 줌설명회 참여">본사 줌설명회 참여</option>
+                                    <option value="본사 개별안내 요청">본사 개별안내 요청</option>
+                                    <option value="대면미팅 예정">대면미팅 예정</option>
+                                    <option value="재통화 예정">재통화 예정</option>
+                                    <option value="대상아님">대상아님</option>
+                                    <option value="전문위원 미팅확정">전문위원 미팅확정</option>
+                                    <option value="유가망">유가망</option>
+                                </select>
+                            </div>
+                            <button onclick="resetTmStatusFilter()" class="py-2 px-3 text-sm font-semibold rounded-lg text-green-700 bg-green-100 hover:bg-green-200">초기화</button>
                         </div>
                     </div>
                 </div>
@@ -1338,7 +1359,7 @@
                                 <th class="px-3 py-2 min-w-[80px]">통화대상자</th>
                                 <th class="px-3 py-2 min-w-[70px]">직함</th>
                                 <th class="px-3 py-2 min-w-[200px]">통화내용</th>
-                                <th class="px-3 py-2 min-w-[100px]">향후진행</th>
+                                <th id="th-status" class="px-3 py-2 min-w-[100px] cursor-pointer hover:bg-blue-200 select-none bg-blue-50" onclick="toggleStatusSort()">향후진행 <span id="status-sort-icon">↕</span></th>
                                 <th class="px-3 py-2 min-w-[100px]">통화일자</th>
                                 <!-- 본사 입력항목 (4개) -->
                                 <th class="px-3 py-2 min-w-[100px] bg-amber-50">상담요청확인</th>
@@ -1430,6 +1451,8 @@
                                     <option value="대면미팅 예정">대면미팅 예정</option>
                                     <option value="재통화 예정">재통화 예정</option>
                                     <option value="대상아님">대상아님</option>
+                                    <option value="전문위원 미팅확정">전문위원 미팅확정</option>
+                                    <option value="유가망">유가망</option>
                                 </select>
                             </div>
                             <div>
@@ -2755,6 +2778,9 @@
             }
         } else {
             document.getElementById('admin-advanced-filter').classList.add('hidden');
+            // TM/전문위원: 향후진행 필터 표시
+            const tmFilter = document.getElementById('tm-status-filter');
+            if (tmFilter) tmFilter.classList.remove('hidden');
         }
     }
 
@@ -2788,6 +2814,43 @@
     }
     window.resetAdvancedFilter = resetAdvancedFilter;
     // === 관리자 고급 필터 끝 ===
+
+    // ── 향후진행 정렬 ──
+    var statusSortDir = null;
+    function toggleStatusSort() {
+        statusSortDir = (statusSortDir === 'asc') ? 'desc' : 'asc';
+        var icon = document.getElementById('status-sort-icon');
+        if (icon) icon.textContent = statusSortDir === 'asc' ? '↑' : '↓';
+        var order = ['본사 줌설명회 참여','본사 개별안내 요청','대면미팅 예정','전문위원 미팅확정','재통화 예정','유가망','대상아님',''];
+        var sortFn = function(a, b) {
+            var sa = (a['향후진행'] || '').trim();
+            var sb = (b['향후진행'] || '').trim();
+            var ia = order.indexOf(sa); if (ia < 0) ia = order.length;
+            var ib = order.indexOf(sb); if (ib < 0) ib = order.length;
+            return statusSortDir === 'asc' ? ia - ib : ib - ia;
+        };
+        if (apiCache['Companies']) apiCache['Companies'].sort(sortFn);
+        if (cachedAllCompanies.length > 0) cachedAllCompanies.sort(sortFn);
+        loadInitialData(1);
+    }
+    window.toggleStatusSort = toggleStatusSort;
+
+    function applyTmStatusFilter() {
+        var status = document.getElementById('tm-filter-status').value;
+        var filter = Object.assign({}, currentFilter);
+        if (status) filter['향후진행'] = status;
+        else delete filter['향후진행'];
+        currentFilter = filter;
+        loadInitialData(1, filter);
+    }
+    window.applyTmStatusFilter = applyTmStatusFilter;
+
+    function resetTmStatusFilter() {
+        document.getElementById('tm-filter-status').value = '';
+        delete currentFilter['향후진행'];
+        loadInitialData(1, currentFilter);
+    }
+    window.resetTmStatusFilter = resetTmStatusFilter;
 
     function resetSearch() {
         document.getElementById('search-input').value = '';
