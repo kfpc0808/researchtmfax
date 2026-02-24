@@ -1864,8 +1864,10 @@
             try {
                 const existingDocId = noVal ? existingDocs[noVal] : null;
                 if (existingDocId) {
-                    // PATCH: 등록일자는 기존값 유지 (덮어쓰지 않음)
-                    await fetch(`${FIRESTORE_BASE_URL}/Companies/${existingDocId}`, {
+                    // PATCH: updateMask로 지정 필드만 업데이트 → 등록일자 보존
+                    const fieldKeys = Object.keys(fields);
+                    const maskParams = fieldKeys.map(k => 'updateMask.fieldPaths=' + encodeURIComponent(k)).join('&');
+                    await fetch(`${FIRESTORE_BASE_URL}/Companies/${existingDocId}?${maskParams}`, {
                         method: 'PATCH',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ fields })
@@ -3939,7 +3941,7 @@
             if (existing) { existing.message = text; }
             else { adminWtRows.push({ name: name, date: date, docId: docId, message: text, mainTask: '', suggestion: '', startTime: '', endTime: '', workMins: 0, status: 'pending' }); }
             document.getElementById('admin-wt-msg-text').value = '';
-            document.getElementById('admin-wt-msg-text').removeAttribute('data-edit-doc-id');
+            renderAdminWtTable(adminWtRows); // 테이블 data-message 속성 갱신 (수정 버튼 덮어쓰기 방지)
             renderAdminWtPanel('message');
         } catch(e) { alert('저장 오류: ' + e.message); }
         finally { hideLoading(); }
