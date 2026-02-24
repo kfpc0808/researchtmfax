@@ -44,6 +44,11 @@
         /* 전체 화면 사용 */
         .full-width-container { width: 100%; padding: 8px; }
         @media (min-width: 768px) { .full-width-container { padding: 16px; } }
+    @keyframes blink-msg {
+        0%, 100% { background-color: #f59e0b; color: #fff; border-color: #d97706; box-shadow: 0 0 0 0 rgba(245,158,11,0); }
+        50% { background-color: #fbbf24; color: #fff; border-color: #d97706; box-shadow: 0 0 8px 4px rgba(245,158,11,0.5); }
+    }
+    .btn-msg-blink { animation: blink-msg 0.9s ease-in-out infinite; }
     </style>
 </head>
 <body class="bg-slate-100 pb-20">
@@ -1309,7 +1314,7 @@
                     <table class="w-full text-sm text-left text-slate-600">
                         <thead class="text-xs text-slate-700 uppercase bg-slate-100">
                             <tr class="border-b-2">
-                                <th colspan="11" class="px-4 py-2 font-bold text-center bg-blue-100 text-blue-800">기업 기본정보</th>
+                                <th colspan="12" class="px-4 py-2 font-bold text-center bg-blue-100 text-blue-800">기업 기본정보</th>
                                 <th colspan="6" class="px-4 py-2 font-bold text-center bg-green-100 text-green-800">전문위원 입력</th>
                                 <th colspan="4" class="px-4 py-2 font-bold text-center bg-amber-100 text-amber-800">본사</th>
                             </tr>
@@ -1326,6 +1331,7 @@
                                 <th class="px-3 py-2 min-w-[120px]">회사Fax</th>
                                 <th class="px-3 py-2 min-w-[80px]">대표자명</th>
                                 <th class="px-3 py-2 min-w-[100px]">담당전문위원</th>
+                                <th id="th-regdate" class="px-3 py-2 min-w-[100px] cursor-pointer hover:bg-blue-200 select-none bg-blue-50" onclick="toggleRegdateSort()">등록일자 <span id="regdate-sort-icon">↕</span></th>
                                 <!-- 전문위원 입력항목 (6개) -->
                                 <th class="px-3 py-2 min-w-[90px]">콜일자</th>
                                 <th class="px-3 py-2 min-w-[80px]">통화대상자</th>
@@ -2452,7 +2458,7 @@
 
         // 표시할 컬럼
         const headers = [
-            '기업명', '업종', '기업규모', '회사주소', '연구소주소', '구분', '회사Tel', '회사Fax', '대표자명', '담당 전문위원',
+            '기업명', '업종', '기업규모', '회사주소', '연구소주소', '구분', '회사Tel', '회사Fax', '대표자명', '담당 전문위원', '등록일자',
             '콜일자', '통화대상자', '직함', '통화내용_전문위원', '향후진행', '(실제)홈페이지 통화일자', '상담요청확인', '본사상담내용', '홈페이지url',
             '본사담당자메모'
         ];
@@ -2511,6 +2517,43 @@
             tableBody.appendChild(row);
         });
     }
+
+    // ── 등록일자 정렬 ──
+    var regdateSortDir = 'desc';
+    function toggleRegdateSort() {
+        regdateSortDir = (regdateSortDir === 'desc') ? 'asc' : 'desc';
+        var icon = document.getElementById('regdate-sort-icon');
+        if (icon) icon.textContent = regdateSortDir === 'desc' ? '↓' : '↑';
+        allCompanies.sort(function(a, b) {
+            var da = a['등록일자'] || '';
+            var db = b['등록일자'] || '';
+            if (!da && !db) return (Number(a.originalIndex)||0) - (Number(b.originalIndex)||0);
+            if (!da) return 1;
+            if (!db) return -1;
+            if (da !== db) return regdateSortDir === 'desc' ? db.localeCompare(da) : da.localeCompare(db);
+            return (Number(a.originalIndex)||0) - (Number(b.originalIndex)||0);
+        });
+        renderDbTable();
+    }
+    window.toggleRegdateSort = toggleRegdateSort;
+
+    // ── TM 메세지 미확인 깜빡임 ──
+    function checkUnreadMessages() {
+        var btn = document.getElementById('wt-btn-message');
+        if (!btn || !loggedInUser) return;
+        // 이번 달 메세지 존재 여부 확인
+        var hasMsg = Object.values(worktimeData).some(function(r) { return r.message && r.message.trim(); });
+        if (!hasMsg) { btn.classList.remove('btn-msg-blink'); return; }
+        // localStorage에 확인 여부 저장 (key: wt_msg_read_{name}_{year}_{month})
+        var key = 'wt_msg_read_' + loggedInUser.name + '_' + worktimeYear + '_' + (worktimeMonth + 1);
+        var isRead = localStorage.getItem(key) === '1';
+        if (isRead) {
+            btn.classList.remove('btn-msg-blink');
+        } else {
+            btn.classList.add('btn-msg-blink');
+        }
+    }
+    window.checkUnreadMessages = checkUnreadMessages;
 
     async function deleteCompanyByDocId(docId, companyName) {
         if (!confirm(`'${companyName}' 기업을 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`)) return;
@@ -3369,6 +3412,8 @@
         updateWorktimeTotalDisplay();
         // 패널이 열려있으면 새 데이터로 다시 렌더링
         if (currentWtPanel) renderWtPanel(currentWtPanel);
+        // 미확인 메세지 있으면 버튼 깜빡임
+        checkUnreadMessages();
     }
 
     const HOURLY_RATE = 15000;
@@ -3986,6 +4031,12 @@
         document.getElementById('wt-panel-' + type).classList.remove('hidden');
         var btn = document.getElementById('wt-btn-' + type);
         if (btn) btn.className = 'py-2 px-3 text-sm font-bold rounded-lg border ' + colors[type];
+        // 메세지 패널 열면 읽음 처리 → 깜빡임 중지
+        if (type === 'message' && loggedInUser) {
+            var key = 'wt_msg_read_' + loggedInUser.name + '_' + worktimeYear + '_' + (worktimeMonth + 1);
+            localStorage.setItem(key, '1');
+            if (btn) btn.classList.remove('btn-msg-blink');
+        }
         renderWtPanel(type);
         // 날짜 input 기본값: 오늘
         var today = new Date().toISOString().split('T')[0];
