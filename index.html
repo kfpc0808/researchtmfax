@@ -1322,7 +1322,7 @@
                             <tr class="border-b text-center">
                                 <!-- A~K열: 기업 기본정보 -->
                                 <th class="px-3 py-2 min-w-[50px]">No</th>
-                                <th class="px-3 py-2 min-w-[150px]">기업명</th>
+                                <th id="th-company" class="px-3 py-2 min-w-[150px] cursor-pointer hover:bg-blue-200 select-none bg-blue-50" onclick="toggleCompanySort()">기업명 <span id="company-sort-icon">↕</span></th>
                                 <th class="px-3 py-2 min-w-[100px]">업종</th>
                                 <th class="px-3 py-2 min-w-[80px]">기업규모</th>
                                 <th class="px-3 py-2 min-w-[200px]">회사주소</th>
@@ -2467,15 +2467,18 @@
             '본사담당자메모'
         ];
 
-        // 중복 originalIndex 감지 (유효한 값만, null/0/빈값 제외)
-        const idxCount = {};
-        allCompanies.forEach(c => {
-            const k = c.originalIndex;
-            if (k !== null && k !== undefined && k !== '' && k !== 0) {
-                idxCount[String(k)] = (idxCount[String(k)] || 0) + 1;
+        // 중복 감지: 기업명 + 전화번호 두 가지 모두 일치 AND 전화번호 비어있지 않음
+        // 전체 캐시 기준으로 감지 (현재 페이지에 없는 중복도 감지)
+        const dupKeyCount = {};
+        (cachedAllCompanies.length > 0 ? cachedAllCompanies : allCompanies).forEach(c => {
+            const name = (c['기업명'] || '').trim();
+            const tel = (c['회사Tel'] || '').trim();
+            if (name && tel) {
+                const k = name + '||' + tel;
+                dupKeyCount[k] = (dupKeyCount[k] || 0) + 1;
             }
         });
-        const hasDuplicate = Object.values(idxCount).some(v => v > 1);
+        const hasDuplicate = Object.values(dupKeyCount).some(v => v > 1);
         const dupWarn = document.getElementById('duplicate-warning');
         // 중복 경고는 관리자만 표시
         if (dupWarn) {
@@ -2488,10 +2491,11 @@
 
         allCompanies.forEach((company, index) => {
             const row = document.createElement('tr');
-            // 중복 표시: 관리자이고 유효한 originalIndex가 중복인 경우만
-            const k = company.originalIndex;
-            const isValidIdx = k !== null && k !== undefined && k !== '' && k !== 0;
-            const isDuplicate = loggedInUser && loggedInUser.role === 'admin' && isValidIdx && idxCount[String(k)] > 1;
+            // 중복 표시: 기업명+전화번호 모두 일치, 전화번호 비어있지 않은 경우만
+            const _name = (company['기업명'] || '').trim();
+            const _tel = (company['회사Tel'] || '').trim();
+            const isDuplicate = loggedInUser && loggedInUser.role === 'admin'
+                && _name && _tel && (dupKeyCount[_name + '||' + _tel] || 0) > 1;
             row.className = 'cursor-pointer hover:bg-amber-50 border-b' + (isDuplicate ? ' bg-red-50' : '');
             row.onclick = () => openEditModal(company._docId, company.originalIndex);
 
@@ -2522,6 +2526,26 @@
             tableBody.appendChild(row);
         });
     }
+
+    // ── 기업명 정렬 ──
+    var companySortDir = null;
+    function toggleCompanySort() {
+        companySortDir = (companySortDir === 'asc') ? 'desc' : 'asc';
+        var icon = document.getElementById('company-sort-icon');
+        if (icon) icon.textContent = companySortDir === 'asc' ? '↑' : '↓';
+        var sortFn = function(a, b) {
+            var na = (a['기업명'] || '').trim();
+            var nb = (b['기업명'] || '').trim();
+            if (!na && !nb) return 0;
+            if (!na) return 1;
+            if (!nb) return -1;
+            return companySortDir === 'asc' ? na.localeCompare(nb, 'ko') : nb.localeCompare(na, 'ko');
+        };
+        if (apiCache['Companies']) apiCache['Companies'].sort(sortFn);
+        if (cachedAllCompanies.length > 0) cachedAllCompanies.sort(sortFn);
+        loadInitialData(1);
+    }
+    window.toggleCompanySort = toggleCompanySort;
 
     // ── 등록일자 정렬 ──
     var regdateSortDir = 'desc';
