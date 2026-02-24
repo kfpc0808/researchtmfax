@@ -843,6 +843,9 @@
                         <button onclick="prevAdminWtMonth()" class="px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 font-bold">◀</button>
                         <span id="admin-wt-month-title" class="text-sm font-bold text-slate-800 min-w-[110px] text-center"></span>
                         <button onclick="nextAdminWtMonth()" class="px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 font-bold">▶</button>
+                        <button id="admin-wt-btn-log" onclick="showAdminWtPanel('log')" class="py-2 px-3 text-sm font-bold rounded-lg border border-slate-200 text-slate-600 bg-slate-100 hover:bg-blue-100 hover:text-blue-700">📋 업무기록</button>
+                        <button id="admin-wt-btn-suggestion" onclick="showAdminWtPanel('suggestion')" class="py-2 px-3 text-sm font-bold rounded-lg border border-slate-200 text-slate-600 bg-slate-100 hover:bg-purple-100 hover:text-purple-700">💬 건의사항</button>
+                        <button id="admin-wt-btn-message" onclick="showAdminWtPanel('message')" class="py-2 px-3 text-sm font-bold rounded-lg border border-slate-200 text-slate-600 bg-slate-100 hover:bg-amber-100 hover:text-amber-700">📢 메세지전달</button>
                     </div>
                 </div>
                 <div class="p-4">
@@ -869,6 +872,44 @@
                         </table>
                     </div>
                     <div id="admin-wt-month-total" class="mt-4 p-3 bg-blue-50 rounded-xl border border-blue-200 text-sm font-semibold text-blue-800 hidden"></div>
+                </div>
+                <!-- 업무기록 패널 (읽기전용) -->
+                <div id="admin-wt-panel-log" class="hidden border-t">
+                    <div class="p-4">
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="text-sm font-bold text-blue-700">📋 업무기록 <span class="text-xs text-slate-400 font-normal">(TM 입력)</span></h3>
+                            <button onclick="showAdminWtPanel(null)" class="text-xs text-slate-400 hover:text-slate-600">✕ 닫기</button>
+                        </div>
+                        <div id="admin-wt-log-list" class="space-y-2 max-h-72 overflow-y-auto"></div>
+                    </div>
+                </div>
+                <!-- 건의사항 패널 (읽기전용) -->
+                <div id="admin-wt-panel-suggestion" class="hidden border-t">
+                    <div class="p-4">
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="text-sm font-bold text-purple-700">💬 건의사항 <span class="text-xs text-slate-400 font-normal">(TM 입력)</span></h3>
+                            <button onclick="showAdminWtPanel(null)" class="text-xs text-slate-400 hover:text-slate-600">✕ 닫기</button>
+                        </div>
+                        <div id="admin-wt-suggestion-list" class="space-y-2 max-h-72 overflow-y-auto"></div>
+                    </div>
+                </div>
+                <!-- 메세지전달 패널 (관리자 입력/수정/삭제) -->
+                <div id="admin-wt-panel-message" class="hidden border-t">
+                    <div class="p-4">
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="text-sm font-bold text-amber-700">📢 메세지전달 <span class="text-xs text-slate-400 font-normal">(본사 → TM)</span></h3>
+                            <button onclick="showAdminWtPanel(null)" class="text-xs text-slate-400 hover:text-slate-600">✕ 닫기</button>
+                        </div>
+                        <div class="mb-3 flex gap-2 items-start">
+                            <select id="admin-wt-msg-name" class="p-2 border rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-300">
+                                <option value="">TM 선택</option>
+                            </select>
+                            <input type="date" id="admin-wt-msg-date" class="p-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-300">
+                            <textarea id="admin-wt-msg-text" rows="2" class="flex-1 p-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-300" placeholder="TM에게 전달할 메세지를 입력하세요"></textarea>
+                            <button onclick="saveAdminMessage()" class="py-2 px-3 text-sm font-bold rounded-lg text-white bg-amber-500 hover:bg-amber-600 whitespace-nowrap">저장</button>
+                        </div>
+                        <div id="admin-wt-message-list" class="space-y-2 max-h-72 overflow-y-auto"></div>
+                    </div>
                 </div>
             </div>
 
@@ -3239,6 +3280,8 @@
     let adminWorktimeYear = new Date().getFullYear();
     let adminWorktimeMonth = new Date().getMonth();
     let adminWorktimeData = {};
+    let adminWtRows = [];          // 마지막 로드된 rows 캐시
+    let currentAdminWtPanel = null; // 현재 열린 패널
 
     // WorkTime Firestore 읽기
     async function loadWorktimeData(name, year, month) {
@@ -3599,7 +3642,10 @@
                 }
             });
             rows.sort(function(a,b){ return a.name.localeCompare(b.name) || a.date.localeCompare(b.date); });
+            adminWtRows = rows;
             renderAdminWtTable(rows);
+            // 패널이 열려있으면 새 데이터로 다시 렌더링
+            if (currentAdminWtPanel) renderAdminWtPanel(currentAdminWtPanel);
         } catch(e) {
             document.getElementById('admin-wt-table-body').innerHTML =
                 '<tr><td colspan="5" class="text-center py-8 text-red-400">오류: ' + e.message + '</td></tr>';
@@ -3790,6 +3836,135 @@
         } catch(e) { alert('저장 오류: ' + e.message); } finally { hideLoading(); }
     }
     window.saveAdminWtEdit = saveAdminWtEdit;
+
+    // ── 관리자 패널 표시/숨기기 ──
+    function showAdminWtPanel(type) {
+        var panels = ['log', 'suggestion', 'message'];
+        var colors = {
+            log: 'py-2 px-3 text-sm font-bold rounded-lg border text-blue-700 bg-blue-100 border-blue-300',
+            suggestion: 'py-2 px-3 text-sm font-bold rounded-lg border text-purple-700 bg-purple-100 border-purple-300',
+            message: 'py-2 px-3 text-sm font-bold rounded-lg border text-amber-700 bg-amber-100 border-amber-300'
+        };
+        var baseClass = 'py-2 px-3 text-sm font-bold rounded-lg border border-slate-200 text-slate-600 bg-slate-100';
+        panels.forEach(function(p) {
+            document.getElementById('admin-wt-panel-' + p).classList.add('hidden');
+            var btn = document.getElementById('admin-wt-btn-' + p);
+            if (btn) btn.className = baseClass;
+        });
+        if (!type || type === currentAdminWtPanel) { currentAdminWtPanel = null; return; }
+        currentAdminWtPanel = type;
+        document.getElementById('admin-wt-panel-' + type).classList.remove('hidden');
+        var btn = document.getElementById('admin-wt-btn-' + type);
+        if (btn) btn.className = colors[type];
+        renderAdminWtPanel(type);
+        // 메세지 패널: TM 선택 드롭다운 채우기 + 날짜 기본값
+        if (type === 'message') {
+            var sel = document.getElementById('admin-wt-msg-name');
+            var names = [...new Set(adminWtRows.map(function(r){ return r.name; }))].sort();
+            sel.innerHTML = '<option value="">TM 선택</option>'
+                + names.map(function(n){ return '<option value="' + n + '">' + n + '</option>'; }).join('');
+            var dateEl = document.getElementById('admin-wt-msg-date');
+            if (!dateEl.value) dateEl.value = new Date().toISOString().split('T')[0];
+        }
+    }
+    window.showAdminWtPanel = showAdminWtPanel;
+
+    // ── 관리자 패널 목록 렌더링 ──
+    function renderAdminWtPanel(type) {
+        var field = type === 'log' ? 'mainTask' : type === 'suggestion' ? 'suggestion' : 'message';
+        var listEl = document.getElementById('admin-wt-' + (type === 'log' ? 'log' : type === 'suggestion' ? 'suggestion' : 'message') + '-list');
+        var entries = adminWtRows.filter(function(r){ return r[field]; })
+            .sort(function(a, b){ return b.date.localeCompare(a.date) || a.name.localeCompare(b.name); });
+        if (entries.length === 0) {
+            listEl.innerHTML = '<p class="text-sm text-slate-400 text-center py-4">내용이 없습니다.</p>';
+            return;
+        }
+        var colorMap = {
+            log: 'bg-blue-50 border-blue-100',
+            suggestion: 'bg-purple-50 border-purple-100',
+            message: 'bg-amber-50 border-amber-100'
+        };
+        var textColor = { log: 'text-slate-700', suggestion: 'text-slate-700', message: 'text-amber-800' };
+        listEl.innerHTML = entries.map(function(r) {
+            var val = (r[field] || '').replace(/</g, '&lt;');
+            var dateParts = r.date.split('-');
+            var label = r.name + ' · ' + parseInt(dateParts[1]) + '월 ' + parseInt(dateParts[2]) + '일';
+            var editBtn = type === 'message'
+                ? '<button onclick="editAdminMessage(&quot;' + r.docId + '&quot;)" class="text-xs text-blue-500 hover:text-blue-700 whitespace-nowrap ml-1">수정</button>'
+                  + '<button onclick="deleteAdminMessage(&quot;' + r.docId + '&quot;)" class="text-xs text-red-400 hover:text-red-600 whitespace-nowrap ml-1">삭제</button>'
+                : '';
+            return '<div class="flex gap-2 items-start p-2 rounded-lg border ' + colorMap[type] + '">'
+                + '<span class="text-xs font-bold whitespace-nowrap pt-0.5 text-slate-500 min-w-[110px]">' + label + '</span>'
+                + '<span class="text-sm flex-1 whitespace-pre-wrap ' + textColor[type] + '">' + val + '</span>'
+                + editBtn
+                + '</div>';
+        }).join('');
+    }
+    window.renderAdminWtPanel = renderAdminWtPanel;
+
+    // ── 메세지 수정 버튼 클릭: rows에서 찾아 입력란 채우기 ──
+    function editAdminMessage(docId) {
+        var row = adminWtRows.find(function(r){ return r.docId === docId; });
+        if (!row) return;
+        document.getElementById('admin-wt-msg-name').value = row.name;
+        document.getElementById('admin-wt-msg-date').value = row.date;
+        document.getElementById('admin-wt-msg-text').value = row.message || '';
+        document.getElementById('admin-wt-msg-text').focus();
+    }
+    window.editAdminMessage = editAdminMessage;
+
+    // ── 메세지 저장 ──
+    async function saveAdminMessage() {
+        var name = document.getElementById('admin-wt-msg-name').value;
+        var date = document.getElementById('admin-wt-msg-date').value;
+        var text = document.getElementById('admin-wt-msg-text').value.trim();
+        if (!name) { alert('TM을 선택해주세요.'); return; }
+        if (!date) { alert('날짜를 선택해주세요.'); return; }
+        var docId = name + '_' + date;
+        showLoading();
+        try {
+            var url = FIRESTORE_BASE_URL + '/WorkTime/' + docId
+                + '?updateMask.fieldPaths=message&updateMask.fieldPaths=name&updateMask.fieldPaths=date';
+            var res = await fetch(url, {
+                method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ fields: {
+                    name: { stringValue: name },
+                    date: { stringValue: date },
+                    message: { stringValue: text }
+                }})
+            });
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            // 로컬 캐시 업데이트
+            var existing = adminWtRows.find(function(r){ return r.docId === docId; });
+            if (existing) { existing.message = text; }
+            else { adminWtRows.push({ name: name, date: date, docId: docId, message: text, mainTask: '', suggestion: '', startTime: '', endTime: '', workMins: 0, status: 'pending' }); }
+            document.getElementById('admin-wt-msg-text').value = '';
+            document.getElementById('admin-wt-msg-text').removeAttribute('data-edit-doc-id');
+            renderAdminWtPanel('message');
+        } catch(e) { alert('저장 오류: ' + e.message); }
+        finally { hideLoading(); }
+    }
+    window.saveAdminMessage = saveAdminMessage;
+
+    // ── 메세지 삭제 (빈값으로 덮어씀) ──
+    async function deleteAdminMessage(docId) {
+        if (!confirm('이 메세지를 삭제하시겠습니까?')) return;
+        showLoading();
+        try {
+            var url = FIRESTORE_BASE_URL + '/WorkTime/' + docId
+                + '?updateMask.fieldPaths=message';
+            var res = await fetch(url, {
+                method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ fields: { message: { stringValue: '' } }})
+            });
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            var row = adminWtRows.find(function(r){ return r.docId === docId; });
+            if (row) row.message = '';
+            renderAdminWtPanel('message');
+        } catch(e) { alert('삭제 오류: ' + e.message); }
+        finally { hideLoading(); }
+    }
+    window.deleteAdminMessage = deleteAdminMessage;
 
     // ── 탭 전환 ──
     // ── 패널 표시/숨기기 ──
