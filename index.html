@@ -3516,7 +3516,8 @@
         };
         try {
             // PATCH로 upsert (문서 없으면 생성, 있으면 덮어쓰기)
-            const res = await fetch(`${FIRESTORE_BASE_URL}/WorkTime/${docId}`, {
+            // updateMask: 지정 필드만 업데이트 → message/mainTask/suggestion 보존
+            const res = await fetch(`${FIRESTORE_BASE_URL}/WorkTime/${docId}?updateMask.fieldPaths=name&updateMask.fieldPaths=date&updateMask.fieldPaths=startTime&updateMask.fieldPaths=endTime&updateMask.fieldPaths=workHours&updateMask.fieldPaths=status`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ fields })
