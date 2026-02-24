@@ -1061,19 +1061,22 @@
             <!-- TM 근무시간 입력 섹션 (TMer만 표시) -->
             <!-- TMer 근무시간 입력 섹션 -->
             <div id="tm-worktime-section" class="hidden bg-white rounded-xl shadow-lg mb-4">
-                <!-- 헤더: 클릭하면 달력 접기/펼치기 -->
-                <div class="p-4 flex flex-wrap justify-between items-center gap-2 cursor-pointer select-none" onclick="toggleWorktimeCalendar()">
-                    <div class="flex items-center gap-2">
+                <!-- 헤더 -->
+                <div class="p-4 flex flex-wrap justify-between items-center gap-2">
+                    <div class="flex items-center gap-2 cursor-pointer select-none" onclick="toggleWorktimeCalendar()">
                         <h2 class="text-lg font-semibold text-slate-800">🕐 나의 월간 근무시간</h2>
                         <span id="worktime-toggle-icon" class="text-slate-400 text-sm font-bold">▼ 펼치기</span>
                     </div>
-                    <div class="flex gap-3 flex-wrap" onclick="event.stopPropagation()">
-                        <div class="text-sm font-semibold text-blue-700 bg-blue-50 px-4 py-2 rounded-lg">
+                    <div class="flex gap-2 flex-wrap items-center">
+                        <div class="text-sm font-semibold text-blue-700 bg-blue-50 px-3 py-2 rounded-lg">
                             월 합계: <span id="worktime-total" class="font-bold text-blue-900">0시간 0분</span>
                         </div>
-                        <div class="text-sm font-semibold text-emerald-700 bg-emerald-50 px-4 py-2 rounded-lg">
+                        <div class="text-sm font-semibold text-emerald-700 bg-emerald-50 px-3 py-2 rounded-lg">
                             월 수수료: <span id="worktime-commission" class="font-bold text-emerald-900">0원</span>
                         </div>
+                        <button id="wt-btn-log" onclick="showWtPanel('log')" class="py-2 px-3 text-sm font-bold rounded-lg border border-slate-200 text-slate-600 bg-slate-100 hover:bg-blue-100 hover:text-blue-700">📋 업무기록</button>
+                        <button id="wt-btn-suggestion" onclick="showWtPanel('suggestion')" class="py-2 px-3 text-sm font-bold rounded-lg border border-slate-200 text-slate-600 bg-slate-100 hover:bg-purple-100 hover:text-purple-700">💬 건의사항</button>
+                        <button id="wt-btn-message" onclick="showWtPanel('message')" class="py-2 px-3 text-sm font-bold rounded-lg border border-slate-200 text-slate-600 bg-slate-100 hover:bg-amber-100 hover:text-amber-700">📢 메세지전달</button>
                     </div>
                 </div>
                 <!-- 달력 영역: 기본 접혀있음 -->
@@ -1101,24 +1104,58 @@
                         </table>
                     </div>
                 </div>
+                <!-- 업무기록 패널 -->
+                <div id="wt-panel-log" class="hidden border-t">
+                    <div class="p-4">
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="text-sm font-bold text-blue-700">📋 업무기록</h3>
+                            <button onclick="showWtPanel(null)" class="text-xs text-slate-400 hover:text-slate-600">✕ 닫기</button>
+                        </div>
+                        <div class="mb-3 flex gap-2 items-start">
+                            <input type="date" id="wt-log-date" class="p-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-300">
+                            <textarea id="wt-log-text" rows="2" class="flex-1 p-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-300" placeholder="주요업무 내용을 입력하세요"></textarea>
+                            <button onclick="saveWtPanelEntry('log')" class="py-2 px-3 text-sm font-bold rounded-lg text-white bg-blue-600 hover:bg-blue-700 whitespace-nowrap">저장</button>
+                        </div>
+                        <div id="wt-log-list" class="space-y-2 max-h-64 overflow-y-auto"></div>
+                    </div>
+                </div>
+                <!-- 건의사항 패널 -->
+                <div id="wt-panel-suggestion" class="hidden border-t">
+                    <div class="p-4">
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="text-sm font-bold text-purple-700">💬 건의사항</h3>
+                            <button onclick="showWtPanel(null)" class="text-xs text-slate-400 hover:text-slate-600">✕ 닫기</button>
+                        </div>
+                        <div class="mb-3 flex gap-2 items-start">
+                            <input type="date" id="wt-suggestion-date" class="p-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-300">
+                            <textarea id="wt-suggestion-text" rows="2" class="flex-1 p-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-300" placeholder="건의사항을 입력하세요"></textarea>
+                            <button onclick="saveWtPanelEntry('suggestion')" class="py-2 px-3 text-sm font-bold rounded-lg text-white bg-purple-600 hover:bg-purple-700 whitespace-nowrap">저장</button>
+                        </div>
+                        <div id="wt-suggestion-list" class="space-y-2 max-h-64 overflow-y-auto"></div>
+                    </div>
+                </div>
+                <!-- 메세지전달 패널 (읽기전용) -->
+                <div id="wt-panel-message" class="hidden border-t">
+                    <div class="p-4">
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="text-sm font-bold text-amber-700">📢 메세지전달 <span class="text-xs text-slate-400 font-normal">(본사 입력)</span></h3>
+                            <button onclick="showWtPanel(null)" class="text-xs text-slate-400 hover:text-slate-600">✕ 닫기</button>
+                        </div>
+                        <div id="wt-message-list" class="space-y-2 max-h-64 overflow-y-auto"></div>
+                    </div>
+                </div>
             </div>
 
             <!-- 근무시간 입력 모달 (커스텀 시/분 select) -->
             <div id="worktime-modal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[2000]" onclick="if(event.target===this) closeWorktimeModal()">
-                <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4">
+                <div class="bg-white rounded-2xl shadow-2xl w-full max-w-xs mx-4">
                     <div class="bg-slate-800 text-white px-5 py-4 rounded-t-2xl flex justify-between items-center">
                         <h3 class="text-base font-bold" id="worktime-modal-title">근무시간 입력</h3>
-                        <button onclick="closeWorktimeModal()" class="text-slate-300 hover:text-white text-xl font-bold leading-none">&#x2715;</button>
+                        <button onclick="closeWorktimeModal()" class="text-slate-300 hover:text-white text-xl font-bold leading-none">✕</button>
                     </div>
-                    <!-- 탭 버튼 -->
-                    <div class="flex border-b">
-                        <button id="wt-tab-time" onclick="switchWtTab('time')" class="flex-1 py-3 text-sm font-bold text-white bg-slate-700">&#x23F0; 근무시간</button>
-                        <button id="wt-tab-log" onclick="switchWtTab('log')" class="flex-1 py-3 text-sm font-bold text-slate-500 bg-slate-100 hover:bg-slate-200">&#x1F4CB; 업무기록</button>
-                    </div>
-                    <!-- 탭1: 근무시간 -->
-                    <div id="wt-panel-time" class="p-5 space-y-4">
+                    <div class="p-5 space-y-4">
                         <div>
-                            <label class="block text-sm font-semibold text-slate-600 mb-2">&#x1F7E2; 출근시간</label>
+                            <label class="block text-sm font-semibold text-slate-600 mb-2">🟢 출근시간</label>
                             <div class="flex gap-2 items-center">
                                 <select id="wt-start-h" onchange="updateWtCalcResult()" class="flex-1 p-3 border-2 border-slate-200 rounded-xl text-lg font-bold text-center focus:border-slate-500 focus:outline-none bg-white"></select>
                                 <span class="font-bold text-slate-500">:</span>
@@ -1126,7 +1163,7 @@
                             </div>
                         </div>
                         <div>
-                            <label class="block text-sm font-semibold text-slate-600 mb-2">&#x1F534; 퇴근시간</label>
+                            <label class="block text-sm font-semibold text-slate-600 mb-2">🔴 퇴근시간</label>
                             <div class="flex gap-2 items-center">
                                 <select id="wt-end-h" onchange="updateWtCalcResult()" class="flex-1 p-3 border-2 border-slate-200 rounded-xl text-lg font-bold text-center focus:border-slate-500 focus:outline-none bg-white"></select>
                                 <span class="font-bold text-slate-500">:</span>
@@ -1137,28 +1174,11 @@
                             <div class="text-sm text-green-600">근무시간</div>
                             <div id="wt-calc-hours" class="text-2xl font-bold text-green-700 mt-1"></div>
                         </div>
-                        <button onclick="clearWorktimeEntry()" id="wt-clear-btn" class="hidden w-full py-2 text-sm text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition border border-red-200">&#x1F5D1; 이 날 기록 삭제</button>
+                        <button onclick="clearWorktimeEntry()" id="wt-clear-btn" class="hidden w-full py-2 text-sm text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition border border-red-200">🗑 이 날 기록 삭제</button>
                     </div>
-                    <!-- 탭2: 업무기록 -->
-                    <div id="wt-panel-log" class="hidden p-5 space-y-4">
-                        <div>
-                            <label class="block text-sm font-semibold text-slate-600 mb-1">&#x1F4CB; 주요업무</label>
-                            <textarea id="wt-maintask" rows="3" class="w-full p-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-300" placeholder="오늘 주요 업무 내용을 입력하세요"></textarea>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-semibold text-slate-600 mb-1">&#x1F4AC; 건의사항</label>
-                            <textarea id="wt-suggestion" rows="3" class="w-full p-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-300" placeholder="건의사항이 있으면 입력하세요"></textarea>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-semibold text-amber-700 mb-1">&#x1F4E2; 메세지전달 <span class="text-xs text-slate-400 font-normal">(본사 입력)</span></label>
-                            <div id="wt-message-display" class="w-full p-2 border rounded-lg text-sm bg-amber-50 text-amber-800 min-h-[60px] whitespace-pre-wrap"></div>
-                        </div>
-                    </div>
-                    <!-- 푸터 버튼 -->
                     <div class="px-5 pb-5 flex gap-3">
                         <button onclick="closeWorktimeModal()" class="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl">취소</button>
-                        <button id="wt-save-time-btn" onclick="saveWorktimeEntry()" class="flex-1 py-3 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-xl">저장</button>
-                        <button id="wt-save-log-btn" onclick="saveWorkLogEntry()" class="hidden flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl">저장</button>
+                        <button onclick="saveWorktimeEntry()" class="flex-1 py-3 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-xl">저장</button>
                     </div>
                 </div>
             </div>
@@ -3302,6 +3322,8 @@
         hideLoading();
         buildWorktimeCalendar('worktime-calendar-body', worktimeYear, worktimeMonth, worktimeData, true);
         updateWorktimeTotalDisplay();
+        // 패널이 열려있으면 새 데이터로 다시 렌더링
+        if (currentWtPanel) renderWtPanel(currentWtPanel);
     }
 
     const HOURLY_RATE = 15000;
@@ -3456,18 +3478,12 @@
         const rec = worktimeData[dateStr] || {};
         const parts = dateStr.split('-');
         document.getElementById('worktime-modal-title').textContent =
-            parseInt(parts[1]) + '월 ' + parseInt(parts[2]) + '일';
+            parseInt(parts[1]) + '월 ' + parseInt(parts[2]) + '일 근무시간';
         initTimeSelects();
         setSelectTime('wt-start-h', 'wt-start-m', rec.startTime || '');
         setSelectTime('wt-end-h', 'wt-end-m', rec.endTime || '');
         document.getElementById('wt-clear-btn').classList.toggle('hidden', !rec.startTime);
         updateWtCalcResult();
-        // 업무기록 탭 데이터 초기화
-        document.getElementById('wt-maintask').value = rec.mainTask || '';
-        document.getElementById('wt-suggestion').value = rec.suggestion || '';
-        document.getElementById('wt-message-display').textContent = rec.message || '(본사 메세지 없음)';
-        // 탭 초기화: 근무시간 탭으로 시작
-        switchWtTab('time');
         document.getElementById('worktime-modal').classList.remove('hidden');
     }
     window.openWorktimeModal = openWorktimeModal;
@@ -3776,53 +3792,101 @@
     window.saveAdminWtEdit = saveAdminWtEdit;
 
     // ── 탭 전환 ──
-    function switchWtTab(tab) {
-        var isTime = tab === 'time';
-        document.getElementById('wt-panel-time').classList.toggle('hidden', !isTime);
-        document.getElementById('wt-panel-log').classList.toggle('hidden', isTime);
-        document.getElementById('wt-save-time-btn').classList.toggle('hidden', !isTime);
-        document.getElementById('wt-save-log-btn').classList.toggle('hidden', isTime);
-        var tabTime = document.getElementById('wt-tab-time');
-        var tabLog = document.getElementById('wt-tab-log');
-        tabTime.className = 'flex-1 py-3 text-sm font-bold ' + (isTime ? 'text-white bg-slate-700' : 'text-slate-500 bg-slate-100 hover:bg-slate-200');
-        tabLog.className = 'flex-1 py-3 text-sm font-bold ' + (!isTime ? 'text-white bg-blue-600' : 'text-slate-500 bg-slate-100 hover:bg-slate-200');
+    // ── 패널 표시/숨기기 ──
+    var currentWtPanel = null;
+    function showWtPanel(type) {
+        var panels = ['log', 'suggestion', 'message'];
+        var btns = { log: 'wt-btn-log', suggestion: 'wt-btn-suggestion', message: 'wt-btn-message' };
+        var colors = { log: 'text-blue-700 bg-blue-100 border-blue-300', suggestion: 'text-purple-700 bg-purple-100 border-purple-300', message: 'text-amber-700 bg-amber-100 border-amber-300' };
+        // 모두 닫기
+        panels.forEach(function(p) {
+            document.getElementById('wt-panel-' + p).classList.add('hidden');
+            var btn = document.getElementById('wt-btn-' + p);
+            if (btn) btn.className = 'py-2 px-3 text-sm font-bold rounded-lg border border-slate-200 text-slate-600 bg-slate-100';
+        });
+        if (!type || type === currentWtPanel) { currentWtPanel = null; return; }
+        currentWtPanel = type;
+        document.getElementById('wt-panel-' + type).classList.remove('hidden');
+        var btn = document.getElementById('wt-btn-' + type);
+        if (btn) btn.className = 'py-2 px-3 text-sm font-bold rounded-lg border ' + colors[type];
+        renderWtPanel(type);
+        // 날짜 input 기본값: 오늘
+        var today = new Date().toISOString().split('T')[0];
+        var dateEl = document.getElementById('wt-' + type + '-date');
+        if (dateEl && !dateEl.value) dateEl.value = today;
     }
-    window.switchWtTab = switchWtTab;
+    window.showWtPanel = showWtPanel;
 
-    // ── 업무기록 저장 (TM: 주요업무 + 건의사항) ──
-    async function saveWorkLogEntry() {
-        if (!worktimeDateSelected) return;
-        var mainTask = document.getElementById('wt-maintask').value.trim();
-        var suggestion = document.getElementById('wt-suggestion').value.trim();
-        var docId = loggedInUser.name + '_' + worktimeDateSelected;
+    // ── 패널 목록 렌더링 ──
+    function renderWtPanel(type) {
+        var field = type === 'log' ? 'mainTask' : type === 'suggestion' ? 'suggestion' : 'message';
+        var listEl = document.getElementById('wt-' + type + '-list');
+        var entries = Object.entries(worktimeData)
+            .filter(function(e) { return e[1][field]; })
+            .sort(function(a, b) { return b[0].localeCompare(a[0]); });
+        if (entries.length === 0) {
+            listEl.innerHTML = '<p class="text-sm text-slate-400 text-center py-4">이번 달 내용이 없습니다.</p>';
+            return;
+        }
+        var colorMap = { log: 'bg-blue-50 border-blue-100 text-blue-900', suggestion: 'bg-purple-50 border-purple-100 text-purple-900', message: 'bg-amber-50 border-amber-100 text-amber-900' };
+        listEl.innerHTML = entries.map(function(e) {
+            var date = e[0]; var val = e[1][field] || '';
+            var parts = date.split('-');
+            var label = parseInt(parts[1]) + '월 ' + parseInt(parts[2]) + '일';
+            return '<div class="flex gap-2 items-start p-2 rounded-lg border ' + colorMap[type] + '">'
+                + '<span class="text-xs font-bold whitespace-nowrap pt-0.5 text-slate-500">' + label + '</span>'
+                + '<span class="text-sm flex-1 whitespace-pre-wrap">' + val.replace(/</g,'&lt;') + '</span>'
+                + (type !== 'message' ? '<button onclick="editWtPanelEntry(\'' + type + '\',\'' + date + '\')" class="text-xs text-slate-400 hover:text-slate-600 whitespace-nowrap">수정</button>' : '')
+                + '</div>';
+        }).join('');
+    }
+    window.renderWtPanel = renderWtPanel;
+
+    // ── 수정 버튼 클릭: 날짜/내용을 입력란에 채워줌 ──
+    function editWtPanelEntry(type, date) {
+        var field = type === 'log' ? 'mainTask' : 'suggestion';
+        var rec = worktimeData[date] || {};
+        var dateEl = document.getElementById('wt-' + type + '-date');
+        var textEl = document.getElementById('wt-' + type + '-text');
+        if (dateEl) dateEl.value = date;
+        if (textEl) textEl.value = rec[field] || '';
+        textEl.focus();
+    }
+    window.editWtPanelEntry = editWtPanelEntry;
+
+    // ── 패널 저장 (업무기록 / 건의사항) ──
+    async function saveWtPanelEntry(type) {
+        var date = document.getElementById('wt-' + type + '-date').value;
+        var text = document.getElementById('wt-' + type + '-text').value.trim();
+        if (!date) { alert('날짜를 선택해주세요.'); return; }
+        var field = type === 'log' ? 'mainTask' : 'suggestion';
+        var docId = loggedInUser.name + '_' + date;
         showLoading();
         try {
             var res = await fetch(
                 FIRESTORE_BASE_URL + '/WorkTime/' + docId
-                + '?updateMask.fieldPaths=mainTask&updateMask.fieldPaths=suggestion'
+                + '?updateMask.fieldPaths=' + field
                 + '&updateMask.fieldPaths=name&updateMask.fieldPaths=date',
                 {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ fields: {
                         name: { stringValue: loggedInUser.name },
-                        date: { stringValue: worktimeDateSelected },
-                        mainTask: { stringValue: mainTask },
-                        suggestion: { stringValue: suggestion }
+                        date: { stringValue: date },
+                        [field]: { stringValue: text }
                     }})
                 }
             );
             if (!res.ok) throw new Error('HTTP ' + res.status);
-            // 로컬 캐시 업데이트
-            if (!worktimeData[worktimeDateSelected]) worktimeData[worktimeDateSelected] = {};
-            worktimeData[worktimeDateSelected].mainTask = mainTask;
-            worktimeData[worktimeDateSelected].suggestion = suggestion;
+            if (!worktimeData[date]) worktimeData[date] = {};
+            worktimeData[date][field] = text;
             buildWorktimeCalendar('worktime-calendar-body', worktimeYear, worktimeMonth, worktimeData, true);
-            closeWorktimeModal();
+            document.getElementById('wt-' + type + '-text').value = '';
+            renderWtPanel(type);
         } catch(e) { alert('저장 오류: ' + e.message); }
         finally { hideLoading(); }
     }
-    window.saveWorkLogEntry = saveWorkLogEntry;
+    window.saveWtPanelEntry = saveWtPanelEntry;
 
     // === 페이지 첫 로드 ===
     document.addEventListener('DOMContentLoaded', () => {
