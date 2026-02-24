@@ -2500,7 +2500,7 @@
         const dupKeyCount = {};
         allCompanies.forEach(c => {
             const name = (c['기업명'] || '').trim();
-            const tel = (c['회사Tel'] || '').trim();
+            const tel = String(c['회사Tel'] || '').trim();
             if (name && tel) {
                 const k = name + '||' + tel;
                 dupKeyCount[k] = (dupKeyCount[k] || 0) + 1;
@@ -2521,7 +2521,7 @@
             const row = document.createElement('tr');
             // 중복 표시: 기업명+전화번호 모두 일치, 전화번호 비어있지 않은 경우만
             const _name = (company['기업명'] || '').trim();
-            const _tel = (company['회사Tel'] || '').trim();
+            const _tel = String(company['회사Tel'] || '').trim();
             const isDuplicate = loggedInUser && loggedInUser.role === 'admin'
                 && _name && _tel && (dupKeyCount[_name + '||' + _tel] || 0) > 1;
             row.className = 'cursor-pointer hover:bg-amber-50 border-b' + (isDuplicate ? ' bg-red-50' : '');
