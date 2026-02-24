@@ -1322,7 +1322,7 @@
                             <tr class="border-b text-center">
                                 <!-- A~K열: 기업 기본정보 -->
                                 <th class="px-3 py-2 min-w-[50px]">No</th>
-                                <th class="px-3 py-2 min-w-[150px]">기업명</th>
+                                <th id="th-company" class="px-3 py-2 min-w-[150px] cursor-pointer hover:bg-blue-200 select-none bg-blue-50" onclick="toggleCompanySort()">기업명 <span id="company-sort-icon">↕</span></th>
                                 <th class="px-3 py-2 min-w-[100px]">업종</th>
                                 <th class="px-3 py-2 min-w-[80px]">기업규모</th>
                                 <th class="px-3 py-2 min-w-[200px]">회사주소</th>
@@ -2528,6 +2528,26 @@
             tableBody.appendChild(row);
         });
     }
+
+    // ── 기업명 정렬 ──
+    var companySortDir = null;
+    function toggleCompanySort() {
+        companySortDir = (companySortDir === 'asc') ? 'desc' : 'asc';
+        var icon = document.getElementById('company-sort-icon');
+        if (icon) icon.textContent = companySortDir === 'asc' ? '↑' : '↓';
+        var sortFn = function(a, b) {
+            var na = (a['기업명'] || '').trim();
+            var nb = (b['기업명'] || '').trim();
+            if (!na && !nb) return 0;
+            if (!na) return 1;
+            if (!nb) return -1;
+            return companySortDir === 'asc' ? na.localeCompare(nb, 'ko') : nb.localeCompare(na, 'ko');
+        };
+        if (apiCache['Companies']) apiCache['Companies'].sort(sortFn);
+        if (cachedAllCompanies.length > 0) cachedAllCompanies.sort(sortFn);
+        loadInitialData(1);
+    }
+    window.toggleCompanySort = toggleCompanySort;
 
     // ── 등록일자 정렬 ──
     var regdateSortDir = 'desc';
