@@ -3491,6 +3491,7 @@
                         mainTask: fields.mainTask?.stringValue || '',
                         suggestion: fields.suggestion?.stringValue || '',
                         message: fields.message?.stringValue || '',
+                        adminReply: fields.adminReply?.stringValue || '',
                         _docId: doc.name.split('/').pop()
                     };
                 }
@@ -3826,6 +3827,7 @@
                         mainTask: f.mainTask?.stringValue || '',
                         suggestion: f.suggestion?.stringValue || '',
                         message: f.message?.stringValue || '',
+                        adminReply: f.adminReply?.stringValue || '',
                         docId: doc.name.split('/').pop()
                     });
                 }
@@ -4082,10 +4084,23 @@
                 ? '<button onclick="editAdminMessage(&quot;' + r.docId + '&quot;)" class="text-xs text-blue-500 hover:text-blue-700 whitespace-nowrap ml-1">수정</button>'
                   + '<button onclick="deleteAdminMessage(&quot;' + r.docId + '&quot;)" class="text-xs text-red-400 hover:text-red-600 whitespace-nowrap ml-1">삭제</button>'
                 : '';
-            return '<div class="flex gap-2 items-start p-2 rounded-lg border ' + colorMap[type] + '">'
+            var replyHtml = '';
+            if (type === 'log') {
+                var replyVal = (r.adminReply || '').replace(/</g, '&lt;');
+                replyHtml = '<div class="mt-2 ml-2 border-l-2 border-blue-300 pl-2">'
+                    + (replyVal ? '<p class="text-xs text-blue-700 whitespace-pre-wrap mb-1">📝 관리자 답변: ' + replyVal + '</p>' : '')
+                    + '<div class="flex gap-1 items-center mt-1">'
+                    + '<input type="text" placeholder="답변 입력..." value="' + replyVal + '" id="reply-input-' + r.docId + '" class="flex-1 text-xs border rounded px-2 py-1 focus:outline-none focus:border-blue-400">'
+                    + '<button onclick="saveAdminReply(&quot;' + r.docId + '&quot;,&quot;' + r.name + '&quot;,&quot;' + r.date + '&quot;)" class="text-xs px-2 py-1 bg-blue-500 hover:bg-blue-600 text-white rounded whitespace-nowrap">저장</button>'
+                    + '</div></div>';
+            }
+            return '<div class="p-2 rounded-lg border ' + colorMap[type] + '">'
+                + '<div class="flex gap-2 items-start">'
                 + '<span class="text-xs font-bold whitespace-nowrap pt-0.5 text-slate-500 min-w-[110px]">' + label + '</span>'
                 + '<span class="text-sm flex-1 whitespace-pre-wrap ' + textColor[type] + '">' + val + '</span>'
                 + editBtn
+                + '</div>'
+                + replyHtml
                 + '</div>';
         }).join('');
     }
@@ -4101,6 +4116,29 @@
         document.getElementById('admin-wt-msg-text').focus();
     }
     window.editAdminMessage = editAdminMessage;
+
+    // ── 업무기록 관리자 답변 저장 ──
+    async function saveAdminReply(docId, name, date) {
+        var inputEl = document.getElementById('reply-input-' + docId);
+        if (!inputEl) return;
+        var text = inputEl.value.trim();
+        showLoading();
+        try {
+            var url = FIRESTORE_BASE_URL + '/WorkTime/' + docId + '?updateMask.fieldPaths=adminReply';
+            var res = await fetch(url, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ fields: { adminReply: { stringValue: text } } })
+            });
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            // 로컬 캐시 업데이트
+            var row = adminWtRows.find(function(r){ return r.docId === docId; });
+            if (row) row.adminReply = text;
+            renderAdminWtPanel('log');
+        } catch(e) { alert('저장 오류: ' + e.message); }
+        finally { hideLoading(); }
+    }
+    window.saveAdminReply = saveAdminReply;
 
     // ── 메세지 저장 ──
     async function saveAdminMessage() {
@@ -4203,10 +4241,19 @@
             var date = e[0]; var val = e[1][field] || '';
             var parts = date.split('-');
             var label = parseInt(parts[1]) + '월 ' + parseInt(parts[2]) + '일';
-            return '<div class="flex gap-2 items-start p-2 rounded-lg border ' + colorMap[type] + '">'
+            var replyHtml = '';
+            if (type === 'log' && e[1].adminReply) {
+                replyHtml = '<div class="mt-2 ml-2 border-l-2 border-blue-300 pl-2">'
+                    + '<p class="text-xs text-blue-700 whitespace-pre-wrap">📝 본사: ' + e[1].adminReply.replace(/</g,'&lt;') + '</p>'
+                    + '</div>';
+            }
+            return '<div class="p-2 rounded-lg border ' + colorMap[type] + '">'
+                + '<div class="flex gap-2 items-start">'
                 + '<span class="text-xs font-bold whitespace-nowrap pt-0.5 text-slate-500">' + label + '</span>'
                 + '<span class="text-sm flex-1 whitespace-pre-wrap">' + val.replace(/</g,'&lt;') + '</span>'
                 + (type !== 'message' ? '<button onclick="editWtPanelEntry(\'' + type + '\',\'' + date + '\')" class="text-xs text-slate-400 hover:text-slate-600 whitespace-nowrap">수정</button>' : '')
+                + '</div>'
+                + replyHtml
                 + '</div>';
         }).join('');
     }
