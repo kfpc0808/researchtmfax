@@ -4230,13 +4230,18 @@
     window.updateMeetingTime = updateMeetingTime;
 
     // ── TM 전문위원시연 패널 렌더링 ──
-    function renderSiyonPanel() {
+    async function renderSiyonPanel() {
         var listEl = document.getElementById('wt-siyon-list');
         if (!listEl) return;
-        // allCompanies(현재 페이지) + cachedAllCompanies(누적) + apiCache 순으로 사용
-        var src = (typeof cachedAllCompanies !== 'undefined' && cachedAllCompanies.length > 0)
+        listEl.innerHTML = '<p class="text-sm text-slate-400 text-center py-4">로딩 중...</p>';
+        // 전체 Companies 조회 (전문위원 미팅확정 기업이 다른 페이지에 있을 수 있음)
+        var allData = cachedAllCompanies.length > 0
             ? cachedAllCompanies
-            : ((apiCache && apiCache['Companies']) ? apiCache['Companies'] : []);
+            : await readFromFirestore('Companies');
+        if (allData && allData.length > 0 && cachedAllCompanies.length === 0) {
+            cachedAllCompanies = allData;
+        }
+        var src = allData || [];
         var myName = loggedInUser ? loggedInUser.name : '';
         var filtered = src.filter(function(c) {
             return c['향후진행'] === '전문위원 미팅확정'
@@ -4254,7 +4259,7 @@
             return '<div class="p-3 rounded-lg border border-indigo-100 bg-indigo-50 space-y-1">'
                 + '<p class="text-sm font-bold text-indigo-800">' + (c['기업명'] || '') + '</p>'
                 + '<p class="text-xs text-slate-600">📍 ' + (c['회사주소'] || '-') + '</p>'
-                + '<p class="text-xs text-slate-600">📞 ' + (c['회사Tel'] || '-') + '</p>'
+                + '<p class="text-xs text-slate-600">📞 ' + String(c['회사Tel'] || '-') + '</p>'
                 + '<p class="text-xs text-slate-600">📅 미팅일시: ' + 미팅일시 + '</p>'
                 + '<p class="text-xs text-indigo-700 font-semibold">👤 전문위원: ' + 성명 + '</p>'
                 + '</div>';
@@ -4263,11 +4268,17 @@
     window.renderSiyonPanel = renderSiyonPanel;
 
     // ── 관리자 전문위원시연 패널 렌더링 ──
-    function renderAdminSiyonPanel() {
+    async function renderAdminSiyonPanel() {
         var listEl = document.getElementById('admin-wt-siyon-list');
         if (!listEl) return;
-        var src = (apiCache && apiCache['Companies']) ? apiCache['Companies']
-            : ((typeof cachedAllCompanies !== 'undefined' && cachedAllCompanies.length > 0) ? cachedAllCompanies : []);
+        listEl.innerHTML = '<p class="text-sm text-slate-400 text-center py-4">로딩 중...</p>';
+        var allData = cachedAllCompanies.length > 0
+            ? cachedAllCompanies
+            : await readFromFirestore('Companies');
+        if (allData && allData.length > 0 && cachedAllCompanies.length === 0) {
+            cachedAllCompanies = allData;
+        }
+        var src = allData || [];
         var filtered = src.filter(function(c) {
             return c['향후진행'] === '전문위원 미팅확정';
         });
@@ -4318,7 +4329,9 @@
         var text = inputEl.value.trim();
         showLoading();
         try {
-            var url = FIRESTORE_BASE_URL + '/Companies/' + docId + '?updateMask.fieldPaths=' + encodeURIComponent('시연전문위원');
+            // 한글 필드명은 updateMask URL 파라미터 미지원 → updateMask 없이 PATCH
+            // Firestore는 updateMask 없는 PATCH 시 body의 필드만 병합(기존 필드 보존)
+            var url = FIRESTORE_BASE_URL + '/Companies/' + docId;
             var res = await fetch(url, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
@@ -4326,11 +4339,17 @@
             });
             if (!res.ok) throw new Error('HTTP ' + res.status);
             // apiCache 업데이트
+            // apiCache 업데이트
             if (apiCache && apiCache['Companies']) {
                 var c = apiCache['Companies'].find(function(x){ return x._docId === docId; });
                 if (c) c['시연전문위원'] = text;
             }
-            renderAdminSiyonPanel();
+            // cachedAllCompanies 업데이트
+            if (cachedAllCompanies.length > 0) {
+                var c2 = cachedAllCompanies.find(function(x){ return x._docId === docId; });
+                if (c2) c2['시연전문위원'] = text;
+            }
+            await renderAdminSiyonPanel();
         } catch(e) { alert('저장 오류: ' + e.message); }
         finally { hideLoading(); }
     }
