@@ -4424,7 +4424,12 @@
         if (!type || type === currentWtPanel) { currentWtPanel = null; return; }
         currentWtPanel = type;
         document.getElementById('wt-panel-' + type).classList.remove('hidden');
-        if (type === 'siyon') { renderSiyonPanel(); }
+        if (type === 'siyon') {
+            var siyonBtn = document.getElementById('wt-btn-siyon');
+            if (siyonBtn) siyonBtn.className = 'py-2 px-3 text-sm font-bold rounded-lg border ' + colors['siyon'];
+            renderSiyonPanel(); // async, return으로 renderWtPanel 호출 차단
+            return;
+        }
         var btn = document.getElementById('wt-btn-' + type);
         if (btn) btn.className = 'py-2 px-3 text-sm font-bold rounded-lg border ' + colors[type];
         // 메세지 패널 열면 읽음 처리 → 깜빡임 중지
