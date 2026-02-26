@@ -4251,30 +4251,19 @@
             listEl.innerHTML = '<p class="text-sm text-slate-400 text-center py-4">전문위원 미팅확정 기업이 없습니다.</p>';
             return;
         }
-        var rows = filtered.map(function(c) {
+        listEl.innerHTML = filtered.map(function(c) {
             var 미팅일자 = c['미팅일자'] || '';
             var 미팅시간 = c['미팅시간'] || '';
             var 미팅일시 = (미팅일자 + (미팅시간 ? ' ' + 미팅시간 : '')) || '-';
             var 성명 = c['시연전문위원'] || '-';
-            return '<tr class="border-b hover:bg-indigo-50">'
-                + '<td class="px-3 py-2 text-sm font-semibold text-indigo-800 whitespace-nowrap">' + (c['기업명'] || '') + '</td>'
-                + '<td class="px-3 py-2 text-xs text-slate-600">' + (c['회사주소'] || '-') + '</td>'
-                + '<td class="px-3 py-2 text-xs text-slate-600 whitespace-nowrap">' + String(c['회사Tel'] || '-') + '</td>'
-                + '<td class="px-3 py-2 text-xs text-slate-600 whitespace-nowrap">' + 미팅일시 + '</td>'
-                + '<td class="px-3 py-2 text-xs text-indigo-700 font-semibold whitespace-nowrap">' + 성명 + '</td>'
-                + '</tr>';
+            return '<div class="p-3 rounded-lg border border-indigo-100 bg-indigo-50 space-y-1">'
+                + '<p class="text-sm font-bold text-indigo-800">' + (c['기업명'] || '') + '</p>'
+                + '<p class="text-xs text-slate-600">📍 ' + (c['회사주소'] || '-') + '</p>'
+                + '<p class="text-xs text-slate-600">📞 ' + String(c['회사Tel'] || '-') + '</p>'
+                + '<p class="text-xs text-slate-600">📅 미팅일시: ' + 미팅일시 + '</p>'
+                + '<p class="text-xs text-indigo-700 font-semibold">👤 전문위원: ' + 성명 + '</p>'
+                + '</div>';
         }).join('');
-        listEl.innerHTML = '<div class="overflow-x-auto">'
-            + '<table class="w-full text-left border-collapse">'
-            + '<thead><tr class="bg-indigo-100 text-xs font-bold text-indigo-700">'
-            + '<th class="px-3 py-2">기업명</th>'
-            + '<th class="px-3 py-2">회사주소</th>'
-            + '<th class="px-3 py-2">회사TEL</th>'
-            + '<th class="px-3 py-2">미팅일시</th>'
-            + '<th class="px-3 py-2">전문위원</th>'
-            + '</tr></thead>'
-            + '<tbody>' + rows + '</tbody>'
-            + '</table></div>';
     }
     window.renderSiyonPanel = renderSiyonPanel;
 
