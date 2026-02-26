@@ -4318,7 +4318,7 @@
         var text = inputEl.value.trim();
         showLoading();
         try {
-            var url = FIRESTORE_BASE_URL + '/Companies/' + docId + '?updateMask.fieldPaths=시연전문위원';
+            var url = FIRESTORE_BASE_URL + '/Companies/' + docId + '?updateMask.fieldPaths=' + encodeURIComponent('시연전문위원');
             var res = await fetch(url, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
