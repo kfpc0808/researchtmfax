@@ -851,6 +851,7 @@
                         <button id="admin-wt-btn-log" onclick="showAdminWtPanel('log')" class="py-2 px-3 text-sm font-bold rounded-lg border border-slate-200 text-slate-600 bg-slate-100 hover:bg-blue-100 hover:text-blue-700">📋 업무기록</button>
                         <button id="admin-wt-btn-suggestion" onclick="showAdminWtPanel('suggestion')" class="py-2 px-3 text-sm font-bold rounded-lg border border-slate-200 text-slate-600 bg-slate-100 hover:bg-purple-100 hover:text-purple-700">💬 건의사항</button>
                         <button id="admin-wt-btn-message" onclick="showAdminWtPanel('message')" class="py-2 px-3 text-sm font-bold rounded-lg border border-slate-200 text-slate-600 bg-slate-100 hover:bg-amber-100 hover:text-amber-700">📢 메세지전달</button>
+                        <button id="admin-wt-btn-siyon" onclick="showAdminWtPanel('siyon')" class="py-2 px-3 text-sm font-bold rounded-lg border border-slate-200 text-slate-600 bg-slate-100 hover:bg-indigo-100 hover:text-indigo-700">🏢 전문위원시연</button>
                     </div>
                 </div>
                 <div class="p-4">
@@ -914,6 +915,16 @@
                             <button onclick="saveAdminMessage()" class="py-2 px-3 text-sm font-bold rounded-lg text-white bg-amber-500 hover:bg-amber-600 whitespace-nowrap">저장</button>
                         </div>
                         <div id="admin-wt-message-list" class="space-y-2 max-h-72 overflow-y-auto"></div>
+                    </div>
+                </div>
+                <!-- 전문위원시연 패널 (관리자) -->
+                <div id="admin-wt-panel-siyon" class="hidden border-t">
+                    <div class="p-4">
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="text-sm font-bold text-indigo-700">🏢 전문위원시연 대상 기업 <span class="text-xs text-slate-400 font-normal">(전문위원성명 입력)</span></h3>
+                            <button onclick="showAdminWtPanel(null)" class="text-xs text-slate-400 hover:text-slate-600">✕ 닫기</button>
+                        </div>
+                        <div id="admin-wt-siyon-list" class="space-y-2 max-h-96 overflow-y-auto"></div>
                     </div>
                 </div>
             </div>
@@ -1123,6 +1134,7 @@
                         <button id="wt-btn-log" onclick="showWtPanel('log')" class="py-2 px-3 text-sm font-bold rounded-lg border border-slate-200 text-slate-600 bg-slate-100 hover:bg-blue-100 hover:text-blue-700">📋 업무기록</button>
                         <button id="wt-btn-suggestion" onclick="showWtPanel('suggestion')" class="py-2 px-3 text-sm font-bold rounded-lg border border-slate-200 text-slate-600 bg-slate-100 hover:bg-purple-100 hover:text-purple-700">💬 건의사항</button>
                         <button id="wt-btn-message" onclick="showWtPanel('message')" class="py-2 px-3 text-sm font-bold rounded-lg border border-slate-200 text-slate-600 bg-slate-100 hover:bg-amber-100 hover:text-amber-700">📢 메세지전달</button>
+                        <button id="wt-btn-siyon" onclick="showWtPanel('siyon')" class="py-2 px-3 text-sm font-bold rounded-lg border border-slate-200 text-slate-600 bg-slate-100 hover:bg-indigo-100 hover:text-indigo-700">🏢 전문위원시연</button>
                     </div>
                 </div>
                 <!-- 달력 영역: 기본 접혀있음 -->
@@ -1188,6 +1200,16 @@
                             <button onclick="showWtPanel(null)" class="text-xs text-slate-400 hover:text-slate-600">✕ 닫기</button>
                         </div>
                         <div id="wt-message-list" class="space-y-2 max-h-64 overflow-y-auto"></div>
+                    </div>
+                </div>
+                <!-- 전문위원시연 패널 -->
+                <div id="wt-panel-siyon" class="hidden border-t">
+                    <div class="p-4">
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="text-sm font-bold text-indigo-700">🏢 전문위원시연 대상 기업</h3>
+                            <button onclick="showWtPanel(null)" class="text-xs text-slate-400 hover:text-slate-600">✕ 닫기</button>
+                        </div>
+                        <div id="wt-siyon-list" class="space-y-2 max-h-72 overflow-y-auto"></div>
                     </div>
                 </div>
             </div>
@@ -1445,7 +1467,7 @@
                             </div>
                             <div>
                                 <label class="font-semibold flex items-center">향후진행</label>
-                                <select name="향후진행" class="w-full p-2 mt-1 border rounded">
+                                <select name="향후진행" class="w-full p-2 mt-1 border rounded" onchange="toggleMeetingDateTime(this.value)">
                                     <option value="">선택</option>
                                     <option value="본사 줌설명회 참여">본사 줌설명회 참여</option>
                                     <option value="본사 개별안내 요청">본사 개별안내 요청</option>
@@ -1455,6 +1477,14 @@
                                     <option value="전문위원 미팅확정">전문위원 미팅확정</option>
                                     <option value="유가망">유가망</option>
                                 </select>
+                            </div>
+                            <!-- 전문위원 미팅확정 선택 시 표시 -->
+                            <div id="meeting-datetime-wrap" class="hidden">
+                                <label class="font-semibold flex items-center text-indigo-700">📅 미팅 일시</label>
+                                <div class="flex gap-2 mt-1">
+                                    <input name="미팅일자" type="date" class="flex-1 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-300">
+                                    <input name="미팅시간" type="time" class="flex-1 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-300">
+                                </div>
                             </div>
                             <div>
                                 <label class="font-semibold flex items-center">(실제)홈페이지 통화일자</label>
@@ -2908,6 +2938,8 @@
             document.getElementById('delete-button').classList.add('hidden');
             
             applyRolePermissions();
+            // 전문위원 미팅확정 선택 여부에 따라 미팅일시 입력창 표시
+            toggleMeetingDateTime(company['향후진행'] || '');
             document.getElementById('edit-modal').classList.remove('hidden');
         } else {
             alert('해당 기업 정보를 찾을 수 없습니다.');
@@ -4034,11 +4066,12 @@
 
     // ── 관리자 패널 표시/숨기기 ──
     function showAdminWtPanel(type) {
-        var panels = ['log', 'suggestion', 'message'];
+        var panels = ['log', 'suggestion', 'message', 'siyon'];
         var colors = {
             log: 'py-2 px-3 text-sm font-bold rounded-lg border text-blue-700 bg-blue-100 border-blue-300',
             suggestion: 'py-2 px-3 text-sm font-bold rounded-lg border text-purple-700 bg-purple-100 border-purple-300',
-            message: 'py-2 px-3 text-sm font-bold rounded-lg border text-amber-700 bg-amber-100 border-amber-300'
+            message: 'py-2 px-3 text-sm font-bold rounded-lg border text-amber-700 bg-amber-100 border-amber-300',
+            siyon: 'py-2 px-3 text-sm font-bold rounded-lg border text-indigo-700 bg-indigo-100 border-indigo-300'
         };
         var baseClass = 'py-2 px-3 text-sm font-bold rounded-lg border border-slate-200 text-slate-600 bg-slate-100';
         panels.forEach(function(p) {
@@ -4049,6 +4082,7 @@
         if (!type || type === currentAdminWtPanel) { currentAdminWtPanel = null; return; }
         currentAdminWtPanel = type;
         document.getElementById('admin-wt-panel-' + type).classList.remove('hidden');
+        if (type === 'siyon') { renderAdminSiyonPanel(); return; }
         var btn = document.getElementById('admin-wt-btn-' + type);
         if (btn) btn.className = colors[type];
         renderAdminWtPanel(type);
@@ -4144,6 +4178,110 @@
     }
     window.saveAdminReply = saveAdminReply;
 
+    // ── 향후진행 미팅확정 시 미팅일시 입력창 표시/숨김 ──
+    function toggleMeetingDateTime(val) {
+        var wrap = document.getElementById('meeting-datetime-wrap');
+        if (!wrap) return;
+        if (val === '전문위원 미팅확정') {
+            wrap.classList.remove('hidden');
+        } else {
+            wrap.classList.add('hidden');
+        }
+    }
+    window.toggleMeetingDateTime = toggleMeetingDateTime;
+
+    // ── TM 전문위원시연 패널 렌더링 ──
+    function renderSiyonPanel() {
+        var listEl = document.getElementById('wt-siyon-list');
+        if (!listEl) return;
+        var src = (apiCache && apiCache['Companies']) ? apiCache['Companies'] : [];
+        var myName = loggedInUser ? loggedInUser.name : '';
+        var filtered = src.filter(function(c) {
+            return c['향후진행'] === '전문위원 미팅확정'
+                && (!myName || c['담당 전문위원'] === myName);
+        });
+        if (filtered.length === 0) {
+            listEl.innerHTML = '<p class="text-sm text-slate-400 text-center py-4">전문위원 미팅확정 기업이 없습니다.</p>';
+            return;
+        }
+        listEl.innerHTML = filtered.map(function(c) {
+            var 미팅일자 = c['미팅일자'] || '';
+            var 미팅시간 = c['미팅시간'] || '';
+            var 미팅일시 = (미팅일자 + (미팅시간 ? ' ' + 미팅시간 : '')) || '-';
+            var 성명 = c['시연전문위원'] || '-';
+            return '<div class="p-3 rounded-lg border border-indigo-100 bg-indigo-50 space-y-1">'
+                + '<p class="text-sm font-bold text-indigo-800">' + (c['기업명'] || '') + '</p>'
+                + '<p class="text-xs text-slate-600">📍 ' + (c['회사주소'] || '-') + '</p>'
+                + '<p class="text-xs text-slate-600">📞 ' + (c['회사Tel'] || '-') + '</p>'
+                + '<p class="text-xs text-slate-600">📅 미팅일시: ' + 미팅일시 + '</p>'
+                + '<p class="text-xs text-indigo-700 font-semibold">👤 전문위원: ' + 성명 + '</p>'
+                + '</div>';
+        }).join('');
+    }
+    window.renderSiyonPanel = renderSiyonPanel;
+
+    // ── 관리자 전문위원시연 패널 렌더링 ──
+    function renderAdminSiyonPanel() {
+        var listEl = document.getElementById('admin-wt-siyon-list');
+        if (!listEl) return;
+        var src = (apiCache && apiCache['Companies']) ? apiCache['Companies'] : [];
+        var filtered = src.filter(function(c) {
+            return c['향후진행'] === '전문위원 미팅확정';
+        });
+        if (filtered.length === 0) {
+            listEl.innerHTML = '<p class="text-sm text-slate-400 text-center py-4">전문위원 미팅확정 기업이 없습니다.</p>';
+            return;
+        }
+        listEl.innerHTML = filtered.map(function(c) {
+            var 미팅일자 = c['미팅일자'] || '';
+            var 미팅시간 = c['미팅시간'] || '';
+            var 미팅일시 = (미팅일자 + (미팅시간 ? ' ' + 미팅시간 : '')) || '-';
+            var 성명 = c['시연전문위원'] || '';
+            var docId = c['_docId'] || '';
+            return '<div class="p-3 rounded-lg border border-indigo-100 bg-indigo-50">'
+                + '<div class="flex gap-2 items-start justify-between mb-2">'
+                + '<div>'
+                + '<p class="text-sm font-bold text-indigo-800">' + (c['기업명'] || '') + '</p>'
+                + '<p class="text-xs text-slate-600">📍 ' + (c['회사주소'] || '-') + '</p>'
+                + '<p class="text-xs text-slate-600">📞 ' + (c['회사Tel'] || '-') + '</p>'
+                + '<p class="text-xs text-slate-600">📅 미팅일시: ' + 미팅일시 + '</p>'
+                + '<p class="text-xs text-slate-600">담당TM: ' + (c['담당 전문위원'] || '-') + '</p>'
+                + '</div>'
+                + '</div>'
+                + '<div class="flex gap-2 items-center">'
+                + '<input type="text" placeholder="전문위원 성명 입력" value="' + 성명 + '" id="siyon-input-' + docId + '" class="flex-1 text-xs border rounded px-2 py-1 focus:outline-none focus:border-indigo-400">'
+                + '<button onclick="saveAdminSiyon(&quot;' + docId + '&quot;)" class="text-xs px-2 py-1 bg-indigo-500 hover:bg-indigo-600 text-white rounded whitespace-nowrap">저장</button>'
+                + '</div>'
+                + '</div>';
+        }).join('');
+    }
+    window.renderAdminSiyonPanel = renderAdminSiyonPanel;
+
+    // ── 관리자 전문위원성명 저장 ──
+    async function saveAdminSiyon(docId) {
+        var inputEl = document.getElementById('siyon-input-' + docId);
+        if (!inputEl) return;
+        var text = inputEl.value.trim();
+        showLoading();
+        try {
+            var url = FIRESTORE_BASE_URL + '/Companies/' + docId + '?updateMask.fieldPaths=시연전문위원';
+            var res = await fetch(url, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ fields: { '시연전문위원': { stringValue: text } } })
+            });
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            // apiCache 업데이트
+            if (apiCache && apiCache['Companies']) {
+                var c = apiCache['Companies'].find(function(x){ return x._docId === docId; });
+                if (c) c['시연전문위원'] = text;
+            }
+            renderAdminSiyonPanel();
+        } catch(e) { alert('저장 오류: ' + e.message); }
+        finally { hideLoading(); }
+    }
+    window.saveAdminSiyon = saveAdminSiyon;
+
     // ── 메세지 저장 ──
     async function saveAdminMessage() {
         var name = document.getElementById('admin-wt-msg-name').value;
@@ -4201,9 +4339,9 @@
     // ── 패널 표시/숨기기 ──
     var currentWtPanel = null;
     function showWtPanel(type) {
-        var panels = ['log', 'suggestion', 'message'];
-        var btns = { log: 'wt-btn-log', suggestion: 'wt-btn-suggestion', message: 'wt-btn-message' };
-        var colors = { log: 'text-blue-700 bg-blue-100 border-blue-300', suggestion: 'text-purple-700 bg-purple-100 border-purple-300', message: 'text-amber-700 bg-amber-100 border-amber-300' };
+        var panels = ['log', 'suggestion', 'message', 'siyon'];
+        var btns = { log: 'wt-btn-log', suggestion: 'wt-btn-suggestion', message: 'wt-btn-message', siyon: 'wt-btn-siyon' };
+        var colors = { log: 'text-blue-700 bg-blue-100 border-blue-300', suggestion: 'text-purple-700 bg-purple-100 border-purple-300', message: 'text-amber-700 bg-amber-100 border-amber-300', siyon: 'text-indigo-700 bg-indigo-100 border-indigo-300' };
         // 모두 닫기
         panels.forEach(function(p) {
             document.getElementById('wt-panel-' + p).classList.add('hidden');
@@ -4213,6 +4351,7 @@
         if (!type || type === currentWtPanel) { currentWtPanel = null; return; }
         currentWtPanel = type;
         document.getElementById('wt-panel-' + type).classList.remove('hidden');
+        if (type === 'siyon') { renderSiyonPanel(); }
         var btn = document.getElementById('wt-btn-' + type);
         if (btn) btn.className = 'py-2 px-3 text-sm font-bold rounded-lg border ' + colors[type];
         // 메세지 패널 열면 읽음 처리 → 깜빡임 중지
