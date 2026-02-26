@@ -2107,7 +2107,11 @@
             const user = users.find(u => u.name === username && String(u.phone) === String(password));
             if (user) {
                 loggedInUser = user;
-                sessionStorage.setItem('loggedInUser', JSON.stringify(user));
+                // Membership → role 정규화 (기존 데이터 호환)
+                if (!loggedInUser.role && loggedInUser.Membership) {
+                    loggedInUser.role = loggedInUser.Membership;
+                }
+                sessionStorage.setItem('loggedInUser', JSON.stringify(loggedInUser));
                 
                 // 최초 로그인 시 비밀번호 변경 필요 체크 (명시적으로 'false'인 경우만 강제 변경)
                 if (user.passwordChanged === 'false' || user.passwordChanged === false) {
