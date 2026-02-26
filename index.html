@@ -1481,9 +1481,23 @@
                             <!-- 전문위원 미팅확정 선택 시 표시 -->
                             <div id="meeting-datetime-wrap" class="hidden">
                                 <label class="font-semibold flex items-center text-indigo-700">📅 미팅 일시</label>
-                                <div class="flex gap-2 mt-1">
+                                <div class="flex gap-2 mt-1 items-center">
                                     <input name="미팅일자" type="date" class="flex-1 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-300">
-                                    <input name="미팅시간" type="time" class="flex-1 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-300">
+                                    <select id="meeting-ampm" onchange="updateMeetingTime()" class="p-2 border rounded bg-white focus:outline-none focus:ring-2 focus:ring-indigo-300">
+                                        <option value="오전">오전</option>
+                                        <option value="오후" selected>오후</option>
+                                    </select>
+                                    <select id="meeting-hour" onchange="updateMeetingTime()" class="p-2 border rounded bg-white focus:outline-none focus:ring-2 focus:ring-indigo-300">
+                                        <option value="1">1시</option><option value="2">2시</option><option value="3">3시</option>
+                                        <option value="4">4시</option><option value="5">5시</option><option value="6">6시</option>
+                                        <option value="7">7시</option><option value="8">8시</option><option value="9">9시</option>
+                                        <option value="10">10시</option><option value="11">11시</option><option value="12">12시</option>
+                                    </select>
+                                    <select id="meeting-min" onchange="updateMeetingTime()" class="p-2 border rounded bg-white focus:outline-none focus:ring-2 focus:ring-indigo-300">
+                                        <option value="00">00분</option><option value="10">10분</option><option value="20">20분</option>
+                                        <option value="30">30분</option><option value="40">40분</option><option value="50">50분</option>
+                                    </select>
+                                    <input type="hidden" name="미팅시간" id="meeting-time-hidden">
                                 </div>
                             </div>
                             <div>
@@ -2940,6 +2954,19 @@
             applyRolePermissions();
             // 전문위원 미팅확정 선택 여부에 따라 미팅일시 입력창 표시
             toggleMeetingDateTime(company['향후진행'] || '');
+            // 기존 미팅시간 복원 (오전/오후, 시, 분)
+            if (company['미팅시간']) {
+                var t = company['미팅시간'];
+                var parts = t.match(/(오전|오후) (\d+)시 (\d+)분/);
+                if (parts) {
+                    var amEl = document.getElementById('meeting-ampm');
+                    var hEl = document.getElementById('meeting-hour');
+                    var mEl = document.getElementById('meeting-min');
+                    if(amEl) amEl.value = parts[1];
+                    if(hEl) hEl.value = String(parseInt(parts[2]));
+                    if(mEl) mEl.value = parts[3];
+                }
+            }
             document.getElementById('edit-modal').classList.remove('hidden');
         } else {
             alert('해당 기업 정보를 찾을 수 없습니다.');
@@ -4184,17 +4211,32 @@
         if (!wrap) return;
         if (val === '전문위원 미팅확정') {
             wrap.classList.remove('hidden');
+            updateMeetingTime(); // hidden input 초기값 세팅
         } else {
             wrap.classList.add('hidden');
         }
     }
     window.toggleMeetingDateTime = toggleMeetingDateTime;
 
+    // ── 미팅시간 select 변경 시 hidden input 업데이트 ──
+    function updateMeetingTime() {
+        var ampm = document.getElementById('meeting-ampm');
+        var hour = document.getElementById('meeting-hour');
+        var min = document.getElementById('meeting-min');
+        var hidden = document.getElementById('meeting-time-hidden');
+        if (!ampm || !hour || !min || !hidden) return;
+        hidden.value = ampm.value + ' ' + hour.value + '시 ' + min.value + '분';
+    }
+    window.updateMeetingTime = updateMeetingTime;
+
     // ── TM 전문위원시연 패널 렌더링 ──
     function renderSiyonPanel() {
         var listEl = document.getElementById('wt-siyon-list');
         if (!listEl) return;
-        var src = (apiCache && apiCache['Companies']) ? apiCache['Companies'] : [];
+        // allCompanies(현재 페이지) + cachedAllCompanies(누적) + apiCache 순으로 사용
+        var src = (typeof cachedAllCompanies !== 'undefined' && cachedAllCompanies.length > 0)
+            ? cachedAllCompanies
+            : ((apiCache && apiCache['Companies']) ? apiCache['Companies'] : []);
         var myName = loggedInUser ? loggedInUser.name : '';
         var filtered = src.filter(function(c) {
             return c['향후진행'] === '전문위원 미팅확정'
@@ -4224,7 +4266,8 @@
     function renderAdminSiyonPanel() {
         var listEl = document.getElementById('admin-wt-siyon-list');
         if (!listEl) return;
-        var src = (apiCache && apiCache['Companies']) ? apiCache['Companies'] : [];
+        var src = (apiCache && apiCache['Companies']) ? apiCache['Companies']
+            : ((typeof cachedAllCompanies !== 'undefined' && cachedAllCompanies.length > 0) ? cachedAllCompanies : []);
         var filtered = src.filter(function(c) {
             return c['향후진행'] === '전문위원 미팅확정';
         });
@@ -4232,28 +4275,39 @@
             listEl.innerHTML = '<p class="text-sm text-slate-400 text-center py-4">전문위원 미팅확정 기업이 없습니다.</p>';
             return;
         }
-        listEl.innerHTML = filtered.map(function(c) {
+        // 테이블 형식: 헤더 + 1행 1기업
+        var rows = filtered.map(function(c) {
             var 미팅일자 = c['미팅일자'] || '';
             var 미팅시간 = c['미팅시간'] || '';
             var 미팅일시 = (미팅일자 + (미팅시간 ? ' ' + 미팅시간 : '')) || '-';
             var 성명 = c['시연전문위원'] || '';
             var docId = c['_docId'] || '';
-            return '<div class="p-3 rounded-lg border border-indigo-100 bg-indigo-50">'
-                + '<div class="flex gap-2 items-start justify-between mb-2">'
-                + '<div>'
-                + '<p class="text-sm font-bold text-indigo-800">' + (c['기업명'] || '') + '</p>'
-                + '<p class="text-xs text-slate-600">📍 ' + (c['회사주소'] || '-') + '</p>'
-                + '<p class="text-xs text-slate-600">📞 ' + (c['회사Tel'] || '-') + '</p>'
-                + '<p class="text-xs text-slate-600">📅 미팅일시: ' + 미팅일시 + '</p>'
-                + '<p class="text-xs text-slate-600">담당TM: ' + (c['담당 전문위원'] || '-') + '</p>'
-                + '</div>'
-                + '</div>'
-                + '<div class="flex gap-2 items-center">'
-                + '<input type="text" placeholder="전문위원 성명 입력" value="' + 성명 + '" id="siyon-input-' + docId + '" class="flex-1 text-xs border rounded px-2 py-1 focus:outline-none focus:border-indigo-400">'
+            return '<tr class="border-b hover:bg-indigo-50">'
+                + '<td class="px-3 py-2 text-sm font-semibold text-indigo-800 whitespace-nowrap">' + (c['기업명'] || '') + '</td>'
+                + '<td class="px-3 py-2 text-xs text-slate-600">' + (c['회사주소'] || '-') + '</td>'
+                + '<td class="px-3 py-2 text-xs text-slate-600 whitespace-nowrap">' + String(c['회사Tel'] || '-') + '</td>'
+                + '<td class="px-3 py-2 text-xs text-slate-600 whitespace-nowrap">' + 미팅일시 + '</td>'
+                + '<td class="px-3 py-2 text-xs text-slate-600 whitespace-nowrap">' + (c['담당 전문위원'] || '-') + '</td>'
+                + '<td class="px-3 py-2 whitespace-nowrap">'
+                + '<div class="flex gap-1 items-center">'
+                + '<input type="text" placeholder="전문위원 성명" value="' + 성명 + '" id="siyon-input-' + docId + '" class="w-28 text-xs border rounded px-2 py-1 focus:outline-none focus:border-indigo-400">'
                 + '<button onclick="saveAdminSiyon(&quot;' + docId + '&quot;)" class="text-xs px-2 py-1 bg-indigo-500 hover:bg-indigo-600 text-white rounded whitespace-nowrap">저장</button>'
                 + '</div>'
-                + '</div>';
+                + '</td>'
+                + '</tr>';
         }).join('');
+        listEl.innerHTML = '<div class="overflow-x-auto">'
+            + '<table class="w-full text-left border-collapse">'
+            + '<thead><tr class="bg-indigo-100 text-xs font-bold text-indigo-700">'
+            + '<th class="px-3 py-2">기업명</th>'
+            + '<th class="px-3 py-2">회사주소</th>'
+            + '<th class="px-3 py-2">회사TEL</th>'
+            + '<th class="px-3 py-2">미팅일시</th>'
+            + '<th class="px-3 py-2">담당TM</th>'
+            + '<th class="px-3 py-2">전문위원성명</th>'
+            + '</tr></thead>'
+            + '<tbody>' + rows + '</tbody>'
+            + '</table></div>';
     }
     window.renderAdminSiyonPanel = renderAdminSiyonPanel;
 
