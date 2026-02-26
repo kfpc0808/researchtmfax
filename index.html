@@ -4109,7 +4109,12 @@
         if (!type || type === currentAdminWtPanel) { currentAdminWtPanel = null; return; }
         currentAdminWtPanel = type;
         document.getElementById('admin-wt-panel-' + type).classList.remove('hidden');
-        if (type === 'siyon') { renderAdminSiyonPanel(); return; }
+        if (type === 'siyon') {
+            var siyonAdminBtn = document.getElementById('admin-wt-btn-siyon');
+            if (siyonAdminBtn) siyonAdminBtn.className = colors['siyon'];
+            renderAdminSiyonPanel();
+            return;
+        }
         var btn = document.getElementById('admin-wt-btn-' + type);
         if (btn) btn.className = colors[type];
         renderAdminWtPanel(type);
@@ -4329,16 +4334,14 @@
         var text = inputEl.value.trim();
         showLoading();
         try {
-            // 한글 필드명은 updateMask URL 파라미터 미지원 → updateMask 없이 PATCH
-            // Firestore는 updateMask 없는 PATCH 시 body의 필드만 병합(기존 필드 보존)
-            var url = FIRESTORE_BASE_URL + '/Companies/' + docId;
+            // encodeURIComponent로 한글 필드명 인코딩 → updateMask 정상 동작 (1950라인과 동일 방식)
+            var url = FIRESTORE_BASE_URL + '/Companies/' + docId + '?updateMask.fieldPaths=' + encodeURIComponent('시연전문위원');
             var res = await fetch(url, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ fields: { '시연전문위원': { stringValue: text } } })
             });
             if (!res.ok) throw new Error('HTTP ' + res.status);
-            // apiCache 업데이트
             // apiCache 업데이트
             if (apiCache && apiCache['Companies']) {
                 var c = apiCache['Companies'].find(function(x){ return x._docId === docId; });
