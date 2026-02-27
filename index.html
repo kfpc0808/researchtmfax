@@ -2965,6 +2965,8 @@
                     if(amEl) amEl.value = parts[1];
                     if(hEl) hEl.value = String(parseInt(parts[2]));
                     if(mEl) mEl.value = parts[3];
+                    // ★ 셀렉트 복원 후 hidden input 반드시 갱신
+                    updateMeetingTime();
                 }
             }
             document.getElementById('edit-modal').classList.remove('hidden');
@@ -4239,11 +4241,9 @@
         var listEl = document.getElementById('wt-siyon-list');
         if (!listEl) return;
         listEl.innerHTML = '<p class="text-sm text-slate-400 text-center py-4">로딩 중...</p>';
-        // 전체 Companies 조회 (전문위원 미팅확정 기업이 다른 페이지에 있을 수 있음)
-        var allData = cachedAllCompanies.length > 0
-            ? cachedAllCompanies
-            : await readFromFirestore('Companies');
-        if (allData && allData.length > 0 && cachedAllCompanies.length === 0) {
+        // ★ 항상 Firestore에서 전체 데이터 조회 (캐시가 현재 페이지만 갖고 있을 수 있으므로)
+        var allData = await readFromFirestore('Companies');
+        if (allData && allData.length > 0) {
             cachedAllCompanies = allData;
         }
         var src = allData || [];
@@ -4288,10 +4288,9 @@
         var listEl = document.getElementById('admin-wt-siyon-list');
         if (!listEl) return;
         listEl.innerHTML = '<p class="text-sm text-slate-400 text-center py-4">로딩 중...</p>';
-        var allData = cachedAllCompanies.length > 0
-            ? cachedAllCompanies
-            : await readFromFirestore('Companies');
-        if (allData && allData.length > 0 && cachedAllCompanies.length === 0) {
+        // ★ 항상 Firestore에서 전체 데이터 조회 (캐시가 현재 페이지만 갖고 있을 수 있으므로)
+        var allData = await readFromFirestore('Companies');
+        if (allData && allData.length > 0) {
             cachedAllCompanies = allData;
         }
         var src = allData || [];
