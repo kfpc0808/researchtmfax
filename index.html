@@ -4404,12 +4404,18 @@
         var text = inputEl.value.trim();
         showLoading();
         try {
-            // encodeURIComponent로 한글 필드명 인코딩 → updateMask 정상 동작 (1950라인과 동일 방식)
-            var url = FIRESTORE_BASE_URL + '/Companies/' + docId + '?updateMask.fieldPaths=' + encodeURIComponent('시연전문위원');
-            var res = await fetch(url, {
+            // 1) 기존 문서 읽기
+            var getRes = await fetch(FIRESTORE_BASE_URL + '/Companies/' + docId);
+            if (!getRes.ok) throw new Error('읽기 실패: HTTP ' + getRes.status);
+            var docJson = await getRes.json();
+            var fields = docJson.fields || {};
+            // 2) 시연전문위원 필드만 교체
+            fields['시연전문위원'] = { stringValue: text };
+            // 3) 전체 필드 PATCH (updateMask 없이 — 한글 필드명 인코딩 이슈 회피)
+            var res = await fetch(FIRESTORE_BASE_URL + '/Companies/' + docId, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ fields: { '시연전문위원': { stringValue: text } } })
+                body: JSON.stringify({ fields: fields })
             });
             if (!res.ok) throw new Error('HTTP ' + res.status);
             // apiCache 업데이트
