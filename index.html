@@ -1499,6 +1499,23 @@
                                     </select>
                                     <input type="hidden" name="미팅시간" id="meeting-time-hidden">
                                 </div>
+                                <div class="flex gap-4 mt-3 items-end flex-wrap">
+                                    <div class="flex-1 min-w-[140px]">
+                                        <label class="font-semibold text-sm text-indigo-700">👤 고객사담당자</label>
+                                        <input name="고객사담당자" type="text" class="w-full p-2 mt-1 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-300" placeholder="성명 입력">
+                                    </div>
+                                    <div class="flex-1 min-w-[260px]">
+                                        <label class="font-semibold text-sm text-indigo-700">📞 연락처</label>
+                                        <div class="flex gap-1 mt-1 items-center">
+                                            <span class="p-2 bg-slate-100 border rounded text-sm font-semibold text-slate-600">010</span>
+                                            <span class="text-slate-400">-</span>
+                                            <input id="meeting-phone-mid" type="text" maxlength="4" inputmode="numeric" pattern="[0-9]*" class="w-20 p-2 border rounded text-center focus:outline-none focus:ring-2 focus:ring-indigo-300" placeholder="0000" onchange="updateMeetingPhone()" oninput="updateMeetingPhone()">
+                                            <span class="text-slate-400">-</span>
+                                            <input id="meeting-phone-last" type="text" maxlength="4" inputmode="numeric" pattern="[0-9]*" class="w-20 p-2 border rounded text-center focus:outline-none focus:ring-2 focus:ring-indigo-300" placeholder="0000" onchange="updateMeetingPhone()" oninput="updateMeetingPhone()">
+                                            <input type="hidden" name="고객사연락처" id="meeting-phone-hidden">
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                             <div>
                                 <label class="font-semibold flex items-center">(실제)홈페이지 통화일자</label>
@@ -2969,6 +2986,23 @@
                     updateMeetingTime();
                 }
             }
+            // 기존 고객사연락처 복원 (010-XXXX-XXXX)
+            if (company['고객사연락처']) {
+                var phoneParts = company['고객사연락처'].match(/010-(\d{0,4})-(\d{0,4})/);
+                if (phoneParts) {
+                    var midEl = document.getElementById('meeting-phone-mid');
+                    var lastEl = document.getElementById('meeting-phone-last');
+                    if (midEl) midEl.value = phoneParts[1];
+                    if (lastEl) lastEl.value = phoneParts[2];
+                    updateMeetingPhone();
+                }
+            } else {
+                var midEl2 = document.getElementById('meeting-phone-mid');
+                var lastEl2 = document.getElementById('meeting-phone-last');
+                if (midEl2) midEl2.value = '';
+                if (lastEl2) lastEl2.value = '';
+                updateMeetingPhone();
+            }
             document.getElementById('edit-modal').classList.remove('hidden');
         } else {
             alert('해당 기업 정보를 찾을 수 없습니다.');
@@ -4236,6 +4270,20 @@
     }
     window.updateMeetingTime = updateMeetingTime;
 
+    // ── 고객사연락처 select 변경 시 hidden input 업데이트 ──
+    function updateMeetingPhone() {
+        var mid = document.getElementById('meeting-phone-mid');
+        var last = document.getElementById('meeting-phone-last');
+        var hidden = document.getElementById('meeting-phone-hidden');
+        if (!mid || !last || !hidden) return;
+        var m = mid.value.replace(/[^0-9]/g, '');
+        var l = last.value.replace(/[^0-9]/g, '');
+        mid.value = m;
+        last.value = l;
+        hidden.value = (m || l) ? '010-' + m + '-' + l : '';
+    }
+    window.updateMeetingPhone = updateMeetingPhone;
+
     // ── TM 전문위원시연 패널 렌더링 ──
     async function renderSiyonPanel() {
         var listEl = document.getElementById('wt-siyon-list');
@@ -4261,11 +4309,15 @@
             var 미팅시간 = c['미팅시간'] || '';
             var 미팅일시 = (미팅일자 + (미팅시간 ? ' ' + 미팅시간 : '')) || '-';
             var 성명 = c['시연전문위원'] || '-';
+            var 고객담당 = c['고객사담당자'] || '-';
+            var 연락처 = c['고객사연락처'] || '-';
             return '<tr class="border-b hover:bg-indigo-50">'
                 + '<td class="px-3 py-2 text-sm font-semibold text-indigo-800 whitespace-nowrap">' + (c['기업명'] || '') + '</td>'
                 + '<td class="px-3 py-2 text-xs text-slate-600">' + (c['회사주소'] || '-') + '</td>'
                 + '<td class="px-3 py-2 text-xs text-slate-600 whitespace-nowrap">' + String(c['회사Tel'] || '-') + '</td>'
                 + '<td class="px-3 py-2 text-xs text-slate-600 whitespace-nowrap">' + 미팅일시 + '</td>'
+                + '<td class="px-3 py-2 text-xs text-slate-600 whitespace-nowrap">' + 고객담당 + '</td>'
+                + '<td class="px-3 py-2 text-xs text-slate-600 whitespace-nowrap">' + 연락처 + '</td>'
                 + '<td class="px-3 py-2 text-xs text-indigo-700 font-semibold whitespace-nowrap">' + 성명 + '</td>'
                 + '</tr>';
         }).join('');
@@ -4276,6 +4328,8 @@
             + '<th class="px-3 py-2">회사주소</th>'
             + '<th class="px-3 py-2">회사TEL</th>'
             + '<th class="px-3 py-2">미팅일시</th>'
+            + '<th class="px-3 py-2">고객사담당자</th>'
+            + '<th class="px-3 py-2">연락처</th>'
             + '<th class="px-3 py-2">전문위원</th>'
             + '</tr></thead>'
             + '<tbody>' + rows + '</tbody>'
@@ -4308,11 +4362,15 @@
             var 미팅일시 = (미팅일자 + (미팅시간 ? ' ' + 미팅시간 : '')) || '-';
             var 성명 = c['시연전문위원'] || '';
             var docId = c['_docId'] || '';
+            var 고객담당 = c['고객사담당자'] || '-';
+            var 연락처 = c['고객사연락처'] || '-';
             return '<tr class="border-b hover:bg-indigo-50">'
                 + '<td class="px-3 py-2 text-sm font-semibold text-indigo-800 whitespace-nowrap">' + (c['기업명'] || '') + '</td>'
                 + '<td class="px-3 py-2 text-xs text-slate-600">' + (c['회사주소'] || '-') + '</td>'
                 + '<td class="px-3 py-2 text-xs text-slate-600 whitespace-nowrap">' + String(c['회사Tel'] || '-') + '</td>'
                 + '<td class="px-3 py-2 text-xs text-slate-600 whitespace-nowrap">' + 미팅일시 + '</td>'
+                + '<td class="px-3 py-2 text-xs text-slate-600 whitespace-nowrap">' + 고객담당 + '</td>'
+                + '<td class="px-3 py-2 text-xs text-slate-600 whitespace-nowrap">' + 연락처 + '</td>'
                 + '<td class="px-3 py-2 text-xs text-slate-600 whitespace-nowrap">' + (c['담당 전문위원'] || '-') + '</td>'
                 + '<td class="px-3 py-2 whitespace-nowrap">'
                 + '<div class="flex gap-1 items-center">'
@@ -4329,6 +4387,8 @@
             + '<th class="px-3 py-2">회사주소</th>'
             + '<th class="px-3 py-2">회사TEL</th>'
             + '<th class="px-3 py-2">미팅일시</th>'
+            + '<th class="px-3 py-2">고객사담당자</th>'
+            + '<th class="px-3 py-2">연락처</th>'
             + '<th class="px-3 py-2">담당TM</th>'
             + '<th class="px-3 py-2">전문위원성명</th>'
             + '</tr></thead>'
